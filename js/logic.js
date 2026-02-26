@@ -327,6 +327,7 @@ const Logic = (() => {
       if (pageId === "inventory")
         renderInventoryTable(ItemService.list("all", _inventorySearch));
       if (pageId === "pricing") renderPricingTable(PricingService.list());
+      if (pageId === "restock") initRestockUI();
     },
     onCategoryFilter,
     onPosSearch,

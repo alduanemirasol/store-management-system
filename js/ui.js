@@ -24,7 +24,7 @@ function showPage(pageId, event) {
     .forEach((b) => b.classList.remove("active"));
   document.getElementById("page-" + pageId).classList.add("active");
   if (event && event.target) event.target.classList.add("active");
-  if (pageId === "restock") initRestockUI();
+  if (pageId === "restock") Logic.initRestockUI();
 }
 // Render: Draws item cards in POS grid.
 function renderItemGrid(items) {
