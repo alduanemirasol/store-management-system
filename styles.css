@@ -1,3 +1,4 @@
+/* Variables: Design tokens for colors, spacing, and effects */
 :root {
   --bg: #f8f9fc;
   --surface: #ffffff;
@@ -18,6 +19,7 @@
   --radius: 12px;
   --radius-sm: 8px;
 }
+/* Reset: Normalize box-sizing and margins */
 *,
 *::before,
 *::after {
@@ -58,6 +60,7 @@ header {
   top: 0;
   z-index: 100;
 }
+/* Logo: Brand styling */
 .logo {
   font-weight: 800;
   font-size: 16px;
@@ -73,6 +76,7 @@ header {
   background: var(--accent);
   border-radius: 50%;
 }
+/* Navigation: Top menu bar */
 nav {
   display: flex;
   gap: 4px;
@@ -97,6 +101,7 @@ nav button.active {
   background: var(--accent);
   color: #fff;
 }
+/* Main: Content area */
 main {
   flex: 1;
   padding: 24px;
@@ -110,6 +115,7 @@ main {
 .page.active {
   display: block;
 }
+/* Utilities: Reusable helper classes */
 .flex {
   display: flex;
 }
@@ -165,11 +171,7 @@ main {
   grid-template-columns: 1fr 1fr 1fr;
   gap: 16px;
 }
-.grid-4 {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
+/* Section: Page titles */
 .section-title {
   font-size: 22px;
   font-weight: 800;
@@ -181,6 +183,7 @@ main {
   font-size: 13px;
   margin-bottom: 20px;
 }
+/* Empty: No content state */
 .empty {
   text-align: center;
   padding: 40px;
@@ -192,6 +195,7 @@ main {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
+/* Card: Content container */
 .card-header {
   padding: 20px 24px 16px;
   border-bottom: 1px solid var(--border);
@@ -204,6 +208,7 @@ main {
   font-weight: 700;
   color: var(--text);
 }
+/* Card Body: Inner padding */
 .card-body {
   padding: 20px 24px;
 }
@@ -219,8 +224,8 @@ main {
   cursor: pointer;
   border: none;
   transition: all 0.15s;
-  text-decoration: none;
 }
+/* Button Variants */
 .btn-primary {
   background: var(--accent);
   color: #fff;
@@ -250,6 +255,7 @@ main {
 .btn-ghost:hover {
   background: var(--border);
 }
+/* Button Size: Small variant */
 .btn-sm {
   padding: 5px 10px;
   font-size: 12px;
@@ -260,6 +266,7 @@ main {
   height: 32px;
   justify-content: center;
 }
+/* Form: Input groups */
 .form-group {
   margin-bottom: 16px;
 }
@@ -272,6 +279,7 @@ label {
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
+/* Inputs: Form field styling */
 input,
 select,
 textarea {
@@ -292,6 +300,7 @@ textarea:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
+/* Search: Search input styling */
 .search-bar {
   position: relative;
 }
@@ -306,6 +315,7 @@ textarea:focus {
   color: var(--text3);
   font-size: 16px;
 }
+/* Table: Data grid container */
 .table-wrap {
   overflow-x: auto;
 }
@@ -313,6 +323,7 @@ table {
   width: 100%;
   border-collapse: collapse;
 }
+/* Table Header */
 th {
   padding: 10px 16px;
   text-align: left;
@@ -341,6 +352,7 @@ tr:last-child td {
 tr:hover td {
   background: var(--surface2);
 }
+/* Badge: Status indicators */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -365,6 +377,7 @@ tr:hover td {
   background: var(--orange-soft);
   color: var(--orange);
 }
+/* Tag: Category filters */
 .tag {
   display: inline-block;
   background: var(--accent-soft);
@@ -381,6 +394,7 @@ tr:hover td {
   background: var(--accent);
   color: #fff;
 }
+/* Modal: Dialog overlay */
 .modal-backdrop {
   display: none;
   position: fixed;
@@ -414,6 +428,7 @@ tr:hover td {
     opacity: 1;
   }
 }
+/* Modal Header: Title bar */
 .modal-header {
   padding: 20px 24px;
   border-bottom: 1px solid var(--border);
@@ -425,6 +440,7 @@ tr:hover td {
   font-weight: 700;
   font-size: 16px;
 }
+/* Modal Close: X button */
 .modal-close {
   background: none;
   border: none;
@@ -451,6 +467,7 @@ tr:hover td {
   gap: 10px;
   justify-content: flex-end;
 }
+/* Toast: Notification messages */
 #toast-container {
   position: fixed;
   bottom: 24px;
@@ -460,6 +477,7 @@ tr:hover td {
   flex-direction: column;
   gap: 8px;
 }
+/* Toast Message */
 .toast {
   background: var(--text);
   color: #fff;
@@ -479,6 +497,7 @@ tr:hover td {
 .toast.error {
   background: var(--red);
 }
+/* Toast Animation: Slide in effect */
 @keyframes toastIn {
   from {
     transform: translateX(100%);

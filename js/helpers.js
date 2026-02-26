@@ -1,12 +1,15 @@
+// Format: Converts number to Philippine peso currency string.
 function fmt(n) {
   return "₱" + parseFloat(n).toFixed(2);
 }
+// Format: Converts number with locale formatting and optional unit.
 function fmtNum(n, unit) {
   const formatted = parseFloat(n).toLocaleString("en", {
     maximumFractionDigits: 3,
   });
   return unit ? `${formatted} ${unit}` : formatted;
 }
+// Icons: Maps product categories to emoji icons.
 const CATEGORY_ICONS = {
   Grains: "🌾",
   "Dairy & Eggs": "🥚",
@@ -15,16 +18,20 @@ const CATEGORY_ICONS = {
   Vegetables: "🥬",
   Other: "📦",
 };
+// Lookup: Returns emoji icon for given category.
 function getCategoryIcon(cat) {
   return CATEGORY_ICONS[cat] || "📦";
 }
 const ALL_CATEGORIES = Object.keys(CATEGORY_ICONS);
+// Lookup: Fetches item by ID from database.
 function getItem(id) {
   return db.items.find((i) => i.id == id);
 }
+// Lookup: Returns all pack variants for an item.
 function getUnits(item_id) {
   return db.item_units.filter((u) => u.item_id == item_id);
 }
+// Lookup: Returns active pricing rules valid today.
 function getActivePricing(item_id) {
   const today = new Date().toISOString().split("T")[0];
   return db.custom_pricing.filter((p) => {
@@ -34,6 +41,7 @@ function getActivePricing(item_id) {
     return true;
   });
 }
+// Calc: Computes restock quantity in base units and cost.
 function calcRestockDetails(item, unitType, unitId, qty) {
   if (unitType === "base") {
     return {
@@ -52,6 +60,7 @@ function calcRestockDetails(item, unitType, unitId, qty) {
     unitLabel: u.unit_name,
   };
 }
+// Calc: Computes sale total, base units, and display label.
 function calcSellDetails(
   item,
   sellType,
@@ -89,6 +98,7 @@ function calcSellDetails(
   }
   return { total, baseUnits, label };
 }
+// Status: Returns stock level badge info for display.
 function getStockStatus(item) {
   if (item.stock_quantity < 10)
     return { badgeClass: "badge-red", badgeText: "Low" };

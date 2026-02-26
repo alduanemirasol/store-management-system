@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>POS & Inventory System</title>
 
+    <!-- Fonts: Inter typeface for UI -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
 
@@ -13,8 +14,10 @@
 </head>
 
 <body>
+    <!-- App: Main application container -->
     <div class="app">
 
+        <!-- Header: Logo and navigation -->
         <header>
             <div class="logo">
                 <div class="logo-dot"></div>
@@ -29,8 +32,10 @@
             </nav>
         </header>
 
+        <!-- Main: Page content area -->
         <main>
 
+            <!-- POS Page: Point of sale interface -->
             <div class="page active" id="page-pos">
                 <div class="pos-layout">
 
@@ -115,6 +120,7 @@
                 </div>
             </div>
 
+            <!-- Inventory Page: Product catalog management -->
             <div class="page" id="page-inventory">
                 <div class="flex-center gap-12 mb-16">
                     <div>
@@ -153,6 +159,7 @@
                 </div>
             </div>
 
+            <!-- Restock Page: Inventory restocking interface -->
             <div class="page" id="page-restock">
                 <div class="mb-16">
                     <div class="section-title">Restock</div>
@@ -211,6 +218,7 @@
                 </div>
             </div>
 
+            <!-- Pricing Page: Custom pricing rules -->
             <div class="page" id="page-pricing">
                 <div class="flex-center gap-12 mb-16">
                     <div>
@@ -243,6 +251,7 @@
                 </div>
             </div>
 
+            <!-- Dashboard Page: Sales stats and inventory overview -->
             <div class="page" id="page-dashboard">
                 <div class="mb-16">
                     <div class="section-title">Dashboard</div>
@@ -313,9 +322,11 @@
         </main>
     </div>
 
+    <!-- Toast: Notification container -->
     <div id="toast-container"></div>
 
 
+    <!-- Sell Modal: Add item to cart -->
     <div class="modal-backdrop" id="sell-modal">
         <div class="modal">
             <div class="modal-header">
@@ -330,6 +341,7 @@
         </div>
     </div>
 
+    <!-- Add Item Modal: Create or edit inventory item -->
     <div class="modal-backdrop" id="add-item-modal">
         <div class="modal">
             <div class="modal-header">
@@ -394,6 +406,7 @@
         </div>
     </div>
 
+    <!-- Pricing Modal: Add custom price rule -->
     <div class="modal-backdrop" id="add-pricing-modal">
         <div class="modal">
             <div class="modal-header">
@@ -445,6 +458,7 @@
         </div>
     </div>
 
+    <!-- Receipt Modal: Display transaction receipt -->
     <div class="modal-backdrop" id="receipt-modal">
         <div class="modal">
             <div class="modal-header">
@@ -458,12 +472,14 @@
         </div>
     </div>
 
+    <!-- Scripts: Load JavaScript modules in dependency order -->
     <script src="js/data.js"></script>
     <script src="js/helpers.js"></script>
     <script src="js/services.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/logic.js"></script>
 
+    <!-- Init: Initialize application on DOM ready -->
     <script>
         document.addEventListener('DOMContentLoaded', () => Logic.init());
     </script>

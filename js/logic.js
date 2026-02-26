@@ -1,3 +1,4 @@
+// Controller: Manages POS business logic and user interactions.
 const Logic = (() => {
   let _sellSelection = { type: "base", unitId: null, pricingId: null, qty: 1 };
   let _currentSellItem = null;
@@ -6,10 +7,12 @@ const Logic = (() => {
   let _inventorySearch = "";
   let _restockUnitType = "base";
   let _restockUnitId = null;
+  // UI: Updates item grid with filtered items.
   function _refreshItemGrid() {
     const items = ItemService.list(_currentCategory, _posSearch);
     renderItemGrid(items);
   }
+  // Event: Handles category filter selection.
   function onCategoryFilter(cat, el) {
     _currentCategory = cat;
     document
@@ -18,10 +21,12 @@ const Logic = (() => {
     el.classList.add("active");
     _refreshItemGrid();
   }
+  // Event: Handles POS search input.
   function onPosSearch(val) {
     _posSearch = val;
     _refreshItemGrid();
   }
+  // Event: Opens sale modal for selected item.
   function onItemCardClick(itemId) {
     const item = getItem(itemId);
     _currentSellItem = item;
@@ -32,6 +37,7 @@ const Logic = (() => {
     _refreshSellPreview();
     openModal("sell-modal");
   }
+  // Event: Handles sale type selection (base/unit/pricing).
   function onSellTypeSelect(type, unitId, pricingId, el) {
     _sellSelection.type = type;
     _sellSelection.unitId = unitId;
@@ -39,9 +45,11 @@ const Logic = (() => {
     activateSellOption(el);
     _refreshSellPreview();
   }
+  // Event: Handles quantity input change.
   function onSellQtyChange() {
     _refreshSellPreview();
   }
+  // UI: Updates sale preview with calculated values.
   function _refreshSellPreview() {
     const item = _currentSellItem;
     const qty = parseFloat(document.getElementById("sell-qty")?.value) || 0;
@@ -65,6 +73,7 @@ const Logic = (() => {
       : "";
     updateSellPreview(result, insufficient, stockMsg);
   }
+  // Event: Adds current item to cart.
   function onAddToCart() {
     const item = _currentSellItem;
     const qty = parseFloat(document.getElementById("sell-qty")?.value) || 0;
@@ -86,20 +95,25 @@ const Logic = (() => {
     _refreshCart();
     toast(`${item.item_name} added to cart`, "success");
   }
+  // UI: Renders cart with current items and total.
   function _refreshCart() {
     renderCart(CartService.getItems(), CartService.getTotal());
   }
+  // Event: Removes item from cart by index.
   function onRemoveCartItem(index) {
     CartService.removeItem(index);
     _refreshCart();
   }
+  // Event: Clears all items from cart.
   function onClearCart() {
     CartService.clear();
     _refreshCart();
   }
+  // Event: Updates change display when tendered amount changes.
   function onTenderedChange() {
     renderChangeDisplay(CartService.getTotal());
   }
+  // Event: Processes checkout and completes sale.
   function onCheckout() {
     const tendered = parseFloat(document.getElementById("tendered").value) || 0;
     const result = CartService.checkout(tendered);
@@ -112,24 +126,29 @@ const Logic = (() => {
     _refreshItemGrid();
     showReceipt(result.transaction);
   }
+  // UI: Renders inventory table with items.
   function _refreshInventoryTable() {
     const items = ItemService.list("all", _inventorySearch);
     renderInventoryTable(items);
   }
+  // Event: Handles inventory search input.
   function onInventorySearch(val) {
     _inventorySearch = val;
     _refreshInventoryTable();
   }
+  // Event: Opens modal to add new item.
   function onAddItem() {
     populateItemForm(null, []);
     openModal("add-item-modal");
   }
+  // Event: Opens modal to edit existing item.
   function onEditItem(id) {
     const item = getItem(id);
     const units = getUnits(id);
     populateItemForm(item, units);
     openModal("add-item-modal");
   }
+  // Event: Saves item (create or update) from form.
   function onSaveItem() {
     const form = readItemForm();
     if (!form.item_name || !form.base_unit) {
@@ -165,6 +184,7 @@ const Logic = (() => {
     _refreshInventoryTable();
     _refreshItemGrid();
   }
+  // Event: Deletes item after confirmation.
   function onDeleteItem(id) {
     if (!confirm("Delete this item?")) return;
     ItemService.remove(id);
@@ -172,12 +192,14 @@ const Logic = (() => {
     _refreshItemGrid();
     toast("Item deleted");
   }
+  // Init: Sets up restock UI with item list.
   function initRestockUI() {
     _restockUnitType = "base";
     _restockUnitId = null;
     populateRestockItemSelect(ItemService.list());
     renderRestockHistoryTable(RestockService.getHistory());
   }
+  // Event: Handles restock item selection change.
   function onRestockItemChange() {
     const id = parseInt(document.getElementById("restock-item").value);
     if (!id) {
@@ -191,15 +213,18 @@ const Logic = (() => {
     renderRestockUnits(item, units);
     _refreshRestockPreview();
   }
+  // Event: Handles restock unit type selection.
   function onRestockUnitSelect(type, unitId, el) {
     _restockUnitType = type;
     _restockUnitId = unitId;
     activateRestockOption(el);
     _refreshRestockPreview();
   }
+  // Event: Handles restock quantity input change.
   function onRestockQtyChange() {
     _refreshRestockPreview();
   }
+  // UI: Updates restock preview with calculated values.
   function _refreshRestockPreview() {
     const qty = parseFloat(document.getElementById("restock-qty")?.value) || 0;
     const itemId = parseInt(document.getElementById("restock-item").value);
@@ -221,6 +246,7 @@ const Logic = (() => {
       baseUnit: item.base_unit,
     });
   }
+  // Event: Executes restock and updates stock.
   function onDoRestock() {
     const qty = parseFloat(document.getElementById("restock-qty").value);
     const itemId = parseInt(document.getElementById("restock-item").value);
@@ -243,11 +269,13 @@ const Logic = (() => {
       "success",
     );
   }
+  // Event: Opens modal to add pricing rule.
   function onOpenAddPricing() {
     populatePricingItemSelect(ItemService.list());
     resetPricingForm();
     openModal("add-pricing-modal");
   }
+  // Event: Saves new pricing rule from form.
   function onSavePricing() {
     const form = readPricingForm();
     const result = PricingService.create(form);
@@ -259,15 +287,18 @@ const Logic = (() => {
     renderPricingTable(PricingService.list());
     toast("Price rule added", "success");
   }
+  // Event: Toggles pricing rule active status.
   function onTogglePricing(id) {
     PricingService.toggle(id);
     renderPricingTable(PricingService.list());
   }
+  // Event: Deletes pricing rule after confirmation.
   function onDeletePricing(id) {
     PricingService.remove(id);
     renderPricingTable(PricingService.list());
     toast("Price rule deleted");
   }
+  // UI: Renders dashboard with stats and recent data.
   function onShowDashboard() {
     renderDashboard(
       DashboardService.getStats(),
@@ -275,11 +306,13 @@ const Logic = (() => {
       DashboardService.getInventoryStatus(),
     );
   }
+  // Init: Starts application and loads initial data.
   function init() {
     seedDatabase();
     _attachGlobalListeners();
     _refreshItemGrid();
   }
+  // Init: Attaches global event listeners.
   function _attachGlobalListeners() {
     document.addEventListener("input", (e) => {
       if (e.target.id === "restock-qty") onRestockQtyChange();
