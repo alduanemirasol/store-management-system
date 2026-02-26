@@ -1,30 +1,3 @@
-/**
- * ui.js
- * ─────────────────────────────────────────────
- * Responsibility: All DOM reads and writes.
- * Pure rendering — no business logic.
- *
- * Sections:
- *   Toast           — transient notification display
- *   Modal           — open/close generic modals
- *   Navigation      — page switching
- *   POS UI          — item grid, cart, receipt
- *   Inventory UI    — table + item form
- *   Restock UI      — unit selector + history table
- *   Pricing UI      — pricing table + form
- *   Dashboard UI    — stats cards + tables
- * ─────────────────────────────────────────────
- */
-
-/* ═══════════════════════════════════════════════
-   TOAST
-═══════════════════════════════════════════════ */
-
-/**
- * Show a self-dismissing toast notification.
- * @param {string} msg
- * @param {'success'|'error'|''} [type]
- */
 function toast(msg, type = "") {
   const el = document.createElement("div");
   el.className = `toast ${type}`;
@@ -32,36 +5,12 @@ function toast(msg, type = "") {
   document.getElementById("toast-container").appendChild(el);
   setTimeout(() => el.remove(), 3000);
 }
-
-/* ═══════════════════════════════════════════════
-   MODAL
-═══════════════════════════════════════════════ */
-
-/**
- * Open a modal by its backdrop element id.
- * @param {string} id
- */
 function openModal(id) {
   document.getElementById(id).classList.add("open");
 }
-
-/**
- * Close a modal by its backdrop element id.
- * @param {string} id
- */
 function closeModal(id) {
   document.getElementById(id).classList.remove("open");
 }
-
-/* ═══════════════════════════════════════════════
-   NAVIGATION
-═══════════════════════════════════════════════ */
-
-/**
- * Switch to a named page and trigger its data refresh.
- * @param {string} pageId  — 'pos' | 'inventory' | 'restock' | 'pricing' | 'dashboard'
- * @param {Event}  event   — the nav button click event (to mark it active)
- */
 function showPage(pageId, event) {
   document
     .querySelectorAll(".page")
@@ -69,25 +18,10 @@ function showPage(pageId, event) {
   document
     .querySelectorAll("nav button")
     .forEach((b) => b.classList.remove("active"));
-
   document.getElementById("page-" + pageId).classList.add("active");
   if (event && event.target) event.target.classList.add("active");
-
-  // Trigger data refresh for the activated page
-  // Note: inventory, pricing, and dashboard require data from services —
-  // those are handled by Logic.showPage() after this function returns.
-  // Only restock is safe to call here as initRestockUI is a global from logic.js.
   if (pageId === "restock") initRestockUI();
 }
-
-/* ═══════════════════════════════════════════════
-   POS — ITEM GRID
-═══════════════════════════════════════════════ */
-
-/**
- * Render the product grid on the POS page.
- * @param {object[]} items  — filtered list of items to display
- */
 function renderItemGrid(items) {
   const grid = document.getElementById("item-grid");
   if (!items.length) {
@@ -108,18 +42,6 @@ function renderItemGrid(items) {
     )
     .join("");
 }
-
-/* ═══════════════════════════════════════════════
-   POS — SELL MODAL
-═══════════════════════════════════════════════ */
-
-/**
- * Build and inject the sell-modal body for a given item.
- * @param {object}   item
- * @param {object[]} units          — unit variants
- * @param {object[]} activePricing  — active custom price rules
- * @param {object}   selection      — current sellSelection state
- */
 function renderSellModalBody(item, units, activePricing, selection) {
   let html = `
     <div style="margin-bottom:16px;font-size:13px;color:var(--text2)">
@@ -129,16 +51,12 @@ function renderSellModalBody(item, units, activePricing, selection) {
       Sell By
     </div>
   `;
-
-  // Base unit option
   html += _unitOptionHTML(
     `By ${item.base_unit} (base)`,
     `${fmt(item.selling_price_per_unit)} / ${item.base_unit}`,
     selection.type === "base",
     `Logic.onSellTypeSelect('base', null, null, this)`,
   );
-
-  // Unit variant options
   units.forEach((u) => {
     const selected = selection.type === "unit" && selection.unitId === u.id;
     html += _unitOptionHTML(
@@ -148,8 +66,6 @@ function renderSellModalBody(item, units, activePricing, selection) {
       `Logic.onSellTypeSelect('unit', ${u.id}, null, this)`,
     );
   });
-
-  // Custom pricing options
   activePricing.forEach((p) => {
     const selected =
       selection.type === "pricing" && selection.pricingId === p.id;
@@ -160,8 +76,6 @@ function renderSellModalBody(item, units, activePricing, selection) {
       `Logic.onSellTypeSelect('pricing', null, ${p.id}, this)`,
     );
   });
-
-  // Quantity input
   html += `
     <div class="divider"></div>
     <div class="form-group">
@@ -170,8 +84,6 @@ function renderSellModalBody(item, units, activePricing, selection) {
              min="0.01" step="any" oninput="Logic.onSellQtyChange()">
     </div>
   `;
-
-  // Manual price override (only for items that allow it)
   if (item.allow_override) {
     html += `
       <div class="form-group">
@@ -181,16 +93,11 @@ function renderSellModalBody(item, units, activePricing, selection) {
       </div>
     `;
   }
-
-  // Live preview
   html += `<div id="sell-preview" style="border-radius:var(--radius-sm);padding:12px;font-size:13px;font-weight:600;"></div>`;
-
   document.getElementById("sell-modal-title").textContent =
     `Add ${item.item_name}`;
   document.getElementById("sell-modal-body").innerHTML = html;
 }
-
-/** @private Build a .unit-option div HTML string. */
 function _unitOptionHTML(name, detail, isSelected, onclickHandler) {
   return `
     <div class="unit-option${isSelected ? " selected" : ""}" onclick="${onclickHandler}">
@@ -199,17 +106,9 @@ function _unitOptionHTML(name, detail, isSelected, onclickHandler) {
     </div>
   `;
 }
-
-/**
- * Update the sell-modal preview box with live price feedback.
- * @param {object|null} result  — { label, total, baseUnits } or null on error
- * @param {boolean} insufficientStock
- * @param {string}  [stockMsg]
- */
 function updateSellPreview(result, insufficientStock, stockMsg) {
   const prev = document.getElementById("sell-preview");
   if (!prev) return;
-
   if (insufficientStock) {
     prev.style.background = "var(--red-soft)";
     prev.style.color = "var(--red)";
@@ -222,30 +121,14 @@ function updateSellPreview(result, insufficientStock, stockMsg) {
     prev.textContent = "";
   }
 }
-
-/**
- * Mark the correct .unit-option as selected in the sell modal.
- * @param {HTMLElement} clickedEl
- */
 function activateSellOption(clickedEl) {
   document.querySelectorAll("#sell-modal-body .unit-option").forEach((el) => {
     el.classList.remove("selected");
   });
   clickedEl.classList.add("selected");
 }
-
-/* ═══════════════════════════════════════════════
-   POS — CART
-═══════════════════════════════════════════════ */
-
-/**
- * Re-render the full cart sidebar.
- * @param {object[]} cartItems
- * @param {number}   total
- */
 function renderCart(cartItems, total) {
   const container = document.getElementById("cart-items");
-
   if (!cartItems.length) {
     container.innerHTML = '<div class="empty">No items yet</div>';
   } else {
@@ -266,16 +149,10 @@ function renderCart(cartItems, total) {
       )
       .join("");
   }
-
   document.getElementById("subtotal").textContent = fmt(total);
   document.getElementById("total").textContent = fmt(total);
   renderChangeDisplay(total);
 }
-
-/**
- * Update the change display based on tendered amount.
- * @param {number} total
- */
 function renderChangeDisplay(total) {
   const tendered = parseFloat(document.getElementById("tendered")?.value) || 0;
   const change = tendered - total;
@@ -284,15 +161,6 @@ function renderChangeDisplay(total) {
   el.textContent = fmt(Math.max(0, change));
   el.className = change < 0 ? "font-bold text-red" : "font-bold text-green";
 }
-
-/* ═══════════════════════════════════════════════
-   POS — RECEIPT
-═══════════════════════════════════════════════ */
-
-/**
- * Populate and open the receipt modal.
- * @param {object} txn  — completed transaction record
- */
 function showReceipt(txn) {
   const itemsHTML = txn.items
     .map(
@@ -307,7 +175,6 @@ function showReceipt(txn) {
   `,
     )
     .join("");
-
   document.getElementById("receipt-body").innerHTML = `
     <div style="text-align:center;margin-bottom:16px">
       <div style="font-size:24px">🧾</div>
@@ -326,15 +193,6 @@ function showReceipt(txn) {
   `;
   openModal("receipt-modal");
 }
-
-/* ═══════════════════════════════════════════════
-   INVENTORY UI
-═══════════════════════════════════════════════ */
-
-/**
- * Render the inventory table body.
- * @param {object[]} items  — optionally pre-filtered
- */
 function renderInventoryTable(items) {
   const tbody = document.getElementById("inventory-table");
   if (!items.length) {
@@ -342,7 +200,6 @@ function renderInventoryTable(items) {
       '<tr><td colspan="8" class="empty">No items found</td></tr>';
     return;
   }
-
   tbody.innerHTML = items
     .map((item) => {
       const units = getUnits(item.id);
@@ -371,12 +228,6 @@ function renderInventoryTable(items) {
     })
     .join("");
 }
-
-/**
- * Populate the Add/Edit item modal form fields.
- * @param {object|null} item   — null for a blank "add" form
- * @param {object[]}    units  — existing unit variants (for edit)
- */
 function populateItemForm(item, units = []) {
   const isEdit = !!item;
   document.getElementById("add-item-title").textContent = isEdit
@@ -396,17 +247,10 @@ function populateItemForm(item, units = []) {
   document.getElementById("ai-override").checked = isEdit
     ? item.allow_override || false
     : false;
-
-  // Rebuild unit variant rows
   const list = document.getElementById("unit-variants-list");
   list.innerHTML = "";
   units.forEach((u) => addUnitVariantRow(u));
 }
-
-/**
- * Append a unit-variant input row to the item form.
- * @param {object} [data]  — pre-fill values (for edit mode)
- */
 function addUnitVariantRow(data = {}) {
   const row = document.createElement("div");
   row.className = "grid-2";
@@ -440,11 +284,6 @@ function addUnitVariantRow(data = {}) {
   `;
   document.getElementById("unit-variants-list").appendChild(row);
 }
-
-/**
- * Read all unit variant rows from the item form.
- * @returns {object[]}  — array of unit field objects
- */
 function readUnitVariantRows() {
   const rows = [];
   document.querySelectorAll("#unit-variants-list .grid-2").forEach((row) => {
@@ -458,11 +297,6 @@ function readUnitVariantRows() {
   });
   return rows;
 }
-
-/**
- * Read item form values into a plain object.
- * @returns {object}
- */
 function readItemForm() {
   return {
     id: document.getElementById("edit-item-id").value,
@@ -478,15 +312,6 @@ function readItemForm() {
     units: readUnitVariantRows(),
   };
 }
-
-/* ═══════════════════════════════════════════════
-   RESTOCK UI
-═══════════════════════════════════════════════ */
-
-/**
- * Populate the item dropdown on the Restock page.
- * @param {object[]} items
- */
 function populateRestockItemSelect(items) {
   const sel = document.getElementById("restock-item");
   sel.innerHTML =
@@ -496,12 +321,6 @@ function populateRestockItemSelect(items) {
       .join("");
   document.getElementById("restock-unit-section").style.display = "none";
 }
-
-/**
- * Render the unit-selection options for restocking a chosen item.
- * @param {object}   item
- * @param {object[]} units
- */
 function renderRestockUnits(item, units) {
   let html = `
     <div class="unit-option selected" onclick="Logic.onRestockUnitSelect('base', null, this)">
@@ -522,22 +341,12 @@ function renderRestockUnits(item, units) {
   document.getElementById("restock-qty").value = "";
   document.getElementById("restock-preview").style.display = "none";
 }
-
-/**
- * Activate a restock unit-option visually.
- * @param {HTMLElement} el
- */
 function activateRestockOption(el) {
   document
     .querySelectorAll("#restock-units .unit-option")
     .forEach((e) => e.classList.remove("selected"));
   el.classList.add("selected");
 }
-
-/**
- * Update the restock cost/stock preview block.
- * @param {{ label: string, cost: number, newStock: number, baseUnit: string }|null} data
- */
 function updateRestockPreview(data) {
   const prev = document.getElementById("restock-preview");
   if (!data) {
@@ -549,11 +358,6 @@ function updateRestockPreview(data) {
     <strong>${fmtNum(data.newStock)} ${data.baseUnit}</strong><br>
     Estimated cost: <strong>${fmt(data.cost)}</strong>`;
 }
-
-/**
- * Render the restock history table.
- * @param {object[]} history
- */
 function renderRestockHistoryTable(history) {
   const tbody = document.getElementById("restock-history");
   if (!history.length) {
@@ -574,15 +378,6 @@ function renderRestockHistoryTable(history) {
     )
     .join("");
 }
-
-/* ═══════════════════════════════════════════════
-   PRICING UI
-═══════════════════════════════════════════════ */
-
-/**
- * Render the custom pricing rules table.
- * @param {object[]} rules
- */
 function renderPricingTable(rules) {
   const tbody = document.getElementById("pricing-table");
   if (!rules.length) {
@@ -617,21 +412,11 @@ function renderPricingTable(rules) {
     })
     .join("");
 }
-
-/**
- * Populate the item dropdown inside the Add Pricing modal.
- * @param {object[]} items
- */
 function populatePricingItemSelect(items) {
   document.getElementById("cp-item").innerHTML = items
     .map((i) => `<option value="${i.id}">${i.item_name}</option>`)
     .join("");
 }
-
-/**
- * Read the Add Pricing modal form values.
- * @returns {object}
- */
 function readPricingForm() {
   return {
     item_id: parseInt(document.getElementById("cp-item").value),
@@ -644,8 +429,6 @@ function readPricingForm() {
     end_date: document.getElementById("cp-end").value,
   };
 }
-
-/** Reset the Add Pricing form to blank defaults. */
 function resetPricingForm() {
   ["cp-title", "cp-qty", "cp-price", "cp-start", "cp-end", "cp-note"].forEach(
     (id) => {
@@ -654,27 +437,13 @@ function resetPricingForm() {
   );
   document.getElementById("cp-active").checked = true;
 }
-
-/* ═══════════════════════════════════════════════
-   DASHBOARD UI
-═══════════════════════════════════════════════ */
-
-/**
- * Render all dashboard sections.
- * @param {object}   stats            — from DashboardService.getStats()
- * @param {object[]} recentTxns       — from DashboardService.getRecentTransactions()
- * @param {object[]} inventoryStatus  — from DashboardService.getInventoryStatus()
- */
 function renderDashboard(stats, recentTxns, inventoryStatus) {
-  // Stat cards
   document.getElementById("d-sales").textContent = fmt(stats.todaySales);
   document.getElementById("d-transactions").textContent =
     `${stats.todayTransactions} transactions`;
   document.getElementById("d-items").textContent = stats.todayItems;
   document.getElementById("d-catalog").textContent = stats.catalogCount;
   document.getElementById("d-lowstock").textContent = stats.lowStockCount;
-
-  // Recent transactions table
   const txnTbody = document.getElementById("txn-table");
   if (!recentTxns.length) {
     txnTbody.innerHTML =
@@ -692,8 +461,6 @@ function renderDashboard(stats, recentTxns, inventoryStatus) {
       )
       .join("");
   }
-
-  // Inventory status table
   document.getElementById("stock-table").innerHTML = inventoryStatus
     .map(
       ({ item, status }) => `
