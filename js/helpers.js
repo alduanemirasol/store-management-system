@@ -11,7 +11,7 @@
  *   getItem(id)                 — db lookup: item by id
  *   getUnits(item_id)           — db lookup: all units for an item
  *   getActivePricing(item_id)   — db lookup: currently active price rules
- *   calcRestockBaseUnits(...)   — convert restock input → base units
+ *   calcRestockDetails(...)       — convert restock input → base units
  *   calcSellDetails(...)        — compute price/base-units for a cart entry
  * ─────────────────────────────────────────────
  */

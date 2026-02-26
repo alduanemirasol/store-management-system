@@ -74,10 +74,10 @@ function showPage(pageId, event) {
   if (event && event.target) event.target.classList.add("active");
 
   // Trigger data refresh for the activated page
-  if (pageId === "inventory") renderInventoryTable();
+  // Note: inventory, pricing, and dashboard require data from services —
+  // those are handled by Logic.showPage() after this function returns.
+  // Only restock is safe to call here as initRestockUI is a global from logic.js.
   if (pageId === "restock") initRestockUI();
-  if (pageId === "pricing") renderPricingTable();
-  if (pageId === "dashboard") renderDashboard();
 }
 
 /* ═══════════════════════════════════════════════
@@ -135,7 +135,7 @@ function renderSellModalBody(item, units, activePricing, selection) {
     `By ${item.base_unit} (base)`,
     `${fmt(item.selling_price_per_unit)} / ${item.base_unit}`,
     selection.type === "base",
-    `Logic.onSellTypeSelect('base', null, null)`,
+    `Logic.onSellTypeSelect('base', null, null, this)`,
   );
 
   // Unit variant options
@@ -145,7 +145,7 @@ function renderSellModalBody(item, units, activePricing, selection) {
       u.unit_name,
       `${fmt(u.selling_price)} · ${u.pack_quantity} ${item.base_unit}${u.note ? " · " + u.note : ""}`,
       selected,
-      `Logic.onSellTypeSelect('unit', ${u.id}, null)`,
+      `Logic.onSellTypeSelect('unit', ${u.id}, null, this)`,
     );
   });
 
@@ -157,7 +157,7 @@ function renderSellModalBody(item, units, activePricing, selection) {
       `🏷️ ${p.title}`,
       `${fmt(p.price)} for ${p.quantity} ${item.base_unit}${p.note ? " · " + p.note : ""}`,
       selected,
-      `Logic.onSellTypeSelect('pricing', null, ${p.id})`,
+      `Logic.onSellTypeSelect('pricing', null, ${p.id}, this)`,
     );
   });
 

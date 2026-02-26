@@ -103,11 +103,11 @@ const Logic = (() => {
    * @param {number|null} unitId
    * @param {number|null} pricingId
    */
-  function onSellTypeSelect(type, unitId, pricingId) {
+  function onSellTypeSelect(type, unitId, pricingId, el) {
     _sellSelection.type = type;
     _sellSelection.unitId = unitId;
     _sellSelection.pricingId = pricingId;
-    activateSellOption(event.currentTarget);
+    activateSellOption(el);
     _refreshSellPreview();
   }
 
@@ -494,6 +494,9 @@ const Logic = (() => {
     showPage: (pageId, event) => {
       showPage(pageId, event);
       if (pageId === "dashboard") onShowDashboard();
+      if (pageId === "inventory")
+        renderInventoryTable(ItemService.list("all", _inventorySearch));
+      if (pageId === "pricing") renderPricingTable(PricingService.list());
     },
 
     // POS
