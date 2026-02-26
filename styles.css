@@ -1,0 +1,884 @@
+/*
+ * styles.css
+ * ─────────────────────────────────────────────
+ * Responsibility: All visual styling.
+ *
+ * Sections:
+ *   1. CSS Custom Properties (Design Tokens)
+ *   2. Reset & Base
+ *   3. Layout (app shell, header, nav, main)
+ *   4. Utility Classes
+ *   5. Components
+ *      5a. Cards
+ *      5b. Buttons
+ *      5c. Form Elements
+ *      5d. Tables
+ *      5e. Badges
+ *      5f. Tags (category filter chips)
+ *      5g. Modals
+ *      5h. Toasts
+ *      5i. Tabs
+ *   6. Page-Specific
+ *      6a. POS — Item Grid & Item Cards
+ *      6b. POS — Cart Sidebar
+ *      6c. Restock — Unit Options
+ *      6d. Receipt
+ *      6e. Dashboard — Stat Cards
+ *   7. Responsive Overrides
+ * ─────────────────────────────────────────────
+ */
+
+/* ═══════════════════════════════════════════════
+   1. CSS CUSTOM PROPERTIES (Design Tokens)
+═══════════════════════════════════════════════ */
+:root {
+  /* Surfaces */
+  --bg: #f8f9fc;
+  --surface: #ffffff;
+  --surface2: #f1f3f8;
+  --border: #e4e7ef;
+
+  /* Text */
+  --text: #111827;
+  --text2: #6b7280;
+  --text3: #9ca3af;
+
+  /* Brand / Accent */
+  --accent: #2563eb;
+  --accent-soft: #eff6ff;
+
+  /* Semantic colors */
+  --green: #16a34a;
+  --green-soft: #f0fdf4;
+  --red: #dc2626;
+  --red-soft: #fef2f2;
+  --orange: #ea580c;
+  --orange-soft: #fff7ed;
+
+  /* Elevation */
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.07), 0 4px 16px rgba(0, 0, 0, 0.04);
+
+  /* Radii */
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+/* ═══════════════════════════════════════════════
+   2. RESET & BASE
+═══════════════════════════════════════════════ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Suppress number spinners */
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+  -webkit-appearance: none; /* Safari, Chrome */
+  appearance: none; /* Standard property */
+}
+input[type="number"]::-webkit-inner-spin-button {
+  display: none;
+}
+
+/* ═══════════════════════════════════════════════
+   3. LAYOUT
+═══════════════════════════════════════════════ */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+/* Nav */
+nav {
+  display: flex;
+  gap: 4px;
+}
+
+nav button {
+  padding: 6px 14px;
+  border: none;
+  background: none;
+  border-radius: var(--radius-sm);
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+nav button:hover {
+  background: var(--surface2);
+  color: var(--text);
+}
+nav button.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* Main */
+main {
+  flex: 1;
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Pages */
+.page {
+  display: none;
+}
+.page.active {
+  display: block;
+}
+
+/* ═══════════════════════════════════════════════
+   4. UTILITY CLASSES
+═══════════════════════════════════════════════ */
+.flex {
+  display: flex;
+}
+.flex-center {
+  display: flex;
+  align-items: center;
+}
+.gap-8 {
+  gap: 8px;
+}
+.gap-12 {
+  gap: 12px;
+}
+.ml-auto {
+  margin-left: auto;
+}
+.mb-16 {
+  margin-bottom: 16px;
+}
+.mt-8 {
+  margin-top: 8px;
+}
+.text-right {
+  text-align: right;
+}
+.font-bold {
+  font-weight: 700;
+}
+.text-green {
+  color: var(--green);
+}
+.text-red {
+  color: var(--red);
+}
+.text-sm {
+  font-size: 12px;
+}
+.text-muted {
+  color: var(--text2);
+}
+
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 16px 0;
+}
+
+/* Grid helpers */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+/* Section headings */
+.section-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+.section-sub {
+  color: var(--text2);
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+/* Empty state */
+.empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--text3);
+}
+
+/* ═══════════════════════════════════════════════
+   5. COMPONENTS
+═══════════════════════════════════════════════ */
+
+/* 5a. Cards ─────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.card-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.card-body {
+  padding: 20px 24px;
+}
+
+/* 5b. Buttons ───────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: #1d4ed8;
+}
+.btn-success {
+  background: var(--green);
+  color: #fff;
+}
+.btn-success:hover {
+  background: #15803d;
+}
+.btn-danger {
+  background: var(--red);
+  color: #fff;
+}
+.btn-danger:hover {
+  background: #b91c1c;
+}
+.btn-ghost {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover {
+  background: var(--border);
+}
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 12px;
+}
+.btn-icon {
+  padding: 7px;
+  width: 32px;
+  height: 32px;
+  justify-content: center;
+}
+
+/* 5c. Form Elements ─────────────────────────── */
+.form-group {
+  margin-bottom: 16px;
+}
+
+label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--surface);
+  transition: border-color 0.15s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Search bar */
+.search-bar {
+  position: relative;
+}
+.search-bar input {
+  padding-left: 36px;
+}
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text3);
+  font-size: 16px;
+}
+
+/* 5d. Tables ────────────────────────────────── */
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+
+th:first-child {
+  border-radius: 8px 0 0 0;
+}
+th:last-child {
+  border-radius: 0 8px 0 0;
+}
+
+td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+tr:hover td {
+  background: var(--surface2);
+}
+
+/* 5e. Badges ────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-blue {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.badge-green {
+  background: var(--green-soft);
+  color: var(--green);
+}
+.badge-red {
+  background: var(--red-soft);
+  color: var(--red);
+}
+.badge-orange {
+  background: var(--orange-soft);
+  color: var(--orange);
+}
+
+/* 5f. Tags (category filter chips) ─────────── */
+.tag {
+  display: inline-block;
+  background: var(--accent-soft);
+  color: var(--accent);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  margin: 2px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.tag.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* 5g. Modals ────────────────────────────────── */
+.modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-backdrop.open {
+  display: flex;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius);
+  width: 90%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text2);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.modal-close:hover {
+  background: var(--surface2);
+}
+.modal-body {
+  padding: 20px 24px;
+}
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* 5h. Toasts ────────────────────────────────── */
+#toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  background: var(--text);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  animation: toastIn 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toast.success {
+  background: var(--green);
+}
+.toast.error {
+  background: var(--red);
+}
+
+@keyframes toastIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* 5i. Tabs ──────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface2);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 20px;
+}
+
+.tab {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tab.active {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ═══════════════════════════════════════════════
+   6. PAGE-SPECIFIC
+═══════════════════════════════════════════════ */
+
+/* 6a. POS — Layout ──────────────────────────── */
+.pos-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 20px;
+  min-height: calc(100vh - 108px);
+}
+
+.pos-left {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pos-right {
+  position: sticky;
+  top: 80px;
+  height: fit-content;
+}
+
+/* 6a. POS — Item Grid ───────────────────────── */
+.item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+.item-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.item-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+}
+
+.item-card .item-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+.item-card .item-name {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.item-card .item-price {
+  font-size: 12px;
+  color: var(--text2);
+}
+.item-card .item-stock {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 4px;
+}
+
+/* 6b. POS — Cart Sidebar ────────────────────── */
+.cart-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.cart-item:last-child {
+  border-bottom: none;
+}
+
+.cart-item-info {
+  flex: 1;
+  min-width: 0;
+}
+.cart-item-name {
+  font-weight: 600;
+  font-size: 13px;
+}
+.cart-item-detail {
+  font-size: 11px;
+  color: var(--text2);
+  margin-top: 2px;
+}
+.cart-item-price {
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.qty-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.qty-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+}
+
+.qty-btn:hover {
+  background: var(--border);
+}
+.qty-val {
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 28px;
+  text-align: center;
+}
+
+/* Cart Totals */
+.cart-totals {
+  padding: 16px;
+  border-top: 2px solid var(--border);
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.total-row.grand {
+  font-size: 18px;
+  font-weight: 800;
+  border-top: 2px solid var(--border);
+  padding-top: 12px;
+  margin-top: 4px;
+}
+
+/* 6c. Restock / Sell — Unit Options ─────────── */
+.unit-option {
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 8px;
+}
+
+.unit-option:hover,
+.unit-option.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.unit-option .unit-name {
+  font-weight: 700;
+  font-size: 14px;
+}
+.unit-option .unit-detail {
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 2px;
+}
+
+/* 6d. Receipt ───────────────────────────────── */
+.receipt-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 13px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.receipt-item:last-child {
+  border-bottom: none;
+}
+
+/* 6e. Dashboard — Stat Cards ────────────────── */
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.stat-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--text);
+}
+
+.stat-sub {
+  font-size: 12px;
+  color: var(--text3);
+  margin-top: 4px;
+}
+
+/* ═══════════════════════════════════════════════
+   7. RESPONSIVE OVERRIDES
+═══════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .pos-layout {
+    grid-template-columns: 1fr;
+  }
+  .pos-right {
+    position: static;
+  }
+  .grid-4 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
