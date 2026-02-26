@@ -171,6 +171,11 @@ main {
   grid-template-columns: 1fr 1fr 1fr;
   gap: 16px;
 }
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
 /* Section: Page titles */
 .section-title {
   font-size: 22px;
@@ -724,6 +729,9 @@ tr:hover td {
 @media (max-width: 900px) {
   .pos-layout {
     grid-template-columns: 1fr;
+  }
+  .grid-4 {
+    grid-template-columns: 1fr 1fr;
   }
   .pos-right {
     position: static;
