@@ -1116,7 +1116,178 @@
             font-weight: 600;
         }
 
-        /* Base unit custom input reveal animation */
+        /* Manual Price Toggle */
+        .manual-price-toggle {
+            border: 1.5px solid var(--border2);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 14px;
+            transition: border-color 0.15s;
+        }
+
+        .manual-price-toggle.active {
+            border-color: var(--orange);
+            background: var(--orange-light);
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .toggle-row:hover {
+            background: var(--surface2);
+        }
+
+        .manual-price-toggle.active .toggle-row:hover {
+            background: rgba(234, 88, 12, 0.08);
+        }
+
+        .toggle-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .toggle-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            flex-shrink: 0;
+        }
+
+        .toggle-hint {
+            font-size: 11.5px;
+            color: var(--text3);
+            flex: 1;
+        }
+
+        .manual-price-toggle.active .toggle-hint {
+            color: var(--orange);
+        }
+
+        /* Hide real checkbox, use custom switch */
+        .toggle-row input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-switch {
+            width: 36px;
+            height: 20px;
+            background: var(--border2);
+            border-radius: 20px;
+            position: relative;
+            flex-shrink: 0;
+            transition: background 0.2s;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: #fff;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: transform 0.2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-row input:checked~.toggle-switch {
+            background: var(--orange);
+        }
+
+        .toggle-row input:checked~.toggle-switch::after {
+            transform: translateX(16px);
+        }
+
+        .manual-price-fields {
+            padding: 0 14px 14px;
+        }
+
+        .manual-price-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        /* Cart line manual price indicator */
+        .manual-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 10px;
+            font-weight: 600;
+            background: var(--orange-light);
+            color: var(--orange);
+            padding: 1px 6px;
+            border-radius: 10px;
+            vertical-align: middle;
+            margin-left: 4px;
+        }
+
+        /* Inline price edit button on cart lines */
+        .cart-inline-price-btn {
+            background: none;
+            border: 1.5px solid var(--border2);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 2px 6px;
+            color: var(--text3);
+            transition: all 0.12s;
+            line-height: 1.4;
+        }
+
+        .cart-inline-price-btn:hover {
+            border-color: var(--orange);
+            color: var(--orange);
+            background: var(--orange-light);
+        }
+
+        .cart-inline-price-btn.active {
+            border-color: var(--orange);
+            color: var(--orange);
+            background: var(--orange-light);
+        }
+
+        /* Inline price input row inside cart item */
+        .inline-price-form {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            background: var(--orange-light);
+            border-radius: var(--radius);
+            padding: 8px 10px;
+        }
+
+        .inline-price-form input {
+            flex: 1;
+            padding: 5px 8px;
+            font-size: 12.5px;
+            border: 1.5px solid var(--orange);
+            border-radius: 6px;
+            background: #fff;
+        }
+
+        .inline-price-form .btn {
+            padding: 4px 10px;
+            font-size: 12px;
+        }
+
+        .inline-price-note {
+            font-size: 10.5px;
+            color: var(--orange);
+            margin-top: 3px;
+        }
+
         #item-base-unit-custom {
             transition: all 0.15s;
         }
@@ -1481,23 +1652,43 @@
                     <div class="unit-options" id="cart-unit-options"></div>
                 </div>
                 <div class="form-group" id="cart-qty-group">
-                    <label>Quantity</label>
+                    <label id="cart-qty-label">Quantity</label>
                     <input type="number" id="cart-qty" step="any" min="0.01" placeholder="Enter quantity"
                         oninput="updateCartPreview()">
                 </div>
-                <div id="custom-price-override" style="display:none;">
-                    <div class="form-group">
-                        <label>Price Override (PHP)</label>
-                        <input type="number" id="cart-manual-price" step="0.01" min="0" placeholder="Manual price"
-                            oninput="updateCartPreview()">
+
+                <!-- Manual Price Toggle -->
+                <div class="manual-price-toggle" id="manual-price-section">
+                    <label class="toggle-row" for="cart-manual-check">
+                        <span class="toggle-icon">✏️</span>
+                        <span class="toggle-label">Manual Price</span>
+                        <span class="toggle-hint" id="manual-hint">Use a custom price instead of the normal rate</span>
+                        <input type="checkbox" id="cart-manual-check" onchange="onManualPriceToggle()">
+                        <span class="toggle-switch"></span>
+                    </label>
+                    <div id="manual-price-fields" style="display:none;">
+                        <div class="manual-price-row">
+                            <div class="form-group" style="margin:0;flex:1;">
+                                <label>Price per <span id="manual-per-unit">unit</span></label>
+                                <div style="position:relative;">
+                                    <span
+                                        style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none;">₱</span>
+                                    <input type="number" id="cart-manual-price" step="0.01" min="0" placeholder="0.00"
+                                        style="padding-left:26px;" oninput="updateCartPreview()">
+                                </div>
+                            </div>
+                            <div class="manual-price-vs" id="normal-price-ref"></div>
+                        </div>
+                        <p class="helper" style="margin-top:6px;">Normal price: <strong
+                                id="normal-price-display">—</strong></p>
                     </div>
                 </div>
+
                 <div class="price-preview" id="cart-price-preview">
                     <span class="price-preview-label" id="preview-label">Total</span>
                     <span class="price-preview-value" id="preview-value">₱0.00</span>
                 </div>
-                <div id="stock-warning" style="display:none;" class="restock-info"
-                    style="background:var(--orange-light);color:var(--orange);"></div>
+                <div id="stock-warning" style="display:none;" class="restock-info"></div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('modal-add-cart')">Cancel</button>
@@ -1776,6 +1967,9 @@
             cartModalUnit = defUnit;
             document.getElementById('cart-qty').value = '1';
             document.getElementById('cart-manual-price').value = '';
+            document.getElementById('cart-manual-check').checked = false;
+            document.getElementById('manual-price-fields').style.display = 'none';
+            document.getElementById('manual-price-section').classList.remove('active');
             document.getElementById('stock-warning').style.display = 'none';
 
             updateCartUnitUI();
@@ -1794,11 +1988,9 @@
 
         function updateCartUnitUI() {
             const isCustom = cartModalUnit && cartModalUnit.startsWith('custom-');
-            const overrideEl = document.getElementById('custom-price-override');
-            overrideEl.style.display = 'none'; // show override only on manual
 
-            // For custom pricing: qty group is quantity multiplier
-            const qtyLabel = document.querySelector('#cart-qty-group label');
+            // Update quantity label
+            const qtyLabel = document.getElementById('cart-qty-label');
             if (isCustom) {
                 const cpId = parseInt(cartModalUnit.split('-')[1]);
                 const cp = db.custom_pricing.find(c => c.id === cpId);
@@ -1808,19 +2000,66 @@
             } else {
                 qtyLabel.textContent = 'Quantity';
             }
+
+            // Update the "per unit" label in manual price field
+            const unitLabel = getUnitLabel(cartModalItem, cartModalUnit);
+            document.getElementById('manual-per-unit').textContent = unitLabel;
+
+            // Reset manual toggle whenever unit changes
+            document.getElementById('cart-manual-check').checked = false;
+            document.getElementById('manual-price-fields').style.display = 'none';
+            document.getElementById('manual-price-section').classList.remove('active');
+            document.getElementById('cart-manual-price').value = '';
+        }
+
+        function onManualPriceToggle() {
+            const checked = document.getElementById('cart-manual-check').checked;
+            const fieldsEl = document.getElementById('manual-price-fields');
+            const sectionEl = document.getElementById('manual-price-section');
+
+            fieldsEl.style.display = checked ? 'block' : 'none';
+            sectionEl.classList.toggle('active', checked);
+
+            if (checked) {
+                document.getElementById('cart-manual-price').focus();
+            } else {
+                document.getElementById('cart-manual-price').value = '';
+            }
+            updateCartPreview();
         }
 
         function updateCartPreview() {
             if (!cartModalItem) return;
             const qty = parseFloat(document.getElementById('cart-qty').value) || 0;
-            const { price, label } = calcPrice(cartModalItem, cartModalUnit, qty);
+            const isManual = document.getElementById('cart-manual-check').checked;
+            const manualPricePerUnit = parseFloat(document.getElementById('cart-manual-price').value);
+
+            let price, label;
+
+            if (isManual && !isNaN(manualPricePerUnit) && manualPricePerUnit >= 0) {
+                // Manual: price = manual price per unit × qty
+                price = manualPricePerUnit * qty;
+                const unitLabel = getUnitLabel(cartModalItem, cartModalUnit);
+                label = `${qty} ${unitLabel} × ₱${manualPricePerUnit.toFixed(2)} (manual)`;
+            } else {
+                const result = calcPrice(cartModalItem, cartModalUnit, qty);
+                price = result.price;
+                label = result.label;
+            }
+
+            // Show the normal price as reference when manual is on
+            if (isManual) {
+                const { price: normalPrice } = calcPrice(cartModalItem, cartModalUnit, qty);
+                document.getElementById('normal-price-display').textContent = `₱${normalPrice.toFixed(2)}`;
+            }
+
             document.getElementById('preview-label').textContent = label;
             document.getElementById('preview-value').textContent = '₱' + price.toFixed(2);
 
             // Stock check
             const baseQty = toBaseUnits(cartModalItem, cartModalUnit, qty);
             const warn = document.getElementById('stock-warning');
-            if (baseQty > cartModalItem.stock_quantity) {
+            if (qty > 0 && baseQty > cartModalItem.stock_quantity) {
                 warn.style.display = 'block';
                 warn.style.background = 'var(--orange-light)';
                 warn.style.color = 'var(--orange)';
@@ -1882,12 +2121,25 @@
         function addToCart() {
             const qty = parseFloat(document.getElementById('cart-qty').value) || 0;
             if (qty <= 0) { toast('Enter a valid quantity', 'error'); return; }
+
             const item = cartModalItem;
             const unitId = cartModalUnit;
             const baseQty = toBaseUnits(item, unitId, qty);
             if (baseQty > item.stock_quantity) { toast('Not enough stock!', 'error'); return; }
 
-            const { price, label } = calcPrice(item, unitId, qty);
+            const isManual = document.getElementById('cart-manual-check').checked;
+            const manualPricePerUnit = parseFloat(document.getElementById('cart-manual-price').value);
+
+            let price, label;
+            if (isManual && !isNaN(manualPricePerUnit) && manualPricePerUnit >= 0) {
+                price = manualPricePerUnit * qty;
+                const unitLabel = getUnitLabel(item, unitId);
+                label = `${qty} ${unitLabel} × ₱${manualPricePerUnit.toFixed(2)} (manual)`;
+            } else {
+                const result = calcPrice(item, unitId, qty);
+                price = result.price;
+                label = result.label;
+            }
 
             // base_qty_per_unit: how many base units is 1 qty of this selling unit
             const base_qty_per_unit = qty > 0 ? baseQty / qty : 0;
@@ -1903,7 +2155,9 @@
                 unit_label: getUnitLabel(item, unitId),
                 price: price,
                 detail: label,
-                emoji: item.emoji || '📦'
+                emoji: item.emoji || '📦',
+                is_manual: isManual && !isNaN(manualPricePerUnit),
+                manual_price_per_unit: (isManual && !isNaN(manualPricePerUnit)) ? manualPricePerUnit : null,
             });
 
             closeModal('modal-add-cart');
@@ -1925,18 +2179,20 @@
 
             el.innerHTML = cart.map(ci => {
                 const item = db.items.find(i => i.id === ci.item_id);
-                // Max qty this line can go up to (based on available stock, not counting other cart lines for same item)
                 const otherCartBase = cart.filter(x => x.cartId !== ci.cartId && x.item_id === ci.item_id).reduce((s, x) => s + x.base_qty, 0);
                 const availableBase = item ? (item.stock_quantity - otherCartBase) : 0;
-                const maxQty = ci.base_qty_per_unit > 0 ? Math.floor(availableBase / ci.base_qty_per_unit) : availableBase;
                 const overStock = ci.base_qty > (item ? item.stock_quantity : 0);
+
+                const manualBadge = ci.is_manual
+                    ? `<span class="manual-badge">✏️ manual</span>`
+                    : '';
 
                 return `
     <div class="cart-item" data-cart-id="${ci.cartId}">
       <span style="font-size:20px;flex-shrink:0;">${ci.emoji}</span>
       <div class="cart-item-info" style="flex:1;min-width:0;">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;">
-          <div class="cart-item-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ci.item_name}</div>
+          <div class="cart-item-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ci.item_name}${manualBadge}</div>
           <button class="cart-item-remove" onclick="removeFromCart('${ci.cartId}')" title="Remove item">🗑</button>
         </div>
         <div class="cart-item-detail">${ci.unit_label}${ci.unit_id && ci.unit_id.startsWith('custom-') ? ' 🏷️' : ''}</div>
@@ -1952,9 +2208,15 @@
             <button class="qty-btn" onclick="changeCartQty('${ci.cartId}', 1)">+</button>
             <span class="qty-unit-label">${ci.unit_label}</span>
           </div>
-          <div class="cart-item-price" style="${overStock ? 'color:var(--red)' : ''}">₱${ci.price.toFixed(2)}</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button class="cart-inline-price-btn ${ci.is_manual ? 'active' : ''}"
+              onclick="openInlineManualPrice('${ci.cartId}')"
+              title="${ci.is_manual ? `Manual: ₱${ci.manual_price_per_unit.toFixed(2)} per ${ci.unit_label} — click to edit` : 'Set manual price'}">✏️</button>
+            <div class="cart-item-price" style="${overStock ? 'color:var(--red)' : ci.is_manual ? 'color:var(--orange)' : ''}">₱${ci.price.toFixed(2)}</div>
+          </div>
         </div>
         ${overStock ? `<div style="font-size:11px;color:var(--red);margin-top:3px;">⚠️ Exceeds available stock</div>` : ''}
+        ${ci.is_manual ? `<div id="inline-price-row-${ci.cartId}" style="display:none;margin-top:8px;"></div>` : `<div id="inline-price-row-${ci.cartId}" style="display:none;margin-top:8px;"></div>`}
       </div>
     </div>`;
             }).join('');
@@ -1998,14 +2260,82 @@
             if (!item) return;
             ci.qty = newQty;
             ci.base_qty = toBaseUnits(item, ci.unit_id, newQty);
-            const { price, label } = calcPrice(item, ci.unit_id, newQty);
-            ci.price = price;
-            ci.detail = label;
+
+            if (ci.is_manual && ci.manual_price_per_unit !== null) {
+                ci.price = ci.manual_price_per_unit * newQty;
+                ci.detail = `${newQty} ${ci.unit_label} × ₱${ci.manual_price_per_unit.toFixed(2)} (manual)`;
+            } else {
+                const { price, label } = calcPrice(item, ci.unit_id, newQty);
+                ci.price = price;
+                ci.detail = label;
+            }
         }
 
         function removeFromCart(cartId) {
             cart = cart.filter(i => i.cartId != cartId);
             renderCart();
+        }
+
+        /** Toggle the inline price editor on a cart line */
+        function openInlineManualPrice(cartId) {
+            const ci = cart.find(i => i.cartId == cartId);
+            if (!ci) return;
+
+            const rowEl = document.getElementById(`inline-price-row-${cartId}`);
+            if (!rowEl) return;
+
+            // If already open, close it
+            if (rowEl.style.display === 'block') {
+                rowEl.style.display = 'none';
+                return;
+            }
+
+            const item = db.items.find(i => i.id === ci.item_id);
+            const normalResult = calcPrice(item, ci.unit_id, 1);
+            const normalPerUnit = normalResult.price;
+            const currentVal = ci.is_manual ? ci.manual_price_per_unit : '';
+
+            rowEl.style.display = 'block';
+            rowEl.innerHTML = `
+    <div class="inline-price-form">
+      <span style="font-size:12px;color:var(--orange);font-weight:600;white-space:nowrap;">₱ per ${ci.unit_label}</span>
+      <input type="number" id="inline-price-input-${cartId}" step="0.01" min="0"
+        value="${currentVal}" placeholder="${normalPerUnit.toFixed(2)}"
+        onkeydown="if(event.key==='Enter') applyInlineManualPrice('${cartId}')">
+      <button class="btn btn-sm btn-success" onclick="applyInlineManualPrice('${cartId}')">Apply</button>
+      ${ci.is_manual ? `<button class="btn btn-sm btn-secondary" onclick="clearInlineManualPrice('${cartId}')">Clear</button>` : ''}
+    </div>
+    <div class="inline-price-note">Normal price: ₱${normalPerUnit.toFixed(2)} per ${ci.unit_label}</div>
+  `;
+            document.getElementById(`inline-price-input-${cartId}`).focus();
+        }
+
+        function applyInlineManualPrice(cartId) {
+            const ci = cart.find(i => i.cartId == cartId);
+            if (!ci) return;
+            const inputEl = document.getElementById(`inline-price-input-${cartId}`);
+            const val = parseFloat(inputEl.value);
+            if (isNaN(val) || val < 0) { toast('Enter a valid price', 'error'); return; }
+
+            ci.is_manual = true;
+            ci.manual_price_per_unit = val;
+            ci.price = val * ci.qty;
+            ci.detail = `${ci.qty} ${ci.unit_label} × ₱${val.toFixed(2)} (manual)`;
+            renderCart();
+            toast('Manual price applied', 'success');
+        }
+
+        function clearInlineManualPrice(cartId) {
+            const ci = cart.find(i => i.cartId == cartId);
+            if (!ci) return;
+            const item = db.items.find(i => i.id === ci.item_id);
+            ci.is_manual = false;
+            ci.manual_price_per_unit = null;
+            const { price, label } = calcPrice(item, ci.unit_id, ci.qty);
+            ci.price = price;
+            ci.detail = label;
+            renderCart();
+            toast('Manual price removed', 'info');
         }
 
         function clearCart() {
