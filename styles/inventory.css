@@ -1,0 +1,188 @@
+/* ===================== INVENTORY ===================== */
+.inv-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.inv-controls input {
+  flex: 1;
+}
+
+/* ===================== RESTOCK ===================== */
+.restock-info {
+  background: var(--green-light);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--green);
+  font-weight: 500;
+}
+
+/* ===================== CUSTOM PRICING ===================== */
+.cp-item {
+  background: var(--surface2);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cp-info h4 {
+  font-size: 13px;
+  font-weight: 600;
+}
+.cp-info p {
+  font-size: 12px;
+  color: var(--text3);
+}
+.cp-price {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--green);
+}
+.cp-dates {
+  font-size: 11px;
+  color: var(--text3);
+}
+
+/* ===================== TRANSACTIONS ===================== */
+.txn-meta {
+  font-size: 11px;
+  color: var(--text3);
+}
+.txn-items-detail {
+  font-size: 12px;
+  color: var(--text2);
+}
+
+/* ===================== BASE UNIT CUSTOM INPUT ===================== */
+#item-base-unit-custom {
+  transition: all 0.15s;
+}
+#item-base-unit-select option[value="__custom__"] {
+  color: var(--accent);
+  font-style: italic;
+}
+
+/* ===================== LOW STOCK ALERT BANNER ===================== */
+.low-stock-banner {
+  background: var(--orange-light);
+  border-bottom: 1px solid #f97316;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  animation: slideDown 0.25s ease;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.low-stock-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.low-stock-banner-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--orange);
+  white-space: nowrap;
+}
+
+.low-stock-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.low-stock-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  border: 1.5px solid var(--orange);
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--orange);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.low-stock-chip:hover {
+  background: var(--orange);
+  color: #fff;
+}
+.low-stock-chip.out {
+  border-color: var(--red);
+  color: var(--red);
+}
+.low-stock-chip.out:hover {
+  background: var(--red);
+  color: #fff;
+}
+
+.low-stock-dismiss {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--orange);
+  font-size: 16px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+.low-stock-dismiss:hover {
+  background: rgba(234, 88, 12, 0.15);
+}
+
+/* ===================== INVENTORY LOW-STOCK PANEL ===================== */
+.low-stock-panel {
+  background: var(--orange-light);
+  border: 1.5px solid var(--orange);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+
+.low-stock-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.low-stock-panel-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--orange);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.low-stock-table td,
+.low-stock-table th {
+  background: transparent !important;
+}

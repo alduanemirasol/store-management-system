@@ -2,479 +2,557 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Market POS</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-        rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopEase POS & Inventory</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/pos.css">
+    <link rel="stylesheet" href="styles/inventory.css">
 </head>
 
 <body>
 
-    <!-- RootApplication: Main application container wrapper. -->
     <div class="app">
-
-
-        <!-- SidebarNavigation: Left sidebar with logo and menu. -->
-        <header>
-            <div class="sidebar-logo-area">
-                <div class="logo">
-                    <div class="logo-emblem">🛒</div>
-                    <div class="logo-text">
-                        <div class="logo-name">Market POS</div>
-                        <div class="logo-tagline">Sales &amp; Inventory</div>
-                    </div>
-                </div>
+        <!-- ===================== SIDEBAR ===================== -->
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <h1>🛒 ShopEase</h1>
+                <span>POS & Inventory</span>
             </div>
-            <nav>
-                <div class="nav-section-label">Sales</div>
-                <button class="active" onclick="Logic.showPage('pos', event)">🛒 Point of Sale</button>
-                <div class="nav-section-label">Stock</div>
-                <button onclick="Logic.showPage('inventory', event)">📦 Inventory</button>
-                <button onclick="Logic.showPage('restock', event)">🔄 Restock</button>
-                <div class="nav-section-label">Settings</div>
-                <button onclick="Logic.showPage('pricing', event)">🏷️ Pricing</button>
-                <div class="nav-section-label">Reports</div>
-                <button onclick="Logic.showPage('dashboard', event)">📊 Dashboard</button>
+            <nav class="nav">
+                <div class="nav-item active" onclick="showPage('pos')">
+                    <span class="icon">🏪</span> Point of Sale
+                </div>
+                <div class="nav-item" onclick="showPage('inventory')">
+                    <span class="icon">📦</span> Inventory
+                    <span class="nav-badge" id="nav-low-stock-badge" style="display:none;"></span>
+                </div>
+                <div class="nav-item" onclick="showPage('restock')">
+                    <span class="icon">🔄</span> Restock
+                </div>
+                <div class="nav-item" onclick="showPage('pricing')">
+                    <span class="icon">🏷️</span> Custom Pricing
+                </div>
+                <div class="nav-item" onclick="showPage('categories')">
+                    <span class="icon">🗂️</span> Categories
+                </div>
+                <div class="nav-item" onclick="showPage('transactions')">
+                    <span class="icon">📋</span> Transactions
+                </div>
+                <div class="nav-item" onclick="showPage('recentsales')">
+                    <span class="icon">🕒</span> Recent Sales
+                </div>
+                <div class="nav-item" onclick="showPage('stocklogs')">
+                    <span class="icon">📝</span> Stock Logs
+                </div>
             </nav>
-            <div class="sidebar-footer">Market POS v1.0</div>
-        </header>
+        </div>
 
+        <!-- ===================== MAIN CONTENT ===================== -->
+        <div class="main">
 
-        <!-- MainContent: Primary content area for pages. -->
-        <div class="main-content">
-            <main>
-
-
-                <!-- PagePOS: Point of sale page with products and cart. -->
-                <div class="page active" id="page-pos">
-                    <div class="pos-layout">
-
-                        <div class="pos-left">
-                            <div class="card">
-                                <div class="card-header">
-                                    <div class="card-title">Products</div>
-                                    <div class="search-bar" style="width:210px">
-                                        <span class="search-icon">🔍</span>
-                                        <input type="text" id="item-search" placeholder="Search products…"
-                                            oninput="Logic.onPosSearch(this.value)">
-                                    </div>
-                                </div>
-                                <div class="filter-bar">
-                                    <span class="tag active" data-cat="all"
-                                        onclick="Logic.onCategoryFilter('all', this)">All</span>
-                                    <span class="tag" data-cat="Grains"
-                                        onclick="Logic.onCategoryFilter('Grains', this)">🌾 Grains</span>
-                                    <span class="tag" data-cat="Dairy & Eggs"
-                                        onclick="Logic.onCategoryFilter('Dairy &amp; Eggs', this)">🥚 Dairy &amp;
-                                        Eggs</span>
-                                    <span class="tag" data-cat="Cooking"
-                                        onclick="Logic.onCategoryFilter('Cooking', this)">🫙 Cooking</span>
-                                    <span class="tag" data-cat="Snacks"
-                                        onclick="Logic.onCategoryFilter('Snacks', this)">🍬 Snacks</span>
-                                    <span class="tag" data-cat="Vegetables"
-                                        onclick="Logic.onCategoryFilter('Vegetables', this)">🥬 Vegetables</span>
-                                </div>
-                                <div class="item-grid" id="item-grid"></div>
-                            </div>
-                        </div>
-
-                        <div class="pos-right">
-                            <div class="card">
-                                <div class="card-header">
-                                    <div class="card-title">Current Order</div>
-                                    <button class="btn btn-ghost btn-sm" onclick="Logic.onClearCart()">✕ Clear</button>
-                                </div>
-
-                                <div id="cart-items"
-                                    style="padding: 0 20px; flex: 1; overflow-y: auto; min-height: 120px; max-height: 320px;">
-                                    <div class="empty">No items in order</div>
-                                </div>
-
-                                <div class="cart-totals">
-                                    <div class="total-row"><span>Subtotal</span><span id="subtotal">₱0.00</span></div>
-                                    <div class="total-row"><span>Tax (0%)</span><span>₱0.00</span></div>
-                                    <div class="total-row grand"><span>Total</span><span id="total">₱0.00</span></div>
-                                </div>
-
-                                <div class="checkout-area">
-                                    <div class="form-group" style="margin-bottom: 10px">
-                                        <label>Amount Tendered</label>
-                                        <input type="number" id="tendered" placeholder="₱0.00" min="0" step="0.01"
-                                            oninput="Logic.onTenderedChange()">
-                                    </div>
-                                    <div class="change-box total-row mb-16">
-                                        <span class="font-bold" style="color: var(--text2)">Change</span>
-                                        <span class="font-bold text-green" id="change-amt">₱0.00</span>
-                                    </div>
-                                    <button class="btn btn-success"
-                                        style="width:100%; justify-content:center; font-size:15px; padding: 12px;"
-                                        onclick="Logic.onCheckout()">✓ Complete Sale</button>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
+            <!-- Low Stock Alert Banner -->
+            <div id="low-stock-banner" style="display:none;" class="low-stock-banner">
+                <div class="low-stock-banner-left">
+                    <span class="low-stock-banner-title">⚠️ Low Stock Alert</span>
+                    <div class="low-stock-chips" id="low-stock-chips"></div>
                 </div>
+                <button class="low-stock-dismiss" onclick="dismissLowStockBanner()" title="Dismiss">✕</button>
+            </div>
 
-
-                <!-- PageInventory: Inventory management table page. -->
-                <div class="page" id="page-inventory">
-                    <div class="page-header-row">
-                        <div>
-                            <div class="section-title">Inventory</div>
-                            <div class="section-sub" style="margin-bottom:0">Manage your product catalog and stock
-                                levels</div>
-                        </div>
-                        <div class="flex gap-8">
-                            <div class="search-bar" style="width:240px">
+            <!-- ===================== POS PAGE ===================== -->
+            <div id="page-pos" class="page active" style="padding:0;">
+                <div class="pos-layout">
+                    <!-- Items panel -->
+                    <div class="pos-items" style="background:var(--bg);">
+                        <div class="pos-search">
+                            <div class="search-box">
                                 <span class="search-icon">🔍</span>
-                                <input type="text" placeholder="Search inventory…"
-                                    oninput="Logic.onInventorySearch(this.value)">
+                                <input type="text" id="pos-search" placeholder="Search items..."
+                                    oninput="renderPOSItems()">
                             </div>
-                            <button class="btn btn-primary" onclick="Logic.onAddItem()">＋ Add Item</button>
+                        </div>
+                        <div class="pos-categories" id="pos-categories"></div>
+                        <div class="pos-grid" id="pos-grid"></div>
+                    </div>
+                    <!-- Cart panel -->
+                    <div class="pos-cart">
+                        <div class="cart-header">
+                            <h3>Current Order</h3>
+                            <div class="cart-count" id="cart-count">0 items</div>
+                        </div>
+                        <div class="cart-items" id="cart-items">
+                            <div class="cart-empty">
+                                <div class="cart-empty-icon">🛒</div>
+                                <div>No items yet.<br>Click an item to add.</div>
+                            </div>
+                        </div>
+                        <div class="cart-footer">
+                            <div class="cart-total">
+                                <span class="cart-total-label">Subtotal</span>
+                                <span class="cart-total-value" id="cart-subtotal">₱0.00</span>
+                            </div>
+                            <div class="cart-grand-total">
+                                <span class="cart-grand-label">Total</span>
+                                <span class="cart-grand-value" id="cart-total">₱0.00</span>
+                            </div>
+                            <div class="cart-actions">
+                                <button class="btn btn-secondary" onclick="clearCart()">Clear</button>
+                                <button class="btn btn-success" onclick="checkout()" id="checkout-btn"
+                                    disabled>Checkout</button>
+                            </div>
+                        </div>
+                        <!-- Recent Sales Panel -->
+                        <div class="recent-sales-panel">
+                            <div class="recent-sales-header">
+                                <span class="recent-sales-title">🕒 Recent Sales</span>
+                            </div>
+                            <div class="recent-sales-list" id="recent-sales-list">
+                                <div class="recent-sales-empty">No sales yet.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================== INVENTORY PAGE ===================== -->
+            <div id="page-inventory" class="page">
+                <div class="topbar" style="padding:0 0 16px;">
+                    <h2>📦 Inventory</h2>
+                    <div class="topbar-actions">
+                        <button class="btn btn-primary" onclick="openAddItemModal()">+ Add Item</button>
+                    </div>
+                </div>
+                <div class="inv-controls">
+                    <input type="text" id="inv-search" placeholder="🔍 Search items..." oninput="renderInventory()">
+                    <select id="inv-cat-filter" onchange="renderInventory()" style="width:160px;">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                <!-- Low Stock Panel -->
+                <div id="inv-low-stock-panel" class="low-stock-panel" style="display:none;">
+                    <div class="low-stock-panel-header">
+                        <span class="low-stock-panel-title">⚠️ Items Needing Attention</span>
+                        <button class="btn btn-sm" style="background:var(--orange);color:#fff;"
+                            onclick="showPage('restock')">Go to Restock →</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="low-stock-table">
+                            <thead>
+                                <tr>
+                                    <th style="background:transparent;">Item</th>
+                                    <th style="background:transparent;">Current Stock</th>
+                                    <th style="background:transparent;">Min. Level</th>
+                                    <th style="background:transparent;">Status</th>
+                                    <th style="background:transparent;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="low-stock-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table id="inv-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Category</th>
+                                    <th>Base Unit</th>
+                                    <th>Stock</th>
+                                    <th>Buy Price</th>
+                                    <th>Sell Price</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inv-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================== RESTOCK PAGE ===================== -->
+            <div id="page-restock" class="page">
+                <div class="topbar" style="padding:0 0 16px;">
+                    <h2>🔄 Restock Items</h2>
+                </div>
+                <div class="two-col">
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">Select Item to Restock</span></div>
+                        <div class="form-group">
+                            <label>Item</label>
+                            <select id="restock-item" onchange="updateRestockOptions()">
+                                <option value="">— Select item —</option>
+                            </select>
+                        </div>
+                        <div id="restock-form" style="display:none;">
+                            <div class="form-group">
+                                <label>Restock Unit</label>
+                                <div class="unit-options" id="restock-units"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Quantity</label>
+                                <input type="number" id="restock-qty" min="0.01" step="any" placeholder="Enter quantity"
+                                    oninput="updateRestockPreview()">
+                            </div>
+                            <div id="restock-preview" class="restock-info" style="display:none;"></div>
+                            <div class="form-group" style="margin-top:14px;">
+                                <label>Note (optional)</label>
+                                <input type="text" id="restock-note" placeholder="e.g. New delivery">
+                            </div>
+                            <button class="btn btn-success" style="width:100%;justify-content:center;margin-top:8px;"
+                                onclick="doRestock()">✅ Confirm Restock</button>
                         </div>
                     </div>
                     <div class="card">
-                        <div class="table-wrap">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Category</th>
-                                        <th>Base Unit</th>
-                                        <th>Stock</th>
-                                        <th>Buy Price</th>
-                                        <th>Sell Price</th>
-                                        <th>Variants</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="inventory-table"></tbody>
-                            </table>
-                        </div>
+                        <div class="card-header"><span class="card-title">Recent Restocks</span></div>
+                        <div id="restock-history"></div>
                     </div>
                 </div>
-
-
-                <!-- PageRestock: Restock inventory page. -->
-                <div class="page" id="page-restock">
-                    <div class="page-header-row">
-                        <div>
-                            <div class="section-title">Restock</div>
-                            <div class="section-sub" style="margin-bottom:0">Add inventory by base unit or pack variant
-                            </div>
-                        </div>
-                    </div>
-                    <div class="grid-2">
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-title">Restock Item</div>
-                            </div>
-                            <div class="card-body">
-                                <div class="form-group">
-                                    <label>Select Item</label>
-                                    <select id="restock-item" onchange="Logic.onRestockItemChange()">
-                                        <option value="">— Choose an item —</option>
-                                    </select>
-                                </div>
-                                <div id="restock-unit-section" style="display:none">
-                                    <div class="form-group">
-                                        <label>Restock By</label>
-                                        <div id="restock-units"></div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Quantity</label>
-                                        <input type="number" id="restock-qty" placeholder="Enter quantity" min="1"
-                                            step="any">
-                                    </div>
-                                    <div id="restock-preview" style="margin-bottom: 16px; display: none;"></div>
-                                    <button class="btn btn-success" onclick="Logic.onDoRestock()">✓ Confirm
-                                        Restock</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-title">Restock History</div>
-                            </div>
-                            <div class="table-wrap" style="max-height: 420px; overflow-y: auto;">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Item</th>
-                                            <th>Unit</th>
-                                            <th>Qty</th>
-                                            <th>Base Units Added</th>
-                                            <th>Time</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="restock-history"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-
-                <!-- PagePricing: Custom pricing rules management page. -->
-                <div class="page" id="page-pricing">
-                    <div class="page-header-row">
-                        <div>
-                            <div class="section-title">Custom Pricing</div>
-                            <div class="section-sub" style="margin-bottom:0">Bundle deals, promos &amp; special price
-                                rules</div>
-                        </div>
-                        <button class="btn btn-primary" onclick="Logic.onOpenAddPricing()">＋ Add Price Rule</button>
-                    </div>
-                    <div class="card">
-                        <div class="table-wrap">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Title</th>
-                                        <th>Qty</th>
-                                        <th>Price</th>
-                                        <th>Per Unit</th>
-                                        <th>Status</th>
-                                        <th>Dates</th>
-                                        <th>Note</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="pricing-table"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-
-                <!-- PageDashboard: Dashboard with stats and reports. -->
-                <div class="page" id="page-dashboard">
-                    <div class="page-header-row">
-                        <div>
-                            <div class="section-title">Dashboard</div>
-                            <div class="section-sub" style="margin-bottom:0">Sales overview &amp; inventory insights
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid-4 mb-20">
-                        <div class="stat-card">
-                            <div class="stat-label">Today's Revenue</div>
-                            <div class="stat-value" id="d-sales">₱0</div>
-                            <div class="stat-sub" id="d-transactions">0 transactions</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Items Sold Today</div>
-                            <div class="stat-value" id="d-items">0</div>
-                            <div class="stat-sub">line items</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Catalog Size</div>
-                            <div class="stat-value" id="d-catalog">0</div>
-                            <div class="stat-sub">products</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Low Stock Alerts</div>
-                            <div class="stat-value text-red" id="d-lowstock">0</div>
-                            <div class="stat-sub">items need restock</div>
-                        </div>
-                    </div>
-
-                    <div class="grid-2">
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-title">Recent Transactions</div>
-                            </div>
-                            <div class="table-wrap" style="max-height: 340px; overflow-y: auto;">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Time</th>
-                                            <th>Items</th>
-                                            <th>Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="txn-table"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-title">Inventory Status</div>
-                            </div>
-                            <div class="table-wrap" style="max-height: 340px; overflow-y: auto;">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Item</th>
-                                            <th>Stock</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="stock-table"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </main>
-        </div>
-    </div>
-
-
-    <!-- ToastContainer: Container for notification toasts. -->
-    <div id="toast-container"></div>
-
-
-    <!-- ModalSell: Sale item selection modal. -->
-    <div class="modal-backdrop" id="sell-modal">
-        <div class="modal">
-            <div class="modal-header">
-                <div class="modal-title" id="sell-modal-title">Add to Order</div>
-                <button class="modal-close" onclick="Logic.closeModal('sell-modal')">✕</button>
             </div>
-            <div class="modal-body" id="sell-modal-body"></div>
-            <div class="modal-footer">
-                <button class="btn btn-ghost" onclick="Logic.closeModal('sell-modal')">Cancel</button>
-                <button class="btn btn-primary" onclick="Logic.onAddToCart()">Add to Order</button>
+
+            <!-- ===================== CUSTOM PRICING PAGE ===================== -->
+            <div id="page-pricing" class="page">
+                <div class="topbar" style="padding:0 0 16px;">
+                    <h2>🏷️ Custom Pricing</h2>
+                    <button class="btn btn-primary" onclick="openAddPricingModal()">+ Add Custom Price</button>
+                </div>
+                <div id="pricing-list"></div>
             </div>
-        </div>
-    </div>
 
+            <!-- ===================== CATEGORIES PAGE ===================== -->
+            <div id="page-categories" class="page">
+                <div class="topbar" style="padding:0 0 16px;">
+                    <h2>🗂️ Categories</h2>
+                    <button class="btn btn-primary" onclick="openAddCategoryModal()">+ Add Category</button>
+                </div>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Emoji</th>
+                                    <th>Color</th>
+                                    <th>Items</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cat-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-    <!-- ModalAddItem: Add/edit inventory item modal. -->
-    <div class="modal-backdrop" id="add-item-modal">
-        <div class="modal">
+            <!-- ===================== TRANSACTIONS PAGE ===================== -->
+            <div id="page-transactions" class="page">
+                <div class="topbar" style="padding:0 0 16px;">
+                    <h2>📋 Transactions</h2>
+                </div>
+                <div class="stats-grid" id="txn-stats"></div>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Date & Time</th>
+                                    <th>Items</th>
+                                    <th>Total</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="txn-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================== RECENT SALES PAGE ===================== -->
+            <div id="page-recentsales" class="page">
+                <div class="topbar" style="padding:0 0 16px;background:transparent;border-bottom:none;">
+                    <h2>🕒 Recent Sales</h2>
+                    <div class="topbar-actions">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <input type="text" id="rs-search" placeholder="🔍 Search item..."
+                                oninput="renderRecentSalesPage()" style="width:200px;">
+                            <select id="rs-filter-date" onchange="renderRecentSalesPage()" style="width:150px;">
+                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-grid" id="rs-stats"></div>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Date &amp; Time</th>
+                                    <th>Order #</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rs-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================== STOCK LOGS PAGE ===================== -->
+            <div id="page-stocklogs" class="page">
+                <div class="topbar" style="padding:0 0 16px;background:transparent;border-bottom:none;">
+                    <h2>📝 Stock Logs</h2>
+                    <div class="topbar-actions">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <input type="text" id="sl-search" placeholder="🔍 Search item..."
+                                oninput="renderStockLogsPage()" style="width:180px;">
+                            <select id="sl-filter-type" onchange="renderStockLogsPage()" style="width:140px;">
+                                <option value="all">All Types</option>
+                                <option value="sale">Sales Only</option>
+                                <option value="restock">Restocks Only</option>
+                            </select>
+                            <select id="sl-filter-date" onchange="renderStockLogsPage()" style="width:140px;">
+                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-grid" id="sl-stats"></div>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Change Type</th>
+                                    <th>Qty Change</th>
+                                    <th>Date &amp; Time</th>
+                                    <th>Note</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sl-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /.main -->
+    </div><!-- /.app -->
+
+    <!-- ===================== MODALS ===================== -->
+
+    <!-- Add / Edit Item Modal -->
+    <div class="modal-backdrop" id="modal-add-item">
+        <div class="modal modal-lg">
             <div class="modal-header">
-                <div class="modal-title" id="add-item-title">Add Item</div>
-                <button class="modal-close" onclick="Logic.closeModal('add-item-modal')">✕</button>
+                <h3 id="item-modal-title">Add New Item</h3>
+                <button class="close-btn" onclick="closeModal('modal-add-item')">✕</button>
             </div>
             <div class="modal-body">
-                <input type="hidden" id="edit-item-id">
-                <div class="grid-2">
-                    <div class="form-group">
-                        <label>Item Name</label>
-                        <input type="text" id="ai-name" placeholder="e.g., Rice">
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('basic')">Basic Info</div>
+                    <div class="tab" onclick="switchTab('units')">Unit Variants</div>
+                </div>
+                <div id="tab-basic" class="tab-panel active">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Item Name *</label>
+                            <input type="text" id="item-name" placeholder="e.g. Rice">
+                        </div>
+                        <div class="form-group">
+                            <label>Category *</label>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <select id="item-category" style="flex:1;">
+                                    <option value="">— Select category —</option>
+                                </select>
+                                <button type="button" class="btn btn-secondary btn-sm"
+                                    onclick="openAddCategoryModal(true)" title="Create a new category"
+                                    style="white-space:nowrap;flex-shrink:0;">＋ New</button>
+                            </div>
+                            <p class="helper">Can't find it? Click "＋ New" to create one.</p>
+                        </div>
+                    </div>
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label>Base Unit *</label>
+                            <select id="item-base-unit-select" onchange="onBaseUnitSelectChange()">
+                                <option value="">— Select base unit —</option>
+                                <optgroup label="Weight">
+                                    <option value="kg">kg — kilogram</option>
+                                    <option value="g">g — gram</option>
+                                    <option value="lb">lb — pound</option>
+                                    <option value="oz">oz — ounce</option>
+                                </optgroup>
+                                <optgroup label="Volume">
+                                    <option value="mL">mL — milliliter</option>
+                                    <option value="L">L — liter</option>
+                                    <option value="fl oz">fl oz — fluid ounce</option>
+                                    <option value="cup">cup</option>
+                                </optgroup>
+                                <optgroup label="Count">
+                                    <option value="piece">piece</option>
+                                    <option value="pack">pack</option>
+                                    <option value="box">box</option>
+                                    <option value="bottle">bottle</option>
+                                    <option value="bag">bag</option>
+                                    <option value="can">can</option>
+                                    <option value="sachet">sachet</option>
+                                    <option value="roll">roll</option>
+                                    <option value="pair">pair</option>
+                                    <option value="set">set</option>
+                                </optgroup>
+                                <optgroup label="Length">
+                                    <option value="m">m — meter</option>
+                                    <option value="cm">cm — centimeter</option>
+                                </optgroup>
+                                <option value="__custom__">✏️ Custom unit…</option>
+                            </select>
+                            <input type="hidden" id="item-base-unit">
+                            <input type="text" id="item-base-unit-custom" placeholder="Type custom unit (e.g. bundle)"
+                                style="display:none;margin-top:6px;" oninput="onBaseUnitCustomInput()">
+                            <p class="helper" id="item-base-unit-helper">Smallest standard unit</p>
+                        </div>
+                        <div class="form-group">
+                            <label>Purchase Price / Base Unit</label>
+                            <input type="number" id="item-buy-price" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label>Selling Price / Base Unit</label>
+                            <input type="number" id="item-sell-price" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Initial Stock (in base units)</label>
+                            <input type="number" id="item-stock" step="any" min="0" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Default Selling Unit</label>
+                            <select id="item-default-unit">
+                                <option value="base">Base unit</option>
+                            </select>
+                            <p class="helper">Auto-selected in POS</p>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label>Category</label>
-                        <select id="ai-cat">
-                            <option>Grains</option>
-                            <option>Dairy &amp; Eggs</option>
-                            <option>Cooking</option>
-                            <option>Snacks</option>
-                            <option>Vegetables</option>
-                            <option>Other</option>
-                        </select>
+                        <label>Low Stock Threshold (in base units)</label>
+                        <input type="number" id="item-low-stock" step="any" min="0" placeholder="e.g. 10">
                     </div>
                 </div>
-                <div class="grid-2">
-                    <div class="form-group">
-                        <label>Base Unit</label>
-                        <select id="ai-unit" onchange="handleBaseUnitChange(this)">
-                            <option value="">— Select a unit —</option>
-                            <optgroup label="Weight">
-                                <option value="kg">kg — kilogram</option>
-                                <option value="g">g — gram</option>
-                                <option value="lb">lb — pound</option>
-                                <option value="oz">oz — ounce</option>
-                            </optgroup>
-                            <optgroup label="Volume">
-                                <option value="mL">mL — milliliter</option>
-                                <option value="L">L — liter</option>
-                                <option value="fl oz">fl oz — fluid ounce</option>
-                            </optgroup>
-                            <optgroup label="Count">
-                                <option value="piece">piece</option>
-                                <option value="pack">pack</option>
-                                <option value="box">box</option>
-                                <option value="bottle">bottle</option>
-                                <option value="can">can</option>
-                                <option value="bag">bag</option>
-                                <option value="sachet">sachet</option>
-                                <option value="tray">tray</option>
-                                <option value="dozen">dozen</option>
-                                <option value="bundle">bundle</option>
-                            </optgroup>
-                            <optgroup label="Other">
-                                <option value="custom">✏ Custom…</option>
-                            </optgroup>
-                        </select>
-                        <input type="text" id="ai-unit-custom" placeholder="Type custom unit…"
-                            style="display:none; margin-top:6px">
-                    </div>
-                    <div class="form-group">
-                        <label>Stock Quantity</label>
-                        <input type="number" id="ai-stock" placeholder="0" min="0" step="any">
-                    </div>
+                <div id="tab-units" class="tab-panel">
+                    <p style="color:var(--text3);font-size:13px;margin-bottom:14px;">Define alternative units for buying
+                        and selling (e.g. sack, tray, pack).</p>
+                    <div id="unit-variants-list"></div>
+                    <button class="btn btn-secondary btn-sm" onclick="addUnitVariant()">+ Add Unit Variant</button>
                 </div>
-                <div class="grid-2">
-                    <div class="form-group">
-                        <label>Purchase Price / unit</label>
-                        <input type="number" id="ai-buy" placeholder="0.00" min="0" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label>Selling Price / unit</label>
-                        <input type="number" id="ai-sell" placeholder="0.00" min="0" step="0.01">
-                    </div>
-                </div>
-                <div class="divider"></div>
-                <div style="font-weight:700; font-size:15px; margin-bottom:12px; color: var(--text)">
-                    Unit Variants <span style="font-weight:400; color: var(--text3)">(Optional)</span>
-                </div>
-                <div id="unit-variants-list"></div>
-                <button class="btn btn-ghost btn-sm" onclick="Logic.addUnitVariantRow()" style="margin-bottom: 4px">＋
-                    Add Variant</button>
-                <div class="divider"></div>
-                <label
-                    style="display:flex; align-items:center; gap:9px; text-transform:none; letter-spacing:0; font-size:15px; font-weight:500; cursor:pointer; color: var(--text2)">
-                    <input type="checkbox" id="ai-override" style="width:auto; accent-color: var(--forest)">
-                    Allow manual price override per sale
-                </label>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-ghost" onclick="Logic.closeModal('add-item-modal')">Cancel</button>
-                <button class="btn btn-primary" onclick="Logic.onSaveItem()">Save Item</button>
+                <button class="btn btn-secondary" onclick="closeModal('modal-add-item')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveItem()">Save Item</button>
             </div>
         </div>
     </div>
 
-
-    <!-- ModalAddPricing: Add custom pricing rule modal. -->
-    <div class="modal-backdrop" id="add-pricing-modal">
+    <!-- Add to Cart Modal -->
+    <div class="modal-backdrop" id="modal-add-cart">
         <div class="modal">
             <div class="modal-header">
-                <div class="modal-title">Add Price Rule</div>
-                <button class="modal-close" onclick="Logic.closeModal('add-pricing-modal')">✕</button>
+                <h3 id="cart-modal-title">Add to Cart</h3>
+                <button class="close-btn" onclick="closeModal('modal-add-cart')">✕</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>Item</label>
-                    <select id="cp-item"></select>
+                    <label>Selling Option</label>
+                    <div class="unit-options" id="cart-unit-options"></div>
+                </div>
+                <div class="form-group" id="cart-qty-group">
+                    <label id="cart-qty-label">Quantity</label>
+                    <input type="number" id="cart-qty" step="any" min="0.01" placeholder="Enter quantity"
+                        oninput="updateCartPreview()">
+                </div>
+
+                <!-- Manual Price Toggle -->
+                <div class="manual-price-toggle" id="manual-price-section">
+                    <label class="toggle-row" for="cart-manual-check">
+                        <span class="toggle-icon">✏️</span>
+                        <span class="toggle-label">Manual Price</span>
+                        <span class="toggle-hint" id="manual-hint">Use a custom price instead of the normal rate</span>
+                        <input type="checkbox" id="cart-manual-check" onchange="onManualPriceToggle()">
+                        <span class="toggle-switch"></span>
+                    </label>
+                    <div id="manual-price-fields" style="display:none;">
+                        <div class="manual-price-row">
+                            <div class="form-group" style="margin:0;flex:1;">
+                                <label>Price per <span id="manual-per-unit">unit</span></label>
+                                <div style="position:relative;">
+                                    <span
+                                        style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none;">₱</span>
+                                    <input type="number" id="cart-manual-price" step="0.01" min="0" placeholder="0.00"
+                                        style="padding-left:26px;" oninput="updateCartPreview()">
+                                </div>
+                            </div>
+                            <div class="manual-price-vs" id="normal-price-ref"></div>
+                        </div>
+                        <p class="helper" style="margin-top:6px;">Normal price: <strong
+                                id="normal-price-display">—</strong></p>
+                    </div>
+                </div>
+
+                <div class="price-preview" id="cart-price-preview">
+                    <span class="price-preview-label" id="preview-label">Total</span>
+                    <span class="price-preview-value" id="preview-value">₱0.00</span>
+                </div>
+                <div id="stock-warning" style="display:none;" class="restock-info"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modal-add-cart')">Cancel</button>
+                <button class="btn btn-primary" id="add-cart-btn" onclick="addToCart()">Add to Cart</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Pricing Modal -->
+    <div class="modal-backdrop" id="modal-custom-price">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="cp-modal-title">Add Custom Pricing</h3>
+                <button class="close-btn" onclick="closeModal('modal-custom-price')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Item *</label>
+                    <select id="cp-item">
+                        <option value="">— Select item —</option>
+                    </select>
                 </div>
                 <div class="form-group">
-                    <label>Title / Description</label>
-                    <input type="text" id="cp-title" placeholder="e.g., 3 for ₱5.00 Deal">
+                    <label>Title *</label>
+                    <input type="text" id="cp-title" placeholder="e.g. 3 for 5 deal">
                 </div>
-                <div class="grid-2">
+                <div class="form-row">
                     <div class="form-group">
-                        <label>Quantity (base units)</label>
-                        <input type="number" id="cp-qty" placeholder="e.g., 3" min="1" step="any">
+                        <label>Quantity (in base units) *</label>
+                        <input type="number" id="cp-qty" step="any" min="0.01" placeholder="e.g. 3">
                     </div>
                     <div class="form-group">
-                        <label>Total Price (₱)</label>
-                        <input type="number" id="cp-price" placeholder="e.g., 5.00" min="0" step="0.01">
+                        <label>Price (PHP) *</label>
+                        <input type="number" id="cp-price" step="0.01" min="0" placeholder="e.g. 5.00">
                     </div>
                 </div>
-                <div class="grid-2">
+                <div class="form-row">
                     <div class="form-group">
                         <label>Start Date (optional)</label>
                         <input type="date" id="cp-start">
@@ -485,48 +563,97 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Note</label>
-                    <input type="text" id="cp-note" placeholder="Optional note">
+                    <label>Note (optional)</label>
+                    <input type="text" id="cp-note" placeholder="Additional notes">
                 </div>
-                <label
-                    style="display:flex; align-items:center; gap:9px; text-transform:none; letter-spacing:0; font-size:15px; font-weight:500; cursor:pointer; color: var(--text2)">
-                    <input type="checkbox" id="cp-active" style="width:auto; accent-color: var(--forest)" checked>
-                    Active immediately
-                </label>
+                <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+                    <input type="checkbox" id="cp-active" checked style="width:auto;">
+                    <label style="margin:0;">Active</label>
+                </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-ghost" onclick="Logic.closeModal('add-pricing-modal')">Cancel</button>
-                <button class="btn btn-primary" onclick="Logic.onSavePricing()">Save Rule</button>
+                <button class="btn btn-secondary" onclick="closeModal('modal-custom-price')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveCustomPricing()">Save Pricing</button>
             </div>
         </div>
     </div>
 
-
-    <!-- ModalReceipt: Transaction receipt display modal. -->
-    <div class="modal-backdrop" id="receipt-modal">
-        <div class="modal" style="max-width: 400px;">
+    <!-- Add / Edit Category Modal -->
+    <div class="modal-backdrop" id="modal-category">
+        <div class="modal" style="width:420px;">
             <div class="modal-header">
-                <div class="modal-title">Receipt</div>
-                <button class="modal-close" onclick="Logic.closeModal('receipt-modal')">✕</button>
+                <h3 id="cat-modal-title">Add Category</h3>
+                <button class="close-btn" onclick="closeModal('modal-category')">✕</button>
             </div>
-            <div class="modal-body" id="receipt-body"></div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Category Name *</label>
+                    <input type="text" id="cat-name" placeholder="e.g. Beverages">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Emoji Icon</label>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <input type="text" id="cat-emoji" placeholder="e.g. 🧃" maxlength="4"
+                                style="width:70px;text-align:center;font-size:20px;">
+                            <div id="cat-emoji-presets" style="display:flex;flex-wrap:wrap;gap:5px;flex:1;"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Badge Color</label>
+                        <div id="cat-color-presets" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;"></div>
+                        <input type="hidden" id="cat-color" value="blue">
+                    </div>
+                </div>
+                <div id="cat-preview-row" style="margin-top:4px;">
+                    <label>Preview</label>
+                    <div style="margin-top:6px;">
+                        <span id="cat-badge-preview" class="badge badge-blue">📦 Category</span>
+                    </div>
+                </div>
+            </div>
             <div class="modal-footer">
-                <button class="btn btn-primary" style="width:100%; justify-content:center;"
-                    onclick="Logic.closeModal('receipt-modal')">Done</button>
+                <button class="btn btn-secondary" onclick="closeModal('modal-category')">Cancel</button>
+                <button class="btn btn-primary" id="cat-save-btn" onclick="saveCategory()">Save Category</button>
             </div>
         </div>
     </div>
 
-    <!-- JSModules: Load JavaScript modules in dependency order. -->
-    <script src="js/data.js"></script>
-    <script src="js/helpers.js"></script>
-    <script src="js/services.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/logic.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => Logic.init());
-    </script>
+    <!-- Transaction Detail Modal -->
+    <div class="modal-backdrop" id="modal-txn-detail">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Transaction Details</h3>
+                <button class="close-btn" onclick="closeModal('modal-txn-detail')">✕</button>
+            </div>
+            <div class="modal-body" id="txn-detail-body"></div>
+        </div>
+    </div>
 
+    <!-- ===================== SCRIPTS ===================== -->
+    <!-- Data Layer -->
+    <script src="data/store.js"></script>
+    <!-- Utility Helpers -->
+    <script src="js/helpers.js"></script>
+    <!-- Services (pricing & unit calculations) -->
+    <script src="js/services.js"></script>
+    <!-- Navigation -->
+    <script src="js/navigation.js"></script>
+    <!-- Feature Modules -->
+    <script src="js/pos.js"></script>
+    <script src="js/inventory.js"></script>
+    <script src="js/categories.js"></script>
+    <script src="js/restock.js"></script>
+    <script src="js/pricing.js"></script>
+    <script src="js/reports.js"></script>
+    <script src="js/alerts.js"></script>
+    <!-- App Initialization -->
+    <script>
+        seedData();
+        renderPOSItems();
+        updateLowStockAlerts();
+        renderRecentSales();
+    </script>
 </body>
 
 </html>
