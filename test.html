@@ -1125,6 +1125,19 @@
             color: var(--accent);
             font-style: italic;
         }
+
+        /* Category badge color variants (dynamic via badge-{color} classes) */
+        .badge-yellow {
+            background: var(--yellow-light);
+            color: var(--yellow);
+        }
+
+        .badge-red {
+            background: var(--red-light);
+            color: var(--red);
+        }
+
+        /* badge-blue, badge-green, badge-orange already defined above */
     </style>
 </head>
 
@@ -1149,6 +1162,9 @@
                 </div>
                 <div class="nav-item" onclick="showPage('pricing')">
                     <span class="icon">🏷️</span> Custom Pricing
+                </div>
+                <div class="nav-item" onclick="showPage('categories')">
+                    <span class="icon">🗂️</span> Categories
                 </div>
                 <div class="nav-item" onclick="showPage('transactions')">
                     <span class="icon">📋</span> Transactions
@@ -1288,6 +1304,30 @@
                 <div id="pricing-list"></div>
             </div>
 
+            <!-- Categories Page -->
+            <div id="page-categories" class="page">
+                <div class="topbar" style="padding:0 0 16px;">
+                    <h2>🗂️ Categories</h2>
+                    <button class="btn btn-primary" onclick="openAddCategoryModal()">+ Add Category</button>
+                </div>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Emoji</th>
+                                    <th>Color</th>
+                                    <th>Items</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cat-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- Transactions Page -->
             <div id="page-transactions" class="page">
                 <div class="topbar" style="padding:0 0 16px;">
@@ -1335,9 +1375,15 @@
                         </div>
                         <div class="form-group">
                             <label>Category *</label>
-                            <input type="text" id="item-category" placeholder="e.g. Grains, Dairy, Vegetables"
-                                list="category-list">
-                            <datalist id="category-list"></datalist>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <select id="item-category" style="flex:1;">
+                                    <option value="">— Select category —</option>
+                                </select>
+                                <button type="button" class="btn btn-secondary btn-sm"
+                                    onclick="openAddCategoryModal(true)" title="Create a new category"
+                                    style="white-space:nowrap;flex-shrink:0;">＋ New</button>
+                            </div>
+                            <p class="helper">Can't find it? Click "＋ New" to create one.</p>
                         </div>
                     </div>
                     <div class="form-row-3">
@@ -1514,6 +1560,47 @@
         </div>
     </div>
 
+    <!-- Add / Edit Category Modal -->
+    <div class="modal-backdrop" id="modal-category">
+        <div class="modal" style="width:420px;">
+            <div class="modal-header">
+                <h3 id="cat-modal-title">Add Category</h3>
+                <button class="close-btn" onclick="closeModal('modal-category')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Category Name *</label>
+                    <input type="text" id="cat-name" placeholder="e.g. Beverages">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Emoji Icon</label>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <input type="text" id="cat-emoji" placeholder="e.g. 🧃" maxlength="4"
+                                style="width:70px;text-align:center;font-size:20px;">
+                            <div id="cat-emoji-presets" style="display:flex;flex-wrap:wrap;gap:5px;flex:1;"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Badge Color</label>
+                        <div id="cat-color-presets" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;"></div>
+                        <input type="hidden" id="cat-color" value="blue">
+                    </div>
+                </div>
+                <div id="cat-preview-row" style="margin-top:4px;">
+                    <label>Preview</label>
+                    <div style="margin-top:6px;">
+                        <span id="cat-badge-preview" class="badge badge-blue">📦 Category</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modal-category')">Cancel</button>
+                <button class="btn btn-primary" id="cat-save-btn" onclick="saveCategory()">Save Category</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Transaction Detail Modal -->
     <div class="modal-backdrop" id="modal-txn-detail">
         <div class="modal">
@@ -1532,7 +1619,8 @@
             item_units: [],
             custom_pricing: [],
             transactions: [],
-            restock_history: []
+            restock_history: [],
+            categories: []
         };
 
         let editingItemId = null;
@@ -1544,6 +1632,14 @@
 
         // ===================== SEED DATA =====================
         function seedData() {
+            // Categories
+            db.categories = [
+                { id: 1, name: 'Grains', emoji: '🌾', color: 'yellow' },
+                { id: 2, name: 'Dairy & Eggs', emoji: '🥚', color: 'blue' },
+                { id: 3, name: 'Condiments', emoji: '🫙', color: 'orange' },
+                { id: 4, name: 'Sweets', emoji: '🍬', color: 'green' },
+                { id: 5, name: 'Vegetables', emoji: '🥬', color: 'green' },
+            ];
             // Items
             db.items = [
                 { id: 1, item_name: 'Rice', category: 'Grains', base_unit: 'kg', purchase_price_per_unit: 55, selling_price_per_unit: 57, stock_quantity: 150, low_stock_threshold: 20, default_selling_unit: 'base', emoji: '🌾' },
@@ -1577,7 +1673,7 @@
             // Set Cooking Oil default to 250mL (unit-1 = id 3 in item_units)
             // default_selling_unit format: 'base', 'unit-{item_unit_id}', 'custom-{cp_id}'
 
-            nextId = { items: 6, item_units: 8, custom_pricing: 2, transactions: 1, restock_history: 1 };
+            nextId = { items: 6, item_units: 8, custom_pricing: 2, transactions: 1, restock_history: 1, categories: 6 };
         }
 
         let nextId = {};
@@ -1591,20 +1687,25 @@
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById('page-' + page).classList.add('active');
-            document.querySelectorAll('.nav-item')[['pos', 'inventory', 'restock', 'pricing', 'transactions'].indexOf(page)].classList.add('active');
+            const pages = ['pos', 'inventory', 'restock', 'pricing', 'categories', 'transactions'];
+            document.querySelectorAll('.nav-item')[pages.indexOf(page)].classList.add('active');
 
             if (page === 'pos') renderPOSItems();
             if (page === 'inventory') renderInventory();
             if (page === 'restock') initRestockPage();
             if (page === 'pricing') renderPricingPage();
+            if (page === 'categories') renderCategoriesPage();
             if (page === 'transactions') renderTransactions();
         }
 
         // ===================== POS =====================
         function renderPOSCategories() {
-            const cats = ['All', ...new Set(db.items.map(i => i.category))];
+            // Use db.categories as the source of truth; only show cats that have at least one item
+            const usedCats = new Set(db.items.map(i => i.category));
+            const cats = db.categories.filter(c => usedCats.has(c.name));
             const el = document.getElementById('pos-categories');
-            el.innerHTML = cats.map(c => `<div class="cat-chip ${(c === 'All' && !posFilterCat) || c === posFilterCat ? 'active' : ''}" onclick="setPosFilter('${c}')">${c}</div>`).join('');
+            el.innerHTML = `<div class="cat-chip ${!posFilterCat ? 'active' : ''}" onclick="setPosFilter('All')">All</div>` +
+                cats.map(c => `<div class="cat-chip ${c.name === posFilterCat ? 'active' : ''}" onclick="setPosFilter('${c.name}')">${c.emoji || ''} ${c.name}</div>`).join('');
         }
 
         function setPosFilter(cat) {
@@ -1945,11 +2046,11 @@
             const q = document.getElementById('inv-search').value.toLowerCase();
             const cat = document.getElementById('inv-cat-filter').value;
 
-            // Update cat filter options
-            const cats = [...new Set(db.items.map(i => i.category))];
+            // Update cat filter options from db.categories
             const catEl = document.getElementById('inv-cat-filter');
             const cur = catEl.value;
-            catEl.innerHTML = '<option value="">All Categories</option>' + cats.map(c => `<option value="${c}" ${c === cur ? 'selected' : ''}>${c}</option>`).join('');
+            catEl.innerHTML = '<option value="">All Categories</option>' +
+                db.categories.map(c => `<option value="${c.name}" ${c.name === cur ? 'selected' : ''}>${c.emoji || ''} ${c.name}</option>`).join('');
 
             let items = db.items;
             if (cat) items = items.filter(i => i.category === cat);
@@ -1960,9 +2061,12 @@
                 const low = item.low_stock_threshold && item.stock_quantity <= item.low_stock_threshold;
                 const out = item.stock_quantity <= 0;
                 const units = db.item_units.filter(u => u.item_id === item.id);
+                const catObj = db.categories.find(c => c.name === item.category);
+                const catEmoji = catObj ? catObj.emoji : '';
+                const catColor = catObj ? catObj.color : 'blue';
                 return `<tr>
       <td><strong>${item.emoji || '📦'} ${item.item_name}</strong></td>
-      <td><span class="badge badge-blue">${item.category}</span></td>
+      <td><span class="badge badge-${catColor}">${catEmoji} ${item.category}</span></td>
       <td>${item.base_unit}</td>
       <td>
         <strong ${out ? 'style="color:var(--red)"' : low ? 'style="color:var(--orange)"' : ''}>${formatStock(item)} ${item.base_unit}</strong>
@@ -2053,7 +2157,7 @@
             editingItemId = null;
             document.getElementById('item-modal-title').textContent = 'Add New Item';
             document.getElementById('item-name').value = '';
-            document.getElementById('item-category').value = '';
+            populateCategorySelect('item-category', '');
             setBaseUnitSelector('');
             document.getElementById('item-buy-price').value = '';
             document.getElementById('item-sell-price').value = '';
@@ -2062,11 +2166,6 @@
             itemModalVariants = [];
             renderItemVariants();
             switchTab('basic');
-
-            // Update datalist
-            const cats = [...new Set(db.items.map(i => i.category))];
-            document.getElementById('category-list').innerHTML = cats.map(c => `<option value="${c}">`).join('');
-
             openModal('modal-add-item');
         }
 
@@ -2076,7 +2175,7 @@
             editingItemId = itemId;
             document.getElementById('item-modal-title').textContent = 'Edit Item';
             document.getElementById('item-name').value = item.item_name;
-            document.getElementById('item-category').value = item.category;
+            populateCategorySelect('item-category', item.category);
             setBaseUnitSelector(item.base_unit);
             document.getElementById('item-buy-price').value = item.purchase_price_per_unit;
             document.getElementById('item-sell-price').value = item.selling_price_per_unit;
@@ -2086,7 +2185,6 @@
             itemModalVariants = db.item_units.filter(u => u.item_id === itemId).map(u => ({ ...u }));
             renderItemVariants();
 
-            // Update default unit select
             updateDefaultUnitSelect(item.base_unit);
             document.getElementById('item-default-unit').value = item.default_selling_unit || 'base';
 
@@ -2160,9 +2258,13 @@
 
             if (!name || !cat || !bu) { toast('Fill in required fields', 'error'); return; }
 
+            // Determine emoji from category
+            const catObj = db.categories.find(c => c.name === cat);
+            const emoji = catObj ? catObj.emoji : '📦';
+
             if (editingItemId) {
                 const item = db.items.find(i => i.id === editingItemId);
-                Object.assign(item, { item_name: name, category: cat, base_unit: bu, purchase_price_per_unit: bp, selling_price_per_unit: sp, stock_quantity: stock, low_stock_threshold: lowStock, default_selling_unit: defUnit });
+                Object.assign(item, { item_name: name, category: cat, base_unit: bu, purchase_price_per_unit: bp, selling_price_per_unit: sp, stock_quantity: stock, low_stock_threshold: lowStock, default_selling_unit: defUnit, emoji });
                 // Update units
                 db.item_units = db.item_units.filter(u => u.item_id !== editingItemId);
                 itemModalVariants.forEach(v => {
@@ -2172,8 +2274,7 @@
                 toast('Item updated!', 'success');
             } else {
                 const id = newId('items');
-                const emojis = { 'Grains': '🌾', 'Dairy & Eggs': '🥚', 'Condiments': '🫙', 'Sweets': '🍬', 'Vegetables': '🥬', 'Meat': '🥩', 'Beverages': '🧃', 'Snacks': '🍿' };
-                db.items.push({ id, item_name: name, category: cat, base_unit: bu, purchase_price_per_unit: bp, selling_price_per_unit: sp, stock_quantity: stock, low_stock_threshold: lowStock, default_selling_unit: defUnit || 'base', emoji: emojis[cat] || '📦' });
+                db.items.push({ id, item_name: name, category: cat, base_unit: bu, purchase_price_per_unit: bp, selling_price_per_unit: sp, stock_quantity: stock, low_stock_threshold: lowStock, default_selling_unit: defUnit || 'base', emoji });
                 itemModalVariants.forEach(v => {
                     if (v.unit_name) db.item_units.push({ ...v, id: newId('item_units'), item_id: id });
                 });
@@ -2182,6 +2283,179 @@
 
             closeModal('modal-add-item');
             renderInventory();
+        }
+
+        // ===================== CATEGORY MANAGEMENT =====================
+        const CAT_COLORS = [
+            { key: 'blue', label: 'Blue', bg: '#eef2ff', text: '#3b6ef0' },
+            { key: 'green', label: 'Green', bg: '#dcfce7', text: '#16a34a' },
+            { key: 'orange', label: 'Orange', bg: '#ffedd5', text: '#ea580c' },
+            { key: 'red', label: 'Red', bg: '#fee2e2', text: '#dc2626' },
+            { key: 'yellow', label: 'Yellow', bg: '#fef3c7', text: '#d97706' },
+        ];
+        const CAT_EMOJIS = ['🌾', '🥚', '🫙', '🍬', '🥬', '🥩', '🧃', '🍿', '🧴', '🛒', '🧁', '🍞', '🍎', '🐟', '🧹', '💊', '🍫', '🥤', '🧂', '🍳'];
+
+        let editingCatId = null;
+        let calledFromItemModal = false;
+
+        /** Populate a <select> by id with all categories, pre-selecting a given name */
+        function populateCategorySelect(selectId, selectedName) {
+            const sel = document.getElementById(selectId);
+            sel.innerHTML = '<option value="">— Select category —</option>' +
+                db.categories.map(c =>
+                    `<option value="${c.name}" ${c.name === selectedName ? 'selected' : ''}>${c.emoji || ''} ${c.name}</option>`
+                ).join('');
+        }
+
+        function renderCategoriesPage() {
+            const tbody = document.getElementById('cat-tbody');
+            if (!db.categories.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px;">No categories yet.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = db.categories.map(cat => {
+                const itemCount = db.items.filter(i => i.category === cat.name).length;
+                const colorObj = CAT_COLORS.find(c => c.key === cat.color) || CAT_COLORS[0];
+                return `<tr>
+      <td><strong>${cat.name}</strong></td>
+      <td style="font-size:20px;">${cat.emoji || '—'}</td>
+      <td>
+        <span class="badge badge-${cat.color}" style="gap:4px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:${colorObj.text};display:inline-block;"></span>
+          ${colorObj.label}
+        </span>
+      </td>
+      <td>${itemCount} item${itemCount !== 1 ? 's' : ''}</td>
+      <td style="display:flex;gap:6px;align-items:center;">
+        <button class="btn btn-secondary btn-sm" onclick="openEditCategoryModal(${cat.id})">Edit</button>
+        <button class="btn btn-sm" style="background:var(--red-light);color:var(--red);"
+          onclick="deleteCategory(${cat.id})"
+          ${itemCount > 0 ? 'disabled title="Cannot delete: category has items"' : ''}>Delete</button>
+      </td>
+    </tr>`;
+            }).join('');
+        }
+
+        /** Opens the category modal.
+         *  @param {boolean} fromItemModal — if true, after saving we re-populate the item modal select and stay on it */
+        function openAddCategoryModal(fromItemModal = false) {
+            calledFromItemModal = fromItemModal;
+            editingCatId = null;
+            document.getElementById('cat-modal-title').textContent = 'Add Category';
+            document.getElementById('cat-name').value = '';
+            document.getElementById('cat-emoji').value = '';
+            document.getElementById('cat-color').value = 'blue';
+            renderCatEmojiPresets('');
+            renderCatColorPresets('blue');
+            updateCatPreview();
+            openModal('modal-category');
+        }
+
+        function openEditCategoryModal(catId) {
+            calledFromItemModal = false;
+            editingCatId = catId;
+            const cat = db.categories.find(c => c.id === catId);
+            if (!cat) return;
+            document.getElementById('cat-modal-title').textContent = 'Edit Category';
+            document.getElementById('cat-name').value = cat.name;
+            document.getElementById('cat-emoji').value = cat.emoji || '';
+            document.getElementById('cat-color').value = cat.color || 'blue';
+            renderCatEmojiPresets(cat.emoji || '');
+            renderCatColorPresets(cat.color || 'blue');
+            updateCatPreview();
+            openModal('modal-category');
+        }
+
+        function renderCatEmojiPresets(selected) {
+            const el = document.getElementById('cat-emoji-presets');
+            el.innerHTML = CAT_EMOJIS.map(e =>
+                `<span onclick="pickCatEmoji('${e}')" title="${e}"
+      style="cursor:pointer;font-size:18px;padding:3px 5px;border-radius:6px;border:2px solid ${e === selected ? 'var(--accent)' : 'transparent'};transition:all 0.12s;"
+      onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">${e}</span>`
+            ).join('');
+        }
+
+        function pickCatEmoji(emoji) {
+            document.getElementById('cat-emoji').value = emoji;
+            renderCatEmojiPresets(emoji);
+            updateCatPreview();
+        }
+
+        function renderCatColorPresets(selected) {
+            const el = document.getElementById('cat-color-presets');
+            el.innerHTML = CAT_COLORS.map(c =>
+                `<div onclick="pickCatColor('${c.key}')" title="${c.label}"
+      style="width:24px;height:24px;border-radius:50%;background:${c.bg};border:2.5px solid ${c.key === selected ? c.text : 'transparent'};cursor:pointer;box-shadow:inset 0 0 0 2px ${c.text};transition:all 0.12s;"
+      onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></div>`
+            ).join('');
+        }
+
+        function pickCatColor(colorKey) {
+            document.getElementById('cat-color').value = colorKey;
+            renderCatColorPresets(colorKey);
+            updateCatPreview();
+        }
+
+        function updateCatPreview() {
+            const name = document.getElementById('cat-name').value.trim() || 'Category';
+            const emoji = document.getElementById('cat-emoji').value.trim() || '';
+            const color = document.getElementById('cat-color').value || 'blue';
+            const preview = document.getElementById('cat-badge-preview');
+            preview.className = `badge badge-${color}`;
+            preview.textContent = (emoji ? emoji + ' ' : '') + name;
+        }
+
+        // Keep preview live while typing
+        document.addEventListener('DOMContentLoaded', () => {
+            const nameEl = document.getElementById('cat-name');
+            if (nameEl) nameEl.addEventListener('input', updateCatPreview);
+            const emojiEl = document.getElementById('cat-emoji');
+            if (emojiEl) emojiEl.addEventListener('input', () => { renderCatEmojiPresets(emojiEl.value.trim()); updateCatPreview(); });
+        });
+
+        function saveCategory() {
+            const name = document.getElementById('cat-name').value.trim();
+            const emoji = document.getElementById('cat-emoji').value.trim();
+            const color = document.getElementById('cat-color').value || 'blue';
+
+            if (!name) { toast('Category name is required', 'error'); return; }
+
+            // Check for duplicate names (ignore self when editing)
+            const duplicate = db.categories.find(c => c.name.toLowerCase() === name.toLowerCase() && c.id !== editingCatId);
+            if (duplicate) { toast('A category with that name already exists', 'error'); return; }
+
+            if (editingCatId) {
+                const cat = db.categories.find(c => c.id === editingCatId);
+                const oldName = cat.name;
+                Object.assign(cat, { name, emoji, color });
+                // Rename category on all items that used the old name
+                db.items.forEach(item => { if (item.category === oldName) item.category = name; });
+                toast('Category updated!', 'success');
+            } else {
+                db.categories.push({ id: newId('categories'), name, emoji, color });
+                toast(`Category "${name}" created!`, 'success');
+            }
+
+            closeModal('modal-category');
+
+            // If triggered from item modal: refresh the category dropdown and re-select the new/edited cat
+            if (calledFromItemModal) {
+                populateCategorySelect('item-category', name);
+            } else {
+                renderCategoriesPage();
+                renderInventory();
+                renderPOSItems();
+            }
+        }
+
+        function deleteCategory(catId) {
+            const cat = db.categories.find(c => c.id === catId);
+            if (!cat) return;
+            const itemCount = db.items.filter(i => i.category === cat.name).length;
+            if (itemCount > 0) { toast('Remove all items in this category first', 'error'); return; }
+            db.categories = db.categories.filter(c => c.id !== catId);
+            renderCategoriesPage();
+            toast(`Category "${cat.name}" deleted`, 'info');
         }
 
         // ===================== RESTOCK =====================
