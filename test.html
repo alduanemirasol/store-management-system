@@ -1297,6 +1297,140 @@
             font-style: italic;
         }
 
+        /* Low Stock Alert Banner */
+        .low-stock-banner {
+            background: var(--orange-light);
+            border-bottom: 1px solid #f97316;
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-shrink: 0;
+            animation: slideDown 0.25s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .low-stock-banner-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .low-stock-banner-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--orange);
+            white-space: nowrap;
+        }
+
+        .low-stock-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .low-stock-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #fff;
+            border: 1.5px solid var(--orange);
+            border-radius: 20px;
+            padding: 2px 10px;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--orange);
+            cursor: pointer;
+            transition: all 0.12s;
+        }
+
+        .low-stock-chip:hover {
+            background: var(--orange);
+            color: #fff;
+        }
+
+        .low-stock-chip.out {
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        .low-stock-chip.out:hover {
+            background: var(--red);
+            color: #fff;
+        }
+
+        .low-stock-dismiss {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--orange);
+            font-size: 16px;
+            padding: 2px 6px;
+            border-radius: 6px;
+            flex-shrink: 0;
+            font-weight: 700;
+        }
+
+        .low-stock-dismiss:hover {
+            background: rgba(234, 88, 12, 0.15);
+        }
+
+        /* Nav badge */
+        .nav-badge {
+            margin-left: auto;
+            background: var(--orange);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        /* Inventory low-stock panel */
+        .low-stock-panel {
+            background: var(--orange-light);
+            border: 1.5px solid var(--orange);
+            border-radius: var(--radius-lg);
+            padding: 16px 20px;
+            margin-bottom: 16px;
+        }
+
+        .low-stock-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .low-stock-panel-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--orange);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .low-stock-table td,
+        .low-stock-table th {
+            background: transparent !important;
+        }
+
         /* Category badge color variants (dynamic via badge-{color} classes) */
         .badge-yellow {
             background: var(--yellow-light);
@@ -1327,6 +1461,7 @@
                 </div>
                 <div class="nav-item" onclick="showPage('inventory')">
                     <span class="icon">📦</span> Inventory
+                    <span class="nav-badge" id="nav-low-stock-badge" style="display:none;"></span>
                 </div>
                 <div class="nav-item" onclick="showPage('restock')">
                     <span class="icon">🔄</span> Restock
@@ -1345,6 +1480,15 @@
 
         <!-- Main -->
         <div class="main">
+
+            <!-- Low Stock Alert Banner -->
+            <div id="low-stock-banner" style="display:none;" class="low-stock-banner">
+                <div class="low-stock-banner-left">
+                    <span class="low-stock-banner-title">⚠️ Low Stock Alert</span>
+                    <div class="low-stock-chips" id="low-stock-chips"></div>
+                </div>
+                <button class="low-stock-dismiss" onclick="dismissLowStockBanner()" title="Dismiss">✕</button>
+            </div>
 
             <!-- POS Page -->
             <div id="page-pos" class="page active" style="padding:0;">
@@ -1405,6 +1549,28 @@
                     <select id="inv-cat-filter" onchange="renderInventory()" style="width:160px;">
                         <option value="">All Categories</option>
                     </select>
+                </div>
+                <!-- Low Stock Panel -->
+                <div id="inv-low-stock-panel" class="low-stock-panel" style="display:none;">
+                    <div class="low-stock-panel-header">
+                        <span class="low-stock-panel-title">⚠️ Items Needing Attention</span>
+                        <button class="btn btn-sm" style="background:var(--orange);color:#fff;"
+                            onclick="showPage('restock')">Go to Restock →</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="low-stock-table">
+                            <thead>
+                                <tr>
+                                    <th style="background:transparent;">Item</th>
+                                    <th style="background:transparent;">Current Stock</th>
+                                    <th style="background:transparent;">Min. Level</th>
+                                    <th style="background:transparent;">Status</th>
+                                    <th style="background:transparent;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="low-stock-tbody"></tbody>
+                        </table>
+                    </div>
                 </div>
                 <div class="card">
                     <div class="table-wrap">
@@ -2369,6 +2535,7 @@
             toast(`✅ Checkout complete! Total: ₱${txn.total.toFixed(2)}`, 'success');
             clearCart();
             renderPOSItems();
+            updateLowStockAlerts();
         }
 
         // ===================== INVENTORY =====================
@@ -2411,6 +2578,7 @@
       </td>
     </tr>`;
             }).join('');
+            updateInventoryLowStockPanel(getLowStockItems());
         }
 
         function quickRestock(itemId) {
@@ -2613,6 +2781,7 @@
 
             closeModal('modal-add-item');
             renderInventory();
+            updateLowStockAlerts();
         }
 
         // ===================== CATEGORY MANAGEMENT =====================
@@ -2862,6 +3031,8 @@
             updateRestockPreview();
             renderRestockHistory();
             renderPOSItems();
+            bannerDismissed = false;
+            updateLowStockAlerts();
         }
 
         function renderRestockHistory() {
@@ -3079,9 +3250,99 @@
             setTimeout(() => el.remove(), 3000);
         }
 
+        // ===================== LOW STOCK ALERTS =====================
+        let bannerDismissed = false;
+
+        function getLowStockItems() {
+            return db.items.filter(item =>
+                item.low_stock_threshold > 0 &&
+                item.stock_quantity <= item.low_stock_threshold
+            );
+        }
+
+        function getOutOfStockItems() {
+            return db.items.filter(item => item.stock_quantity <= 0);
+        }
+
+        function updateLowStockAlerts() {
+            const lowItems = getLowStockItems();
+            const outItems = getOutOfStockItems();
+
+            // Update nav badge
+            const badgeEl = document.getElementById('nav-low-stock-badge');
+            if (lowItems.length > 0) {
+                badgeEl.textContent = lowItems.length;
+                badgeEl.style.display = 'inline-block';
+            } else {
+                badgeEl.style.display = 'none';
+            }
+
+            // Update global banner
+            const bannerEl = document.getElementById('low-stock-banner');
+            const chipsEl = document.getElementById('low-stock-chips');
+            if (lowItems.length > 0 && !bannerDismissed) {
+                bannerEl.style.display = 'flex';
+                chipsEl.innerHTML = lowItems.map(item => {
+                    const isOut = item.stock_quantity <= 0;
+                    return `<span class="low-stock-chip ${isOut ? 'out' : ''}" onclick="showPage('inventory')" title="Click to view inventory">
+                        ${item.emoji || '📦'} ${item.item_name}: ${formatStock(item)} ${item.base_unit}${isOut ? ' (Out)' : ''}
+                    </span>`;
+                }).join('');
+            } else {
+                bannerEl.style.display = 'none';
+            }
+
+            // Update inventory panel
+            updateInventoryLowStockPanel(lowItems);
+        }
+
+        function updateInventoryLowStockPanel(lowItems) {
+            const panel = document.getElementById('inv-low-stock-panel');
+            if (!panel) return;
+            if (!lowItems || lowItems.length === 0) {
+                panel.style.display = 'none';
+                return;
+            }
+            panel.style.display = 'block';
+            const tbody = document.getElementById('low-stock-tbody');
+            tbody.innerHTML = lowItems.map(item => {
+                const isOut = item.stock_quantity <= 0;
+                const pct = item.low_stock_threshold > 0
+                    ? Math.min(100, Math.round((item.stock_quantity / item.low_stock_threshold) * 100))
+                    : 100;
+                const barColor = isOut ? 'var(--red)' : 'var(--orange)';
+                return `<tr>
+                    <td><strong>${item.emoji || '📦'} ${item.item_name}</strong></td>
+                    <td>
+                        <strong style="color:${isOut ? 'var(--red)' : 'var(--orange)'}">
+                            ${formatStock(item)} ${item.base_unit}
+                        </strong>
+                        <div style="margin-top:4px;background:rgba(0,0,0,0.08);border-radius:4px;height:5px;width:100px;overflow:hidden;">
+                            <div style="width:${pct}%;background:${barColor};height:100%;border-radius:4px;transition:width 0.3s;"></div>
+                        </div>
+                    </td>
+                    <td style="color:var(--text2);">${item.low_stock_threshold} ${item.base_unit}</td>
+                    <td>${isOut
+                        ? '<span class="badge badge-red">Out of Stock</span>'
+                        : '<span class="badge badge-orange">Low Stock</span>'
+                    }</td>
+                    <td>
+                        <button class="btn btn-sm" style="background:var(--green-light);color:var(--green);" onclick="quickRestock(${item.id})">Restock</button>
+                        <button class="btn btn-sm btn-secondary" style="margin-left:4px;" onclick="editItem(${item.id})">Edit Min.</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function dismissLowStockBanner() {
+            bannerDismissed = true;
+            document.getElementById('low-stock-banner').style.display = 'none';
+        }
+
         // ===================== INIT =====================
         seedData();
         renderPOSItems();
+        updateLowStockAlerts();
     </script>
 </body>
 
