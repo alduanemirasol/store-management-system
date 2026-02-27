@@ -2,346 +2,1624 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POS & Inventory System</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Market POS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet" />
 
-    <!-- Fonts: Inter typeface for UI -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
+    <style>
+        /* ═══════════════════════════════════════
+       BAZAAR POS — Premium Light Theme
+       Aesthetic: Refined Mercantile
+       Fonts: Playfair Display + Outfit
+    ═══════════════════════════════════════ */
 
-    <link rel="stylesheet" href="styles.css">
+        :root {
+            --cream: #faf8f4;
+            --cream2: #f4f1eb;
+            --cream3: #ede9e0;
+            --ivory: #ffffff;
+            --border: #e2ddd4;
+            --border2: #d4cfc5;
+
+            --text: #1a1714;
+            --text2: #6b6560;
+            --text3: #a09b94;
+
+            --forest: #1e4d3a;
+            --forest2: #2a6650;
+            --forest-soft: rgba(30, 77, 58, 0.08);
+            --forest-glow: rgba(30, 77, 58, 0.14);
+
+            --gold: #b07d2e;
+            --gold2: #c99040;
+            --gold-soft: rgba(176, 125, 46, 0.1);
+
+            --green: #2d7a47;
+            --green-soft: rgba(45, 122, 71, 0.1);
+            --red: #c0392b;
+            --red-soft: rgba(192, 57, 43, 0.1);
+            --orange: #c05c1a;
+            --orange-soft: rgba(192, 92, 26, 0.1);
+            --blue: #2563a8;
+            --blue-soft: rgba(37, 99, 168, 0.1);
+
+            --radius: 14px;
+            --radius-sm: 9px;
+            --radius-xs: 5px;
+
+            --shadow-xs: 0 1px 2px rgba(26, 23, 20, 0.06);
+            --shadow-sm: 0 2px 8px rgba(26, 23, 20, 0.07), 0 1px 2px rgba(26, 23, 20, 0.04);
+            --shadow: 0 4px 16px rgba(26, 23, 20, 0.09), 0 1px 3px rgba(26, 23, 20, 0.05);
+            --shadow-lg: 0 12px 40px rgba(26, 23, 20, 0.13), 0 3px 8px rgba(26, 23, 20, 0.07);
+            --shadow-xl: 0 24px 64px rgba(26, 23, 20, 0.18), 0 6px 16px rgba(26, 23, 20, 0.08);
+
+            --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--cream);
+            color: var(--text);
+            min-height: 100vh;
+            font-size: 16px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Subtle dot-grid background texture */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: radial-gradient(circle, rgba(26, 23, 20, 0.055) 1px, transparent 1px);
+            background-size: 24px 24px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app {
+            display: flex;
+            flex-direction: row;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 10px;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+            appearance: none;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button {
+            display: none;
+        }
+
+        /* ── SIDEBAR ──────────────────────────── */
+        header {
+            background: var(--ivory);
+            border-right: 1px solid var(--border);
+            width: 220px;
+            min-width: 220px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            box-shadow: var(--shadow-sm);
+            padding: 0;
+            flex-shrink: 0;
+        }
+
+        .sidebar-logo-area {
+            padding: 24px 20px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+
+        .logo-emblem {
+            width: 34px;
+            height: 34px;
+            background: var(--forest);
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            line-height: 1;
+            box-shadow: 0 2px 8px rgba(30, 77, 58, 0.3);
+            flex-shrink: 0;
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .logo-name {
+            font-family: 'Inter', sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -0.5px;
+            line-height: 1.1;
+        }
+
+        .logo-tagline {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+        }
+
+        nav {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 16px 12px;
+            flex: 1;
+        }
+
+        .nav-section-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            padding: 8px 8px 4px;
+            margin-top: 4px;
+        }
+
+        nav button {
+            padding: 10px 12px;
+            border: none;
+            background: none;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text2);
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-align: left;
+            width: 100%;
+        }
+
+        nav button:hover {
+            background: var(--cream2);
+            color: var(--text);
+        }
+
+        nav button.active {
+            background: var(--forest);
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(30, 77, 58, 0.25);
+        }
+
+        .sidebar-footer {
+            padding: 16px 12px;
+            border-top: 1px solid var(--border);
+            font-size: 11px;
+            color: var(--text3);
+            text-align: center;
+        }
+
+        /* ── MAIN CONTENT ──────────────────────────── */
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            overflow-x: hidden;
+        }
+
+        /* ── MAIN ──────────────────────────── */
+        main {
+            flex: 1;
+            padding: 26px 28px;
+            max-width: 1480px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeUp 0.22s ease;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── UTILITIES ──────────────────────── */
+        .flex {
+            display: flex;
+        }
+
+        .flex-center {
+            display: flex;
+            align-items: center;
+        }
+
+        .gap-8 {
+            gap: 8px;
+        }
+
+        .gap-12 {
+            gap: 12px;
+        }
+
+        .ml-auto {
+            margin-left: auto;
+        }
+
+        .mb-16 {
+            margin-bottom: 16px;
+        }
+
+        .mb-20 {
+            margin-bottom: 20px;
+        }
+
+        .mt-8 {
+            margin-top: 8px;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .font-bold {
+            font-weight: 700;
+        }
+
+        .text-green {
+            color: var(--green);
+        }
+
+        .text-red {
+            color: var(--red);
+        }
+
+        .text-sm {
+            font-size: 12px;
+        }
+
+        .text-muted {
+            color: var(--text2);
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 16px 0;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 18px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+        }
+
+        /* ── PAGE HEADER ──────────────────────── */
+        .section-title {
+            font-family: 'Inter', sans-serif;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -0.6px;
+            margin-bottom: 3px;
+        }
+
+        .section-sub {
+            font-size: 15px;
+            color: var(--text2);
+            font-weight: 400;
+            margin-bottom: 22px;
+        }
+
+        /* ── CARD ──────────────────────────── */
+        .card {
+            background: var(--ivory);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 18px 22px 15px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--ivory);
+            min-height: 60px;
+            gap: 12px;
+        }
+
+        .card-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card-body {
+            padding: 20px 22px;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 44px 20px;
+            color: var(--text3);
+            font-size: 13px;
+        }
+
+        /* ── BUTTONS ──────────────────────────── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 18px;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all var(--transition);
+            letter-spacing: -0.1px;
+        }
+
+        .btn-primary {
+            background: var(--forest);
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(30, 77, 58, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: var(--forest2);
+            box-shadow: 0 4px 14px rgba(30, 77, 58, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--green);
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(45, 122, 71, 0.2);
+        }
+
+        .btn-success:hover {
+            background: #236038;
+            box-shadow: 0 4px 14px rgba(45, 122, 71, 0.28);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: var(--red-soft);
+            color: var(--red);
+            border: 1px solid rgba(192, 57, 43, 0.18);
+        }
+
+        .btn-danger:hover {
+            background: var(--red);
+            color: #fff;
+        }
+
+        .btn-ghost {
+            background: var(--cream2);
+            color: var(--text2);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost:hover {
+            background: var(--cream3);
+            color: var(--text);
+            border-color: var(--border2);
+        }
+
+        .btn-sm {
+            padding: 6px 13px;
+            font-size: 13px;
+        }
+
+        .btn-icon {
+            padding: 7px;
+            width: 32px;
+            height: 32px;
+            justify-content: center;
+        }
+
+        /* ── FORMS ──────────────────────────── */
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text3);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            color: var(--text);
+            background: var(--cream);
+            transition: all var(--transition);
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: var(--text3);
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--forest);
+            box-shadow: 0 0 0 3px var(--forest-soft);
+            background: var(--ivory);
+        }
+
+        .search-bar {
+            position: relative;
+        }
+
+        .search-bar input {
+            padding-left: 38px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text3);
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        /* ── TABLES ──────────────────────────── */
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            padding: 11px 16px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: 0.9px;
+            border-bottom: 1px solid var(--border);
+            background: var(--cream2);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr {
+            transition: background var(--transition);
+        }
+
+        tbody tr:hover td {
+            background: var(--cream2);
+        }
+
+        /* ── BADGES ──────────────────────────── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-blue {
+            background: var(--blue-soft);
+            color: var(--blue);
+        }
+
+        .badge-green {
+            background: var(--green-soft);
+            color: var(--green);
+        }
+
+        .badge-red {
+            background: var(--red-soft);
+            color: var(--red);
+        }
+
+        .badge-orange {
+            background: var(--orange-soft);
+            color: var(--orange);
+        }
+
+        /* ── TAGS ──────────────────────────── */
+        .tag {
+            display: inline-block;
+            background: var(--cream2);
+            color: var(--text2);
+            padding: 5px 13px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            margin: 2px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: all var(--transition);
+        }
+
+        .tag:hover {
+            background: var(--cream3);
+            color: var(--text);
+        }
+
+        .tag.active {
+            background: var(--forest);
+            color: #fff;
+            border-color: var(--forest);
+            box-shadow: 0 2px 6px rgba(30, 77, 58, 0.2);
+        }
+
+        /* ── MODAL ──────────────────────────── */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(26, 23, 20, 0.45);
+            backdrop-filter: blur(3px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--ivory);
+            border-radius: var(--radius);
+            width: 92%;
+            max-width: 580px;
+            max-height: 92vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+            animation: slideUp 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 1px solid var(--border);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(24px) scale(0.97);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            padding: 22px 26px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--cream2);
+        }
+
+        .modal-title {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 19px;
+            color: var(--text);
+        }
+
+        .modal-close {
+            background: var(--cream3);
+            border: 1px solid var(--border);
+            font-size: 16px;
+            cursor: pointer;
+            color: var(--text2);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all var(--transition);
+        }
+
+        .modal-close:hover {
+            background: var(--border2);
+            color: var(--text);
+        }
+
+        .modal-body {
+            padding: 22px 26px;
+        }
+
+        .modal-footer {
+            padding: 16px 26px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            background: var(--cream2);
+        }
+
+        /* ── TOAST ──────────────────────────── */
+        #toast-container {
+            position: fixed;
+            bottom: 26px;
+            right: 26px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            background: var(--text);
+            color: #fff;
+            padding: 13px 20px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            animation: toastIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 340px;
+        }
+
+        .toast.success {
+            background: var(--green);
+        }
+
+        .toast.error {
+            background: var(--red);
+        }
+
+        @keyframes toastIn {
+            from {
+                transform: translateX(110%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* ── POS LAYOUT ──────────────────────── */
+        .pos-layout {
+            display: grid;
+            grid-template-columns: 1fr 390px;
+            gap: 22px;
+            align-items: start;
+            min-height: calc(100vh - 114px);
+        }
+
+        .pos-left {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .pos-left .card {
+            min-height: 0;
+        }
+
+        .pos-right {
+            position: sticky;
+            top: 26px;
+            height: fit-content;
+            max-height: calc(100vh - 52px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pos-right .card {
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 52px);
+            overflow: hidden;
+        }
+
+        /* ── ITEM GRID ──────────────────────── */
+        .item-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+            gap: 12px;
+            padding: 18px;
+        }
+
+        .item-card {
+            background: var(--ivory);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 14px;
+            cursor: pointer;
+            transition: all var(--transition);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 130px;
+        }
+
+        .item-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--forest-soft) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity var(--transition);
+        }
+
+        .item-card:hover {
+            border-color: var(--forest);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .item-card:hover::before {
+            opacity: 1;
+        }
+
+        .item-card .item-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            display: block;
+            position: relative;
+        }
+
+        .item-card .item-name {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 5px;
+            color: var(--text);
+            position: relative;
+        }
+
+        .item-card .item-price {
+            font-size: 13px;
+            color: var(--forest2);
+            font-weight: 600;
+            position: relative;
+        }
+
+        .item-card .item-stock {
+            font-size: 12px;
+            color: var(--text3);
+            margin-top: 3px;
+            position: relative;
+        }
+
+        /* ── CART ──────────────────────────── */
+        .cart-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 13px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .cart-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .cart-item-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text);
+        }
+
+        .cart-item-detail {
+            font-size: 13px;
+            color: var(--text2);
+            margin-top: 2px;
+        }
+
+        .cart-item-price {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--forest);
+            white-space: nowrap;
+        }
+
+        .qty-ctrl {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 7px;
+        }
+
+        .qty-btn {
+            width: 25px;
+            height: 25px;
+            border: 1px solid var(--border);
+            background: var(--cream2);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+            color: var(--text2);
+        }
+
+        .qty-btn:hover {
+            background: var(--red-soft);
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        /* ── CART TOTALS ──────────────────────── */
+        .cart-totals {
+            padding: 16px 20px;
+            background: var(--cream2);
+            border-top: 1.5px solid var(--border);
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 15px;
+            color: var(--text2);
+        }
+
+        .total-row.grand {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text);
+            border-top: 2px solid var(--border2);
+            padding-top: 12px;
+            margin-top: 6px;
+        }
+
+        .total-row.grand span:last-child {
+            color: var(--forest);
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* ── UNIT OPTIONS ──────────────────────── */
+        .unit-option {
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            cursor: pointer;
+            transition: all var(--transition);
+            margin-bottom: 8px;
+            background: var(--cream);
+        }
+
+        .unit-option:hover,
+        .unit-option.selected {
+            border-color: var(--forest);
+            background: var(--forest-soft);
+        }
+
+        .unit-option.selected {
+            box-shadow: 0 0 0 2px var(--forest-glow);
+        }
+
+        .unit-option .unit-name {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--text);
+        }
+
+        .unit-option .unit-detail {
+            font-size: 13px;
+            color: var(--text2);
+            margin-top: 2px;
+        }
+
+        /* ── RECEIPT ──────────────────────────── */
+        .receipt-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 14px;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .receipt-item:last-child {
+            border-bottom: none;
+        }
+
+        /* ── STAT CARDS ──────────────────────── */
+        .stat-card {
+            background: var(--ivory);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px 20px;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--forest);
+            opacity: 0.4;
+        }
+
+        .stat-card:first-child::after {
+            opacity: 1;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-family: 'Inter', sans-serif;
+            font-size: 34px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: var(--text);
+            line-height: 1;
+        }
+
+        .stat-sub {
+            font-size: 13px;
+            color: var(--text3);
+            margin-top: 6px;
+        }
+
+        /* ── RESTOCK PREVIEW ──────────────────── */
+        #restock-preview {
+            background: var(--forest-soft);
+            border: 1px solid rgba(30, 77, 58, 0.15);
+            border-radius: var(--radius-sm);
+            padding: 13px 15px;
+            font-size: 14px;
+            color: var(--forest);
+        }
+
+        /* ── TABS ──────────────────────────── */
+        .tabs {
+            display: flex;
+            gap: 3px;
+            background: var(--cream2);
+            padding: 4px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 9px;
+            border: none;
+            background: none;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text2);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .tab.active {
+            background: var(--ivory);
+            color: var(--text);
+            font-weight: 700;
+            box-shadow: var(--shadow-xs);
+        }
+
+        /* ── SELL PREVIEW ──────────────────────── */
+        #sell-preview {
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* ── CHANGE DISPLAY ──────────────────── */
+        .change-box {
+            background: var(--forest-soft);
+            border: 1px solid rgba(30, 77, 58, 0.15);
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 14px;
+        }
+
+        /* ── CATEGORY FILTER BAR ──────────────── */
+        .filter-bar {
+            padding: 12px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-items: center;
+            background: var(--cream2);
+            min-height: 52px;
+        }
+
+        /* ── CHECKOUT SECTION ──────────────────── */
+        .checkout-area {
+            padding: 16px 20px 22px;
+            background: var(--ivory);
+            border-top: 1px solid var(--border);
+        }
+
+        /* ── UNIT VARIANT ROW ──────────────────── */
+        .unit-variant-row {
+            gap: 8px;
+            margin-bottom: 10px;
+            align-items: end;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            background: var(--cream2);
+        }
+
+        /* ── DECORATIVE HEADER ELEMENT ──────────── */
+        .page-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 22px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--border);
+            gap: 16px;
+        }
+
+        /* ── RESPONSIVE ──────────────────────── */
+        @media (max-width: 960px) {
+            .app {
+                flex-direction: column;
+            }
+
+            header {
+                width: 100%;
+                min-width: unset;
+                height: auto;
+                flex-direction: column;
+                position: sticky;
+                top: 0;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .sidebar-logo-area {
+                padding: 14px 16px;
+                border-bottom: 1px solid var(--border);
+                width: 100%;
+            }
+
+            .logo {
+                gap: 10px;
+            }
+
+            nav {
+                flex-direction: row;
+                flex-wrap: wrap;
+                padding: 10px 12px;
+                gap: 4px;
+            }
+
+            nav button {
+                width: auto;
+                flex: 0 1 auto;
+                padding: 7px 12px;
+                font-size: 13px;
+            }
+
+            .nav-section-label {
+                display: none;
+            }
+
+            .sidebar-footer {
+                display: none;
+            }
+
+            .pos-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .pos-right {
+                position: static;
+                max-height: none;
+            }
+
+            .pos-right .card {
+                max-height: none;
+            }
+
+            .grid-4 {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            main {
+                padding: 16px;
+            }
+
+            header {
+                padding: 0;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <!-- App: Main application container -->
     <div class="app">
 
-        <!-- Header: Logo and navigation -->
+        <!-- SIDEBAR -->
         <header>
-            <div class="logo">
-                <div class="logo-dot"></div>
-                MarketPOS
+            <div class="sidebar-logo-area">
+                <div class="logo">
+                    <div class="logo-emblem">🛒</div>
+                    <div class="logo-text">
+                        <div class="logo-name">Market POS</div>
+                        <div class="logo-tagline">Sales & Inventory</div>
+                    </div>
+                </div>
             </div>
             <nav>
-                <button class="active" onclick="Logic.showPage('pos', event)">🛒 POS</button>
+                <div class="nav-section-label">Sales</div>
+                <button class="active" onclick="Logic.showPage('pos', event)">🛒 Point of Sale</button>
+                <div class="nav-section-label">Stock</div>
                 <button onclick="Logic.showPage('inventory', event)">📦 Inventory</button>
                 <button onclick="Logic.showPage('restock', event)">🔄 Restock</button>
-                <button onclick="Logic.showPage('pricing', event)">🏷️ Custom Pricing</button>
+                <div class="nav-section-label">Settings</div>
+                <button onclick="Logic.showPage('pricing', event)">🏷️ Pricing</button>
+                <div class="nav-section-label">Reports</div>
                 <button onclick="Logic.showPage('dashboard', event)">📊 Dashboard</button>
             </nav>
+            <div class="sidebar-footer">Market POS v1.0</div>
         </header>
 
-        <!-- Main: Page content area -->
-        <main>
+        <div class="main-content">
 
-            <!-- POS Page: Point of sale interface -->
-            <div class="page active" id="page-pos">
-                <div class="pos-layout">
+            <main>
 
-                    <div class="pos-left">
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-title">Products</div>
-                                <div class="flex gap-8">
-                                    <div class="search-bar" style="width:200px">
+                <!-- ── POS PAGE ─────────────────────── -->
+                <div class="page active" id="page-pos">
+                    <div class="pos-layout">
+
+                        <div class="pos-left">
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="card-title">Products</div>
+                                    <div class="search-bar" style="width:210px">
                                         <span class="search-icon">🔍</span>
-                                        <input type="text" id="item-search" placeholder="Search..."
+                                        <input type="text" id="item-search" placeholder="Search products…"
                                             oninput="Logic.onPosSearch(this.value)">
                                     </div>
                                 </div>
+                                <div class="filter-bar">
+                                    <span class="tag active" data-cat="all"
+                                        onclick="Logic.onCategoryFilter('all', this)">All</span>
+                                    <span class="tag" data-cat="Grains"
+                                        onclick="Logic.onCategoryFilter('Grains', this)">🌾
+                                        Grains</span>
+                                    <span class="tag" data-cat="Dairy & Eggs"
+                                        onclick="Logic.onCategoryFilter('Dairy &amp; Eggs', this)">🥚 Dairy &amp;
+                                        Eggs</span>
+                                    <span class="tag" data-cat="Cooking"
+                                        onclick="Logic.onCategoryFilter('Cooking', this)">🫙 Cooking</span>
+                                    <span class="tag" data-cat="Snacks"
+                                        onclick="Logic.onCategoryFilter('Snacks', this)">🍬
+                                        Snacks</span>
+                                    <span class="tag" data-cat="Vegetables"
+                                        onclick="Logic.onCategoryFilter('Vegetables', this)">🥬 Vegetables</span>
+                                </div>
+                                <div class="item-grid" id="item-grid"></div>
                             </div>
+                        </div>
 
-                            <div
-                                style="padding:12px 16px; border-bottom:1px solid var(--border); display:flex; flex-wrap:wrap; gap:4px;">
-                                <span class="tag active" data-cat="all"
-                                    onclick="Logic.onCategoryFilter('all', this)">All</span>
-                                <span class="tag" data-cat="Grains"
-                                    onclick="Logic.onCategoryFilter('Grains', this)">Grains</span>
-                                <span class="tag" data-cat="Dairy & Eggs"
-                                    onclick="Logic.onCategoryFilter('Dairy &amp; Eggs', this)">Dairy &amp; Eggs</span>
-                                <span class="tag" data-cat="Cooking"
-                                    onclick="Logic.onCategoryFilter('Cooking', this)">Cooking</span>
-                                <span class="tag" data-cat="Snacks"
-                                    onclick="Logic.onCategoryFilter('Snacks', this)">Snacks</span>
-                                <span class="tag" data-cat="Vegetables"
-                                    onclick="Logic.onCategoryFilter('Vegetables', this)">Vegetables</span>
+                        <div class="pos-right">
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="card-title">Current Order</div>
+                                    <button class="btn btn-ghost btn-sm" onclick="Logic.onClearCart()">✕ Clear</button>
+                                </div>
+
+                                <div id="cart-items"
+                                    style="padding: 0 20px; flex: 1; overflow-y: auto; min-height: 120px; max-height: 320px;">
+                                    <div class="empty">No items in order</div>
+                                </div>
+
+                                <div class="cart-totals">
+                                    <div class="total-row">
+                                        <span>Subtotal</span>
+                                        <span id="subtotal">₱0.00</span>
+                                    </div>
+                                    <div class="total-row">
+                                        <span>Tax (0%)</span>
+                                        <span>₱0.00</span>
+                                    </div>
+                                    <div class="total-row grand">
+                                        <span>Total</span>
+                                        <span id="total">₱0.00</span>
+                                    </div>
+                                </div>
+
+                                <div class="checkout-area">
+                                    <div class="form-group" style="margin-bottom: 10px">
+                                        <label>Amount Tendered</label>
+                                        <input type="number" id="tendered" placeholder="₱0.00" min="0" step="0.01"
+                                            oninput="Logic.onTenderedChange()">
+                                    </div>
+                                    <div class="change-box total-row mb-16" style="margin-bottom: 14px">
+                                        <span class="font-bold" style="color: var(--text2)">Change</span>
+                                        <span class="font-bold text-green" id="change-amt">₱0.00</span>
+                                    </div>
+                                    <button class="btn btn-success"
+                                        style="width:100%; justify-content:center; font-size:15px; padding: 12px;"
+                                        onclick="Logic.onCheckout()">
+                                        ✓ Complete Sale
+                                    </button>
+                                </div>
                             </div>
+                        </div>
 
-                            <div class="item-grid" id="item-grid"></div>
+                    </div>
+                </div>
+
+                <!-- ── INVENTORY PAGE ─────────────────────── -->
+                <div class="page" id="page-inventory">
+                    <div class="page-header-row">
+                        <div>
+                            <div class="section-title">Inventory</div>
+                            <div class="section-sub" style="margin-bottom:0">Manage your product catalog and stock
+                                levels
+                            </div>
+                        </div>
+                        <div class="flex gap-8">
+                            <div class="search-bar" style="width:240px">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" placeholder="Search inventory…"
+                                    oninput="Logic.onInventorySearch(this.value)">
+                            </div>
+                            <button class="btn btn-primary" onclick="Logic.onAddItem()">＋ Add Item</button>
                         </div>
                     </div>
+                    <div class="card">
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Category</th>
+                                        <th>Base Unit</th>
+                                        <th>Stock</th>
+                                        <th>Buy Price</th>
+                                        <th>Sell Price</th>
+                                        <th>Variants</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventory-table"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
 
-                    <div class="pos-right">
+                <!-- ── RESTOCK PAGE ─────────────────────── -->
+                <div class="page" id="page-restock">
+                    <div class="page-header-row">
+                        <div>
+                            <div class="section-title">Restock</div>
+                            <div class="section-sub" style="margin-bottom:0">Add inventory by base unit or pack variant
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid-2">
                         <div class="card">
                             <div class="card-header">
-                                <div class="card-title">Current Order</div>
-                                <button class="btn btn-ghost btn-sm" onclick="Logic.onClearCart()">Clear</button>
+                                <div class="card-title">Restock Item</div>
                             </div>
-
-                            <div id="cart-items" style="padding:0 16px; max-height:360px; overflow-y:auto;">
-                                <div class="empty">No items yet</div>
-                            </div>
-
-                            <div class="cart-totals">
-                                <div class="total-row">
-                                    <span>Subtotal</span>
-                                    <span id="subtotal">₱0.00</span>
-                                </div>
-                                <div class="total-row">
-                                    <span class="text-muted text-sm">Tax (0%)</span>
-                                    <span class="text-muted text-sm">₱0.00</span>
-                                </div>
-                                <div class="total-row grand">
-                                    <span>Total</span>
-                                    <span id="total">₱0.00</span>
-                                </div>
-                            </div>
-
-                            <div style="padding:0 16px 16px">
-                                <div class="form-group" style="margin-bottom:8px">
-                                    <label>Amount Tendered</label>
-                                    <input type="number" id="tendered" placeholder="₱0.00" min="0" step="0.01"
-                                        oninput="Logic.onTenderedChange()">
-                                </div>
-                                <div class="total-row mb-16"
-                                    style="background:var(--green-soft);padding:10px 12px;border-radius:var(--radius-sm);">
-                                    <span class="font-bold">Change</span>
-                                    <span class="font-bold text-green" id="change-amt">₱0.00</span>
-                                </div>
-                                <button class="btn btn-success"
-                                    style="width:100%;justify-content:center;font-size:15px;"
-                                    onclick="Logic.onCheckout()">
-                                    ✅ Complete Sale
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Inventory Page: Product catalog management -->
-            <div class="page" id="page-inventory">
-                <div class="flex-center gap-12 mb-16">
-                    <div>
-                        <div class="section-title">Inventory</div>
-                        <div class="section-sub">Manage your product catalog and stock levels</div>
-                    </div>
-                    <div class="ml-auto flex gap-8">
-                        <button class="btn btn-primary" onclick="Logic.onAddItem()">+ Add Item</button>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="search-bar" style="width:250px">
-                            <span class="search-icon">🔍</span>
-                            <input type="text" placeholder="Search inventory..."
-                                oninput="Logic.onInventorySearch(this.value)">
-                        </div>
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Item</th>
-                                    <th>Category</th>
-                                    <th>Base Unit</th>
-                                    <th>Stock</th>
-                                    <th>Buy Price</th>
-                                    <th>Sell Price</th>
-                                    <th>Units</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="inventory-table"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Restock Page: Inventory restocking interface -->
-            <div class="page" id="page-restock">
-                <div class="mb-16">
-                    <div class="section-title">Restock</div>
-                    <div class="section-sub">Add stock by base unit or unit variants</div>
-                </div>
-                <div class="grid-2">
-
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-title">Restock Item</div>
-                        </div>
-                        <div class="card-body">
-                            <div class="form-group">
-                                <label>Select Item</label>
-                                <select id="restock-item" onchange="Logic.onRestockItemChange()">
-                                    <option value="">-- Choose item --</option>
-                                </select>
-                            </div>
-                            <div id="restock-unit-section" style="display:none">
+                            <div class="card-body">
                                 <div class="form-group">
-                                    <label>Restock By</label>
-                                    <div id="restock-units"></div>
+                                    <label>Select Item</label>
+                                    <select id="restock-item" onchange="Logic.onRestockItemChange()">
+                                        <option value="">— Choose an item —</option>
+                                    </select>
                                 </div>
-                                <div class="form-group">
-                                    <label>Quantity</label>
-                                    <input type="number" id="restock-qty" placeholder="Enter quantity" min="1"
-                                        step="any">
+                                <div id="restock-unit-section" style="display:none">
+                                    <div class="form-group">
+                                        <label>Restock By</label>
+                                        <div id="restock-units"></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Quantity</label>
+                                        <input type="number" id="restock-qty" placeholder="Enter quantity" min="1"
+                                            step="any">
+                                    </div>
+                                    <div id="restock-preview" style="margin-bottom: 16px; display: none;"></div>
+                                    <button class="btn btn-success" onclick="Logic.onDoRestock()">✓ Confirm
+                                        Restock</button>
                                 </div>
-                                <div id="restock-preview" style="background:var(--surface2);border-radius:var(--radius-sm);
-                          padding:12px;margin-bottom:16px;font-size:13px;display:none">
-                                </div>
-                                <button class="btn btn-success" onclick="Logic.onDoRestock()">✅ Confirm Restock</button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Restock History</div>
+                            </div>
+                            <div class="table-wrap" style="max-height: 420px; overflow-y: auto;">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>Unit</th>
+                                            <th>Qty</th>
+                                            <th>Base Units Added</th>
+                                            <th>Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="restock-history"></tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-title">Restock History</div>
+                <!-- ── PRICING PAGE ─────────────────────── -->
+                <div class="page" id="page-pricing">
+                    <div class="page-header-row">
+                        <div>
+                            <div class="section-title">Custom Pricing</div>
+                            <div class="section-sub" style="margin-bottom:0">Bundle deals, promos &amp; special price
+                                rules
+                            </div>
                         </div>
-                        <div class="table-wrap" style="max-height:400px;overflow-y:auto">
+                        <button class="btn btn-primary" onclick="Logic.onOpenAddPricing()">＋ Add Price Rule</button>
+                    </div>
+                    <div class="card">
+                        <div class="table-wrap">
                             <table>
                                 <thead>
                                     <tr>
                                         <th>Item</th>
-                                        <th>Unit</th>
+                                        <th>Title</th>
                                         <th>Qty</th>
-                                        <th>Base Units</th>
-                                        <th>Time</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="restock-history"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pricing Page: Custom pricing rules -->
-            <div class="page" id="page-pricing">
-                <div class="flex-center gap-12 mb-16">
-                    <div>
-                        <div class="section-title">Custom Pricing</div>
-                        <div class="section-sub">Bundle deals, promotional prices, and special offers</div>
-                    </div>
-                    <div class="ml-auto">
-                        <button class="btn btn-primary" onclick="Logic.onOpenAddPricing()">+ Add Price Rule</button>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="table-wrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Item</th>
-                                    <th>Title</th>
-                                    <th>Qty</th>
-                                    <th>Price</th>
-                                    <th>Per Unit</th>
-                                    <th>Status</th>
-                                    <th>Dates</th>
-                                    <th>Note</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="pricing-table"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Dashboard Page: Sales stats and inventory overview -->
-            <div class="page" id="page-dashboard">
-                <div class="mb-16">
-                    <div class="section-title">Dashboard</div>
-                    <div class="section-sub">Sales overview and inventory insights</div>
-                </div>
-
-                <div class="grid-4 mb-16">
-                    <div class="stat-card">
-                        <div class="stat-label">Today's Sales</div>
-                        <div class="stat-value" id="d-sales">₱0</div>
-                        <div class="stat-sub" id="d-transactions">0 transactions</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Items Sold</div>
-                        <div class="stat-value" id="d-items">0</div>
-                        <div class="stat-sub">Units today</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Total Items</div>
-                        <div class="stat-value" id="d-catalog">0</div>
-                        <div class="stat-sub">In catalog</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Low Stock</div>
-                        <div class="stat-value text-red" id="d-lowstock">0</div>
-                        <div class="stat-sub">Items need restock</div>
-                    </div>
-                </div>
-                <div class="grid-2">
-
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-title">Recent Transactions</div>
-                        </div>
-                        <div class="table-wrap" style="max-height:320px;overflow-y:auto">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Time</th>
-                                        <th>Items</th>
-                                        <th>Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="txn-table"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-title">Inventory Status</div>
-                        </div>
-                        <div class="table-wrap" style="max-height:320px;overflow-y:auto">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Stock</th>
+                                        <th>Price</th>
+                                        <th>Per Unit</th>
                                         <th>Status</th>
+                                        <th>Dates</th>
+                                        <th>Note</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="stock-table"></tbody>
+                                <tbody id="pricing-table"></tbody>
                             </table>
                         </div>
                     </div>
                 </div>
-            </div>
-        </main>
+
+                <!-- ── DASHBOARD PAGE ─────────────────────── -->
+                <div class="page" id="page-dashboard">
+                    <div class="page-header-row">
+                        <div>
+                            <div class="section-title">Dashboard</div>
+                            <div class="section-sub" style="margin-bottom:0">Sales overview &amp; inventory insights
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid-4 mb-20">
+                        <div class="stat-card">
+                            <div class="stat-label">Today's Revenue</div>
+                            <div class="stat-value" id="d-sales">₱0</div>
+                            <div class="stat-sub" id="d-transactions">0 transactions</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Items Sold Today</div>
+                            <div class="stat-value" id="d-items">0</div>
+                            <div class="stat-sub">line items</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Catalog Size</div>
+                            <div class="stat-value" id="d-catalog">0</div>
+                            <div class="stat-sub">products</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Low Stock Alerts</div>
+                            <div class="stat-value text-red" id="d-lowstock">0</div>
+                            <div class="stat-sub">items need restock</div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Recent Transactions</div>
+                            </div>
+                            <div class="table-wrap" style="max-height: 340px; overflow-y: auto;">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>Items</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="txn-table"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Inventory Status</div>
+                            </div>
+                            <div class="table-wrap" style="max-height: 340px; overflow-y: auto;">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>Stock</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="stock-table"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
     </div>
 
-    <!-- Toast: Notification container -->
+    <!-- TOAST CONTAINER -->
     <div id="toast-container"></div>
 
-
-    <!-- Sell Modal: Add item to cart -->
+    <!-- ── SELL MODAL ─────────────────────── -->
     <div class="modal-backdrop" id="sell-modal">
         <div class="modal">
             <div class="modal-header">
-                <div class="modal-title" id="sell-modal-title">Add to Cart</div>
+                <div class="modal-title" id="sell-modal-title">Add to Order</div>
                 <button class="modal-close" onclick="Logic.closeModal('sell-modal')">✕</button>
             </div>
             <div class="modal-body" id="sell-modal-body"></div>
             <div class="modal-footer">
                 <button class="btn btn-ghost" onclick="Logic.closeModal('sell-modal')">Cancel</button>
-                <button class="btn btn-primary" onclick="Logic.onAddToCart()">Add to Cart</button>
+                <button class="btn btn-primary" onclick="Logic.onAddToCart()">Add to Order</button>
             </div>
         </div>
     </div>
 
-    <!-- Add Item Modal: Create or edit inventory item -->
+    <!-- ── ADD ITEM MODAL ─────────────────────── -->
     <div class="modal-backdrop" id="add-item-modal">
         <div class="modal">
             <div class="modal-header">
@@ -373,30 +1651,31 @@
                         <input type="text" id="ai-unit" placeholder="e.g., kg, piece, mL">
                     </div>
                     <div class="form-group">
-                        <label>Stock Quantity (base units)</label>
+                        <label>Stock Quantity</label>
                         <input type="number" id="ai-stock" placeholder="0" min="0" step="any">
                     </div>
                 </div>
                 <div class="grid-2">
                     <div class="form-group">
-                        <label>Purchase Price / base unit</label>
+                        <label>Purchase Price / unit</label>
                         <input type="number" id="ai-buy" placeholder="0.00" min="0" step="0.01">
                     </div>
                     <div class="form-group">
-                        <label>Selling Price / base unit</label>
+                        <label>Selling Price / unit</label>
                         <input type="number" id="ai-sell" placeholder="0.00" min="0" step="0.01">
                     </div>
                 </div>
                 <div class="divider"></div>
-                <div style="font-weight:700;font-size:13px;margin-bottom:12px;">Unit Variants (Optional)</div>
+                <div style="font-weight:700; font-size:15px; margin-bottom:12px; color: var(--text)">Unit Variants <span
+                        style="font-weight:400; color: var(--text3)">(Optional)</span></div>
                 <div id="unit-variants-list"></div>
-                <button class="btn btn-ghost btn-sm" onclick="Logic.addUnitVariantRow()">+ Add Unit Variant</button>
+                <button class="btn btn-ghost btn-sm" onclick="Logic.addUnitVariantRow()" style="margin-bottom: 4px">＋
+                    Add Variant</button>
                 <div class="divider"></div>
-                <div style="font-weight:700;font-size:13px;margin-bottom:8px;">Allow price override when selling?</div>
-                <label style="display:flex;align-items:center;gap:8px;text-transform:none;
-                    letter-spacing:0;font-size:14px;font-weight:500;cursor:pointer;">
-                    <input type="checkbox" id="ai-override" style="width:auto">
-                    Enable manual price override per sale
+                <label
+                    style="display:flex; align-items:center; gap:9px; text-transform:none; letter-spacing:0; font-size:15px; font-weight:500; cursor:pointer; color: var(--text2)">
+                    <input type="checkbox" id="ai-override" style="width:auto; accent-color: var(--forest)">
+                    Allow manual price override per sale
                 </label>
             </div>
             <div class="modal-footer">
@@ -406,11 +1685,11 @@
         </div>
     </div>
 
-    <!-- Pricing Modal: Add custom price rule -->
+    <!-- ── PRICING MODAL ─────────────────────── -->
     <div class="modal-backdrop" id="add-pricing-modal">
         <div class="modal">
             <div class="modal-header">
-                <div class="modal-title">Add Custom Price Rule</div>
+                <div class="modal-title">Add Price Rule</div>
                 <button class="modal-close" onclick="Logic.closeModal('add-pricing-modal')">✕</button>
             </div>
             <div class="modal-body">
@@ -420,7 +1699,7 @@
                 </div>
                 <div class="form-group">
                     <label>Title / Description</label>
-                    <input type="text" id="cp-title" placeholder="e.g., 3 for 5.00 Deal">
+                    <input type="text" id="cp-title" placeholder="e.g., 3 for ₱5.00 Deal">
                 </div>
                 <div class="grid-2">
                     <div class="form-group">
@@ -446,9 +1725,10 @@
                     <label>Note</label>
                     <input type="text" id="cp-note" placeholder="Optional note">
                 </div>
-                <label style="display:flex;align-items:center;gap:8px;text-transform:none;
-                    letter-spacing:0;font-size:14px;font-weight:500;cursor:pointer;">
-                    <input type="checkbox" id="cp-active" style="width:auto" checked> Active
+                <label
+                    style="display:flex; align-items:center; gap:9px; text-transform:none; letter-spacing:0; font-size:15px; font-weight:500; cursor:pointer; color: var(--text2)">
+                    <input type="checkbox" id="cp-active" style="width:auto; accent-color: var(--forest)" checked>
+                    Active immediately
                 </label>
             </div>
             <div class="modal-footer">
@@ -458,31 +1738,763 @@
         </div>
     </div>
 
-    <!-- Receipt Modal: Display transaction receipt -->
+    <!-- ── RECEIPT MODAL ─────────────────────── -->
     <div class="modal-backdrop" id="receipt-modal">
-        <div class="modal">
+        <div class="modal" style="max-width: 400px;">
             <div class="modal-header">
                 <div class="modal-title">Receipt</div>
                 <button class="modal-close" onclick="Logic.closeModal('receipt-modal')">✕</button>
             </div>
             <div class="modal-body" id="receipt-body"></div>
             <div class="modal-footer">
-                <button class="btn btn-primary" onclick="Logic.closeModal('receipt-modal')">Done</button>
+                <button class="btn btn-primary" style="width:100%; justify-content:center;"
+                    onclick="Logic.closeModal('receipt-modal')">Done</button>
             </div>
         </div>
     </div>
 
-    <!-- Scripts: Load JavaScript modules in dependency order -->
-    <script src="js/data.js"></script>
-    <script src="js/helpers.js"></script>
-    <script src="js/services.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/logic.js"></script>
-
-    <!-- Init: Initialize application on DOM ready -->
+    <!-- ════════════════════════════════════════
+     SCRIPTS — All logic preserved exactly
+═══════════════════════════════════════════ -->
     <script>
+        // ── data.js ────────────────────────────────
+        const db = {
+            items: [], item_units: [], custom_pricing: [], transactions: [],
+            restock_history: [],
+            next_id: { item: 1, unit: 1, pricing: 1, txn: 1, restock: 1 },
+        };
+        function _createItem(data) {
+            const item = { id: db.next_id.item++, ...data };
+            db.items.push(item);
+            return item;
+        }
+        function _createUnit(data) {
+            const unit = { id: db.next_id.unit++, ...data };
+            db.item_units.push(unit);
+            return unit;
+        }
+        function seedDatabase() {
+            const rice = _createItem({ item_name: "Rice", category: "Grains", base_unit: "kg", purchase_price_per_unit: 45, selling_price_per_unit: 55, stock_quantity: 200, allow_override: false });
+            _createUnit({ item_id: rice.id, unit_name: "Sack", pack_quantity: 50, purchase_price: 2250, selling_price: 2750, note: "50 kg per sack" });
+            const egg = _createItem({ item_name: "Egg", category: "Dairy & Eggs", base_unit: "piece", purchase_price_per_unit: 7, selling_price_per_unit: 9, stock_quantity: 360, allow_override: false });
+            _createUnit({ item_id: egg.id, unit_name: "Tray", pack_quantity: 30, purchase_price: 210, selling_price: 270, note: "30 pieces per tray" });
+            const oil = _createItem({ item_name: "Cooking Oil", category: "Cooking", base_unit: "mL", purchase_price_per_unit: 0.1, selling_price_per_unit: 0.148, stock_quantity: 40000, allow_override: false });
+            _createUnit({ item_id: oil.id, unit_name: "Container", pack_quantity: 20000, purchase_price: 2000, selling_price: 2960, note: "20,000 mL per container" });
+            db.custom_pricing.push({ id: db.next_id.pricing++, item_id: oil.id, title: "250mL Serving", quantity: 250, price: 37, note: "Standard serving price", active: true, start_date: "", end_date: "" });
+            const candy = _createItem({ item_name: "Candy", category: "Snacks", base_unit: "piece", purchase_price_per_unit: 1, selling_price_per_unit: 1.5, stock_quantity: 500, allow_override: false });
+            _createUnit({ item_id: candy.id, unit_name: "Pack", pack_quantity: 100, purchase_price: 100, selling_price: 150, note: "100 pieces per pack" });
+            db.custom_pricing.push({ id: db.next_id.pricing++, item_id: candy.id, title: "3 for 5.00 Deal", quantity: 3, price: 5, note: "Promo bundle", active: true, start_date: "", end_date: "" });
+            const cabbage = _createItem({ item_name: "Cabbage", category: "Vegetables", base_unit: "kg", purchase_price_per_unit: 120, selling_price_per_unit: 180.5, stock_quantity: 75, allow_override: true });
+            _createUnit({ item_id: cabbage.id, unit_name: "Sack", pack_quantity: 25, purchase_price: 3000, selling_price: 4512.5, note: "25 kg per sack" });
+            db.custom_pricing.push({ id: db.next_id.pricing++, item_id: cabbage.id, title: "Per Piece (Medium)", quantity: 0.5, price: 25, note: "Approx 0.5 kg medium head", active: true, start_date: "", end_date: "" });
+        }
+    </script>
+
+    <script>
+        // ── helpers.js ─────────────────────────────
+        function fmt(n) { return "₱" + parseFloat(n).toFixed(2); }
+        function fmtNum(n, unit) {
+            const formatted = parseFloat(n).toLocaleString("en", { maximumFractionDigits: 3 });
+            return unit ? `${formatted} ${unit}` : formatted;
+        }
+        const CATEGORY_ICONS = { Grains: "🌾", "Dairy & Eggs": "🥚", Cooking: "🫙", Snacks: "🍬", Vegetables: "🥬", Other: "📦" };
+        function getCategoryIcon(cat) { return CATEGORY_ICONS[cat] || "📦"; }
+        const ALL_CATEGORIES = Object.keys(CATEGORY_ICONS);
+        function getItem(id) { return db.items.find((i) => i.id == id); }
+        function getUnits(item_id) { return db.item_units.filter((u) => u.item_id == item_id); }
+        function getActivePricing(item_id) {
+            const today = new Date().toISOString().split("T")[0];
+            return db.custom_pricing.filter((p) => {
+                if (!p.active || p.item_id != item_id) return false;
+                if (p.start_date && p.start_date > today) return false;
+                if (p.end_date && p.end_date < today) return false;
+                return true;
+            });
+        }
+        function calcRestockDetails(item, unitType, unitId, qty) {
+            if (unitType === "base") { return { baseUnits: qty, cost: qty * item.purchase_price_per_unit, label: `${qty} ${item.base_unit}`, unitLabel: item.base_unit }; }
+            const u = db.item_units.find((u) => u.id === unitId);
+            const baseUnits = qty * u.pack_quantity;
+            return { baseUnits, cost: qty * u.purchase_price, label: `${qty} ${u.unit_name} = ${baseUnits} ${item.base_unit}`, unitLabel: u.unit_name };
+        }
+        function calcSellDetails(item, sellType, unitId, pricingId, qty, overridePrice) {
+            let unitPrice = 0, baseUnits = 0, label = "";
+            if (sellType === "base") { unitPrice = item.selling_price_per_unit; baseUnits = qty; label = `${qty} ${item.base_unit}`; }
+            else if (sellType === "unit") { const u = db.item_units.find((u) => u.id === unitId); unitPrice = u.selling_price; baseUnits = qty * u.pack_quantity; label = `${qty} ${u.unit_name} (${baseUnits} ${item.base_unit})`; }
+            else if (sellType === "pricing") { const p = db.custom_pricing.find((p) => p.id === pricingId); unitPrice = p.price; baseUnits = qty * p.quantity; label = `${qty}× ${p.title} (${baseUnits} ${item.base_unit})`; }
+            let total = unitPrice * qty;
+            if (overridePrice !== null && overridePrice !== undefined && overridePrice !== "") { total = parseFloat(overridePrice) || total; label += " (override)"; }
+            return { total, baseUnits, label };
+        }
+        function getStockStatus(item) {
+            if (item.stock_quantity < 10) return { badgeClass: "badge-red", badgeText: "Low" };
+            if (item.stock_quantity < 50) return { badgeClass: "badge-orange", badgeText: "OK" };
+            return { badgeClass: "badge-green", badgeText: "Good" };
+        }
+    </script>
+
+    <script>
+        // ── services.js ────────────────────────────
+        const ItemService = (() => {
+            function create(data) { const item = { id: db.next_id.item++, ...data }; db.items.push(item); return item; }
+            function update(id, data) { const item = getItem(id); if (!item) return null; Object.assign(item, data); return item; }
+            function remove(id) { db.items = db.items.filter((i) => i.id !== id); db.item_units = db.item_units.filter((u) => u.item_id !== id); db.custom_pricing = db.custom_pricing.filter((p) => p.item_id !== id); }
+            function replaceUnits(item_id, units) { db.item_units = db.item_units.filter((u) => u.item_id !== item_id); units.forEach((u) => { if (u.unit_name) { db.item_units.push({ id: db.next_id.unit++, item_id, ...u }); } }); }
+            function list(category = "all", search = "") { let items = db.items; if (category && category !== "all") { items = items.filter((i) => i.category === category); } if (search) { const q = search.toLowerCase(); items = items.filter((i) => i.item_name.toLowerCase().includes(q)); } return items; }
+            return { create, update, remove, replaceUnits, list };
+        })();
+
+        const CartService = (() => {
+            let _cart = [];
+            function addItem(item, sellType, unitId, pricingId, qty, overridePrice) {
+                const { total, baseUnits, label } = calcSellDetails(item, sellType, unitId, pricingId, qty, overridePrice);
+                if (!baseUnits || baseUnits <= 0) return { ok: false, error: "Invalid quantity" };
+                if (baseUnits > item.stock_quantity) return { ok: false, error: `Insufficient stock (available: ${fmtNum(item.stock_quantity)} ${item.base_unit})` };
+                const cartItem = { item_id: item.id, item_name: item.item_name, label, price: total, baseUnits };
+                _cart.push(cartItem);
+                return { ok: true, cartItem };
+            }
+            function removeItem(index) { _cart.splice(index, 1); }
+            function clear() { _cart = []; }
+            function getItems() { return [..._cart]; }
+            function getTotal() { return _cart.reduce((sum, c) => sum + c.price, 0); }
+            function getChange(tendered) { return tendered - getTotal(); }
+            function checkout(tendered) {
+                if (!_cart.length) return { ok: false, error: "Cart is empty" };
+                const total = getTotal();
+                if (tendered < total) return { ok: false, error: "Insufficient payment" };
+                _cart.forEach((c) => { const item = getItem(c.item_id); if (item) item.stock_quantity -= c.baseUnits; });
+                const transaction = { id: db.next_id.txn++, items: [..._cart], total, tendered, change: tendered - total, time: new Date() };
+                db.transactions.push(transaction);
+                clear();
+                return { ok: true, transaction };
+            }
+            return { addItem, removeItem, clear, getItems, getTotal, getChange, checkout };
+        })();
+
+        const RestockService = (() => {
+            function restock(itemId, unitType, unitId, qty) {
+                if (!qty || qty <= 0) return { ok: false, error: "Enter a valid quantity" };
+                const item = getItem(itemId);
+                if (!item) return { ok: false, error: "Item not found" };
+                const { baseUnits, unitLabel, label } = calcRestockDetails(item, unitType, unitId, qty);
+                item.stock_quantity += baseUnits;
+                db.restock_history.unshift({ item_name: item.item_name, unit: unitLabel, qty, base_units: baseUnits, time: new Date() });
+                return { ok: true, baseUnits, label, item };
+            }
+            function getHistory(limit = 50) { return db.restock_history.slice(0, limit); }
+            return { restock, getHistory };
+        })();
+
+        const PricingService = (() => {
+            function create(data) {
+                const { title, quantity, price } = data;
+                if (!title || !quantity || !price) return { ok: false, error: "Title, quantity, and price are required" };
+                const rule = { id: db.next_id.pricing++, ...data };
+                db.custom_pricing.push(rule);
+                return { ok: true, rule };
+            }
+            function toggle(id) { const rule = db.custom_pricing.find((p) => p.id === id); if (rule) rule.active = !rule.active; }
+            function remove(id) { db.custom_pricing = db.custom_pricing.filter((p) => p.id !== id); }
+            function list() { return db.custom_pricing; }
+            return { create, toggle, remove, list };
+        })();
+
+        const DashboardService = (() => {
+            function getStats() {
+                const today = new Date().toDateString();
+                const todayTxns = db.transactions.filter((t) => t.time.toDateString() === today);
+                const todaySales = todayTxns.reduce((s, t) => s + t.total, 0);
+                const todayItems = todayTxns.reduce((s, t) => s + t.items.length, 0);
+                const lowStockCnt = db.items.filter((i) => i.stock_quantity < 10).length;
+                return { todaySales, todayTransactions: todayTxns.length, todayItems, catalogCount: db.items.length, lowStockCount: lowStockCnt };
+            }
+            function getRecentTransactions(limit = 20) { return db.transactions.slice(-limit).reverse(); }
+            function getInventoryStatus() { return db.items.map((item) => ({ item, status: getStockStatus(item) })); }
+            return { getStats, getRecentTransactions, getInventoryStatus };
+        })();
+    </script>
+
+    <script>
+        // ── ui.js ──────────────────────────────────
+        function toast(msg, type = "") {
+            const el = document.createElement("div");
+            el.className = `toast ${type}`;
+            el.textContent = msg;
+            document.getElementById("toast-container").appendChild(el);
+            setTimeout(() => el.remove(), 3000);
+        }
+        function openModal(id) { document.getElementById(id).classList.add("open"); }
+        function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+        function showPage(pageId, event) {
+            document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"));
+            document.querySelectorAll("nav button").forEach((b) => b.classList.remove("active"));
+            document.getElementById("page-" + pageId).classList.add("active");
+            if (event && event.target) event.target.classList.add("active");
+            if (pageId === "restock") Logic.initRestockUI();
+        }
+
+        function renderItemGrid(items) {
+            const grid = document.getElementById("item-grid");
+            if (!items.length) {
+                grid.innerHTML = '<div class="empty" style="grid-column:1/-1">No products found</div>';
+                return;
+            }
+            grid.innerHTML = items.map((item) => `
+    <div class="item-card" onclick="Logic.onItemCardClick(${item.id})">
+      <span class="item-icon">${getCategoryIcon(item.category)}</span>
+      <div class="item-name">${item.item_name}</div>
+      <div class="item-price">${fmt(item.selling_price_per_unit)}/${item.base_unit}</div>
+      <div class="item-stock">${fmtNum(item.stock_quantity)} ${item.base_unit}</div>
+    </div>
+  `).join("");
+        }
+
+        function renderSellModalBody(item, units, activePricing, selection) {
+            let html = `
+    <div style="margin-bottom:16px; padding:12px 14px; background:var(--cream2); border-radius:var(--radius-sm); border:1px solid var(--border); font-size:14px; color:var(--text2)">
+      Available stock: <strong style="color:var(--text)">${fmtNum(item.stock_quantity)} ${item.base_unit}</strong>
+    </div>
+    <div style="font-weight:700; font-size:12px; color:var(--text3); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px;">Sell By</div>
+  `;
+            html += _unitOptionHTML(`By ${item.base_unit}`, `${fmt(item.selling_price_per_unit)} per ${item.base_unit}`, selection.type === "base", `Logic.onSellTypeSelect('base', null, null, this)`);
+            units.forEach((u) => {
+                const selected = selection.type === "unit" && selection.unitId === u.id;
+                html += _unitOptionHTML(u.unit_name, `${fmt(u.selling_price)} · ${u.pack_quantity} ${item.base_unit}${u.note ? " · " + u.note : ""}`, selected, `Logic.onSellTypeSelect('unit', ${u.id}, null, this)`);
+            });
+            activePricing.forEach((p) => {
+                const selected = selection.type === "pricing" && selection.pricingId === p.id;
+                html += _unitOptionHTML(`🏷 ${p.title}`, `${fmt(p.price)} for ${p.quantity} ${item.base_unit}${p.note ? " · " + p.note : ""}`, selected, `Logic.onSellTypeSelect('pricing', null, ${p.id}, this)`);
+            });
+            html += `
+    <div class="divider"></div>
+    <div class="form-group">
+      <label>Quantity</label>
+      <input type="number" id="sell-qty" value="${selection.qty || 1}" min="0.01" step="any" oninput="Logic.onSellQtyChange()">
+    </div>
+  `;
+            if (item.allow_override) {
+                html += `
+      <div class="form-group">
+        <label>Manual Price Override (₱) — leave blank for default</label>
+        <input type="number" id="sell-override" placeholder="Override price" min="0" step="0.01" oninput="Logic.onSellQtyChange()">
+      </div>
+    `;
+            }
+            html += `<div id="sell-preview" style="border-radius:var(--radius-sm); padding:12px 14px; font-size:14px; font-weight:600;"></div>`;
+            document.getElementById("sell-modal-title").textContent = `Add ${item.item_name}`;
+            document.getElementById("sell-modal-body").innerHTML = html;
+        }
+
+        function _unitOptionHTML(name, detail, isSelected, onclickHandler) {
+            return `
+    <div class="unit-option${isSelected ? " selected" : ""}" onclick="${onclickHandler}">
+      <div class="unit-name">${name}</div>
+      <div class="unit-detail">${detail}</div>
+    </div>
+  `;
+        }
+
+        function updateSellPreview(result, insufficientStock, stockMsg) {
+            const prev = document.getElementById("sell-preview");
+            if (!prev) return;
+            if (insufficientStock) {
+                prev.style.background = "var(--red-soft)";
+                prev.style.color = "var(--red)";
+                prev.style.border = "1px solid rgba(192,57,43,0.18)";
+                prev.textContent = `⚠ ${stockMsg}`;
+            } else if (result) {
+                prev.style.background = "var(--forest-soft)";
+                prev.style.color = "var(--forest)";
+                prev.style.border = "1px solid rgba(30,77,58,0.15)";
+                prev.textContent = `${result.label} → ${fmt(result.total)}`;
+            } else {
+                prev.textContent = "";
+                prev.style.background = "";
+                prev.style.border = "";
+            }
+        }
+
+        function activateSellOption(clickedEl) {
+            document.querySelectorAll("#sell-modal-body .unit-option").forEach((el) => el.classList.remove("selected"));
+            clickedEl.classList.add("selected");
+        }
+
+        function renderCart(cartItems, total) {
+            const container = document.getElementById("cart-items");
+            if (!cartItems.length) {
+                container.innerHTML = '<div class="empty">No items in order</div>';
+            } else {
+                container.innerHTML = cartItems.map((c, i) => `
+      <div class="cart-item">
+        <div class="cart-item-info">
+          <div class="cart-item-name">${c.item_name}</div>
+          <div class="cart-item-detail">${c.label}</div>
+          <div class="qty-ctrl">
+            <button class="qty-btn" onclick="Logic.onRemoveCartItem(${i})" title="Remove">✕</button>
+          </div>
+        </div>
+        <div class="cart-item-price">${fmt(c.price)}</div>
+      </div>
+    `).join("");
+            }
+            document.getElementById("subtotal").textContent = fmt(total);
+            document.getElementById("total").textContent = fmt(total);
+            renderChangeDisplay(total);
+        }
+
+        function renderChangeDisplay(total) {
+            const tendered = parseFloat(document.getElementById("tendered")?.value) || 0;
+            const change = tendered - total;
+            const el = document.getElementById("change-amt");
+            if (!el) return;
+            el.textContent = fmt(Math.max(0, change));
+            el.className = change < 0 ? "font-bold text-red" : "font-bold text-green";
+        }
+
+        function showReceipt(txn) {
+            const itemsHTML = txn.items.map((i) => `
+    <div class="receipt-item">
+      <span>
+        <strong>${i.item_name}</strong><br>
+        <span style="font-size:11px; color:var(--text2)">${i.label}</span>
+      </span>
+      <span style="font-weight:700; color:var(--forest)">${fmt(i.price)}</span>
+    </div>
+  `).join("");
+            document.getElementById("receipt-body").innerHTML = `
+    <div style="text-align:center; margin-bottom:20px; padding-bottom:16px; border-bottom:2px dashed var(--border)">
+      <div style="font-size:28px; margin-bottom:6px">🧾</div>
+      <div style="font-family:'Inter',sans-serif; font-weight:800; font-size:22px; color:var(--forest); letter-spacing:-0.5px">Market POS</div>
+      <div style="font-size:12px; color:var(--text3); margin-top:3px; letter-spacing:0.5px">Sales & Inventory</div>
+      <div style="font-size:12px; color:var(--text2); margin-top:6px">${txn.time.toLocaleString()}</div>
+    </div>
+    ${itemsHTML}
+    <div style="padding-top:12px; margin-top:4px; border-top:2px solid var(--border)">
+      <div class="receipt-item"><strong>Total</strong><strong style="color:var(--forest)">${fmt(txn.total)}</strong></div>
+      <div class="receipt-item"><span style="color:var(--text2)">Tendered</span><span>${fmt(txn.tendered)}</span></div>
+      <div class="receipt-item" style="border:none">
+        <strong>Change</strong>
+        <strong class="text-green">${fmt(txn.change)}</strong>
+      </div>
+    </div>
+  `;
+            openModal("receipt-modal");
+        }
+
+        function renderInventoryTable(items) {
+            const tbody = document.getElementById("inventory-table");
+            if (!items.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">No items found</td></tr>'; return; }
+            tbody.innerHTML = items.map((item) => {
+                const units = getUnits(item.id);
+                const stockLow = item.stock_quantity < 10;
+                return `
+      <tr>
+        <td><div style="font-weight:700; font-size:15px; color:var(--text)">${getCategoryIcon(item.category)} ${item.item_name}</div></td>
+        <td><span class="badge badge-blue">${item.category}</span></td>
+        <td style="color:var(--text2); font-size:14px">${item.base_unit}</td>
+        <td>
+          <span class="${stockLow ? "text-red font-bold" : "font-bold"}" style="font-size:14px">${fmtNum(item.stock_quantity)}</span>
+          <span class="text-muted" style="font-size:13px"> ${item.base_unit}</span>
+          ${stockLow ? '<span class="badge badge-red" style="margin-left:5px">Low</span>' : ""}
+        </td>
+        <td style="color:var(--text2); font-size:14px">${fmt(item.purchase_price_per_unit)}/${item.base_unit}</td>
+        <td style="font-weight:600; color:var(--forest); font-size:14px">${fmt(item.selling_price_per_unit)}/${item.base_unit}</td>
+        <td><span style="font-size:13px; color:var(--text2)">${units.length} variant${units.length !== 1 ? "s" : ""}</span></td>
+        <td>
+          <div class="flex gap-8">
+            <button class="btn btn-ghost btn-sm" onclick="Logic.onEditItem(${item.id})">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="Logic.onDeleteItem(${item.id})">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `;
+            }).join("");
+        }
+
+        function populateItemForm(item, units = []) {
+            const isEdit = !!item;
+            document.getElementById("add-item-title").textContent = isEdit ? "Edit Item" : "Add Item";
+            document.getElementById("edit-item-id").value = isEdit ? item.id : "";
+            document.getElementById("ai-name").value = isEdit ? item.item_name : "";
+            document.getElementById("ai-cat").value = isEdit ? item.category : "Grains";
+            document.getElementById("ai-unit").value = isEdit ? item.base_unit : "";
+            document.getElementById("ai-stock").value = isEdit ? item.stock_quantity : "";
+            document.getElementById("ai-buy").value = isEdit ? item.purchase_price_per_unit : "";
+            document.getElementById("ai-sell").value = isEdit ? item.selling_price_per_unit : "";
+            document.getElementById("ai-override").checked = isEdit ? item.allow_override || false : false;
+            const list = document.getElementById("unit-variants-list");
+            list.innerHTML = "";
+            units.forEach((u) => addUnitVariantRow(u));
+        }
+
+        function addUnitVariantRow(data = {}) {
+            const row = document.createElement("div");
+            row.className = "grid-2 unit-variant-row";
+            row.setAttribute("data-unit-id", data.id || "");
+            row.innerHTML = `
+    <div class="form-group" style="margin:0">
+      <label>Unit Name</label>
+      <input class="uv-name" type="text" value="${data.unit_name || ""}" placeholder="e.g., Sack">
+    </div>
+    <div class="form-group" style="margin:0">
+      <label>Pack Qty (base units)</label>
+      <input class="uv-pack" type="number" value="${data.pack_quantity || ""}" placeholder="e.g., 50" min="1" step="any">
+    </div>
+    <div class="form-group" style="margin:0">
+      <label>Purchase Price</label>
+      <input class="uv-buy" type="number" value="${data.purchase_price || ""}" placeholder="0.00" min="0" step="0.01">
+    </div>
+    <div class="form-group" style="margin:0">
+      <label>Sell Price</label>
+      <input class="uv-sell" type="number" value="${data.selling_price || ""}" placeholder="0.00" min="0" step="0.01">
+    </div>
+    <div class="form-group" style="margin:0; grid-column:1/-1">
+      <label>Note</label>
+      <input class="uv-note" type="text" value="${data.note || ""}" placeholder="Optional note">
+    </div>
+    <div style="grid-column:1/-1">
+      <button onclick="this.closest('.unit-variant-row').remove()" class="btn btn-danger btn-sm">Remove</button>
+    </div>
+  `;
+            document.getElementById("unit-variants-list").appendChild(row);
+        }
+
+        function readUnitVariantRows() {
+            const rows = [];
+            document.querySelectorAll("#unit-variants-list .unit-variant-row").forEach((row) => {
+                rows.push({
+                    unit_name: row.querySelector(".uv-name").value.trim(),
+                    pack_quantity: parseFloat(row.querySelector(".uv-pack").value) || 1,
+                    purchase_price: parseFloat(row.querySelector(".uv-buy").value) || 0,
+                    selling_price: parseFloat(row.querySelector(".uv-sell").value) || 0,
+                    note: row.querySelector(".uv-note").value.trim(),
+                });
+            });
+            return rows;
+        }
+
+        function readItemForm() {
+            return {
+                id: document.getElementById("edit-item-id").value,
+                item_name: document.getElementById("ai-name").value.trim(),
+                category: document.getElementById("ai-cat").value,
+                base_unit: document.getElementById("ai-unit").value.trim(),
+                stock_quantity: parseFloat(document.getElementById("ai-stock").value) || 0,
+                purchase_price_per_unit: parseFloat(document.getElementById("ai-buy").value) || 0,
+                selling_price_per_unit: parseFloat(document.getElementById("ai-sell").value) || 0,
+                allow_override: document.getElementById("ai-override").checked,
+                units: readUnitVariantRows(),
+            };
+        }
+
+        function populateRestockItemSelect(items) {
+            const sel = document.getElementById("restock-item");
+            sel.innerHTML = '<option value="">— Choose an item —</option>' + items.map((i) => `<option value="${i.id}">${i.item_name}</option>`).join("");
+            document.getElementById("restock-unit-section").style.display = "none";
+        }
+
+        function renderRestockUnits(item, units) {
+            let html = `
+    <div class="unit-option selected" onclick="Logic.onRestockUnitSelect('base', null, this)">
+      <div class="unit-name">By ${item.base_unit}</div>
+      <div class="unit-detail">${fmt(item.purchase_price_per_unit)} per ${item.base_unit}</div>
+    </div>
+  `;
+            units.forEach((u) => {
+                html += `
+      <div class="unit-option" onclick="Logic.onRestockUnitSelect('unit', ${u.id}, this)">
+        <div class="unit-name">${u.unit_name}</div>
+        <div class="unit-detail">${fmt(u.purchase_price)} · ${u.pack_quantity} ${item.base_unit}</div>
+      </div>
+    `;
+            });
+            document.getElementById("restock-units").innerHTML = html;
+            document.getElementById("restock-unit-section").style.display = "block";
+            document.getElementById("restock-qty").value = "";
+            document.getElementById("restock-preview").style.display = "none";
+        }
+
+        function activateRestockOption(el) {
+            document.querySelectorAll("#restock-units .unit-option").forEach((e) => e.classList.remove("selected"));
+            el.classList.add("selected");
+        }
+
+        function updateRestockPreview(data) {
+            const prev = document.getElementById("restock-preview");
+            if (!data) { prev.style.display = "none"; return; }
+            prev.style.display = "block";
+            prev.innerHTML = `Adding <strong>${data.label}</strong> → stock will be <strong>${fmtNum(data.newStock)} ${data.baseUnit}</strong><br>Estimated cost: <strong>${fmt(data.cost)}</strong>`;
+        }
+
+        function renderRestockHistoryTable(history) {
+            const tbody = document.getElementById("restock-history");
+            if (!history.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">No history yet</td></tr>'; return; }
+            tbody.innerHTML = history.map((r) => `
+    <tr>
+      <td style="font-weight:600; font-size:14px">${r.item_name}</td>
+      <td style="color:var(--text2); font-size:14px">${r.unit}</td>
+      <td style="font-size:14px">${r.qty}</td>
+      <td class="text-green font-bold" style="font-size:14px">+${fmtNum(r.base_units)}</td>
+      <td style="font-size:13px; color:var(--text2)">${r.time.toLocaleTimeString()}</td>
+    </tr>
+  `).join("");
+        }
+
+        function renderPricingTable(rules) {
+            const tbody = document.getElementById("pricing-table");
+            if (!rules.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty">No pricing rules</td></tr>'; return; }
+            tbody.innerHTML = rules.map((p) => {
+                const item = getItem(p.item_id);
+                const perUnit = p.quantity ? (p.price / p.quantity).toFixed(4) : "-";
+                return `
+      <tr>
+        <td style="font-weight:700; font-size:14px">${item?.item_name || "?"}</td>
+        <td style="font-size:14px">${p.title}</td>
+        <td style="color:var(--text2); font-size:14px">${p.quantity} ${item?.base_unit || ""}</td>
+        <td style="font-weight:700; color:var(--forest); font-size:14px">${fmt(p.price)}</td>
+        <td style="color:var(--text2); font-size:13px">₱${perUnit}/${item?.base_unit}</td>
+        <td><span class="badge ${p.active ? "badge-green" : "badge-red"}">${p.active ? "Active" : "Inactive"}</span></td>
+        <td style="font-size:13px; color:var(--text2)">${p.start_date || "—"} to ${p.end_date || "—"}</td>
+        <td style="font-size:13px; color:var(--text2)">${p.note || "—"}</td>
+        <td>
+          <div class="flex gap-8">
+            <button class="btn btn-ghost btn-sm" onclick="Logic.onTogglePricing(${p.id})">${p.active ? "Deactivate" : "Activate"}</button>
+            <button class="btn btn-danger btn-sm" onclick="Logic.onDeletePricing(${p.id})">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `;
+            }).join("");
+        }
+
+        function populatePricingItemSelect(items) {
+            document.getElementById("cp-item").innerHTML = items.map((i) => `<option value="${i.id}">${i.item_name}</option>`).join("");
+        }
+
+        function readPricingForm() {
+            return {
+                item_id: parseInt(document.getElementById("cp-item").value),
+                title: document.getElementById("cp-title").value.trim(),
+                quantity: parseFloat(document.getElementById("cp-qty").value),
+                price: parseFloat(document.getElementById("cp-price").value),
+                note: document.getElementById("cp-note").value.trim(),
+                active: document.getElementById("cp-active").checked,
+                start_date: document.getElementById("cp-start").value,
+                end_date: document.getElementById("cp-end").value,
+            };
+        }
+
+        function resetPricingForm() {
+            ["cp-title", "cp-qty", "cp-price", "cp-start", "cp-end", "cp-note"].forEach((id) => { document.getElementById(id).value = ""; });
+            document.getElementById("cp-active").checked = true;
+        }
+
+        function renderDashboard(stats, recentTxns, inventoryStatus) {
+            document.getElementById("d-sales").textContent = fmt(stats.todaySales);
+            document.getElementById("d-transactions").textContent = `${stats.todayTransactions} transactions`;
+            document.getElementById("d-items").textContent = stats.todayItems;
+            document.getElementById("d-catalog").textContent = stats.catalogCount;
+            document.getElementById("d-lowstock").textContent = stats.lowStockCount;
+            const txnTbody = document.getElementById("txn-table");
+            if (!recentTxns.length) {
+                txnTbody.innerHTML = '<tr><td colspan="3" class="empty">No transactions today</td></tr>';
+            } else {
+                txnTbody.innerHTML = recentTxns.map((t) => `
+      <tr>
+        <td style="font-size:13px; color:var(--text2)">${t.time.toLocaleTimeString()}</td>
+        <td style="font-size:14px">${t.items.length} item${t.items.length !== 1 ? "s" : ""}</td>
+        <td class="font-bold text-green" style="font-size:14px">${fmt(t.total)}</td>
+      </tr>
+    `).join("");
+            }
+            document.getElementById("stock-table").innerHTML = inventoryStatus.map(({ item, status }) => `
+    <tr>
+      <td style="font-weight:500; font-size:14px">${getCategoryIcon(item.category)} ${item.item_name}</td>
+      <td style="font-size:14px">${fmtNum(item.stock_quantity)} ${item.base_unit}</td>
+      <td><span class="badge ${status.badgeClass}">${status.badgeText}</span></td>
+    </tr>
+  `).join("");
+        }
+    </script>
+
+    <script>
+        // ── logic.js ───────────────────────────────
+        const Logic = (() => {
+            let _sellSelection = { type: "base", unitId: null, pricingId: null, qty: 1 };
+            let _currentSellItem = null;
+            let _currentCategory = "all";
+            let _posSearch = "";
+            let _inventorySearch = "";
+            let _restockUnitType = "base";
+            let _restockUnitId = null;
+
+            function _refreshItemGrid() { const items = ItemService.list(_currentCategory, _posSearch); renderItemGrid(items); }
+
+            function onCategoryFilter(cat, el) {
+                _currentCategory = cat;
+                document.querySelectorAll(".tag[data-cat]").forEach((t) => t.classList.remove("active"));
+                el.classList.add("active");
+                _refreshItemGrid();
+            }
+
+            function onPosSearch(val) { _posSearch = val; _refreshItemGrid(); }
+
+            function onItemCardClick(itemId) {
+                const item = getItem(itemId);
+                _currentSellItem = item;
+                _sellSelection = { type: "base", unitId: null, pricingId: null, qty: 1 };
+                const units = getUnits(item.id);
+                const activePricing = getActivePricing(item.id);
+                renderSellModalBody(item, units, activePricing, _sellSelection);
+                _refreshSellPreview();
+                openModal("sell-modal");
+            }
+
+            function onSellTypeSelect(type, unitId, pricingId, el) {
+                _sellSelection.type = type; _sellSelection.unitId = unitId; _sellSelection.pricingId = pricingId;
+                activateSellOption(el); _refreshSellPreview();
+            }
+
+            function onSellQtyChange() { _refreshSellPreview(); }
+
+            function _refreshSellPreview() {
+                const item = _currentSellItem;
+                const qty = parseFloat(document.getElementById("sell-qty")?.value) || 0;
+                const overrideEl = document.getElementById("sell-override");
+                const overrideVal = overrideEl ? overrideEl.value : null;
+                if (!qty || qty <= 0) { updateSellPreview(null, false); return; }
+                const result = calcSellDetails(item, _sellSelection.type, _sellSelection.unitId, _sellSelection.pricingId, qty, overrideVal);
+                const insufficient = result.baseUnits > item.stock_quantity;
+                const stockMsg = insufficient ? `Insufficient stock (available: ${fmtNum(item.stock_quantity)} ${item.base_unit})` : "";
+                updateSellPreview(result, insufficient, stockMsg);
+            }
+
+            function onAddToCart() {
+                const item = _currentSellItem;
+                const qty = parseFloat(document.getElementById("sell-qty")?.value) || 0;
+                const overrideEl = document.getElementById("sell-override");
+                const override = overrideEl ? overrideEl.value : null;
+                const result = CartService.addItem(item, _sellSelection.type, _sellSelection.unitId, _sellSelection.pricingId, qty, override);
+                if (!result.ok) { toast(result.error, "error"); return; }
+                closeModal("sell-modal"); _refreshCart(); toast(`${item.item_name} added to order`, "success");
+            }
+
+            function _refreshCart() { renderCart(CartService.getItems(), CartService.getTotal()); }
+            function onRemoveCartItem(index) { CartService.removeItem(index); _refreshCart(); }
+            function onClearCart() { CartService.clear(); _refreshCart(); }
+            function onTenderedChange() { renderChangeDisplay(CartService.getTotal()); }
+
+            function onCheckout() {
+                const tendered = parseFloat(document.getElementById("tendered").value) || 0;
+                const result = CartService.checkout(tendered);
+                if (!result.ok) { toast(result.error, "error"); return; }
+                document.getElementById("tendered").value = ""; _refreshCart(); _refreshItemGrid(); showReceipt(result.transaction);
+            }
+
+            function _refreshInventoryTable() { const items = ItemService.list("all", _inventorySearch); renderInventoryTable(items); }
+            function onInventorySearch(val) { _inventorySearch = val; _refreshInventoryTable(); }
+            function onAddItem() { populateItemForm(null, []); openModal("add-item-modal"); }
+
+            function onEditItem(id) { const item = getItem(id); const units = getUnits(id); populateItemForm(item, units); openModal("add-item-modal"); }
+
+            function onSaveItem() {
+                const form = readItemForm();
+                if (!form.item_name || !form.base_unit) { toast("Name and base unit are required", "error"); return; }
+                if (form.id) {
+                    ItemService.update(parseInt(form.id), { item_name: form.item_name, category: form.category, base_unit: form.base_unit, stock_quantity: form.stock_quantity, purchase_price_per_unit: form.purchase_price_per_unit, selling_price_per_unit: form.selling_price_per_unit, allow_override: form.allow_override });
+                    ItemService.replaceUnits(parseInt(form.id), form.units); toast("Item updated", "success");
+                } else {
+                    const item = ItemService.create({ item_name: form.item_name, category: form.category, base_unit: form.base_unit, stock_quantity: form.stock_quantity, purchase_price_per_unit: form.purchase_price_per_unit, selling_price_per_unit: form.selling_price_per_unit, allow_override: form.allow_override });
+                    ItemService.replaceUnits(item.id, form.units); toast("Item added", "success");
+                }
+                closeModal("add-item-modal"); _refreshInventoryTable(); _refreshItemGrid();
+            }
+
+            function onDeleteItem(id) {
+                if (!confirm("Delete this item?")) return;
+                ItemService.remove(id); _refreshInventoryTable(); _refreshItemGrid(); toast("Item deleted");
+            }
+
+            function initRestockUI() {
+                _restockUnitType = "base"; _restockUnitId = null;
+                populateRestockItemSelect(ItemService.list()); renderRestockHistoryTable(RestockService.getHistory());
+            }
+
+            function onRestockItemChange() {
+                const id = parseInt(document.getElementById("restock-item").value);
+                if (!id) { document.getElementById("restock-unit-section").style.display = "none"; return; }
+                _restockUnitType = "base"; _restockUnitId = null;
+                const item = getItem(id); const units = getUnits(id);
+                renderRestockUnits(item, units); _refreshRestockPreview();
+            }
+
+            function onRestockUnitSelect(type, unitId, el) { _restockUnitType = type; _restockUnitId = unitId; activateRestockOption(el); _refreshRestockPreview(); }
+            function onRestockQtyChange() { _refreshRestockPreview(); }
+
+            function _refreshRestockPreview() {
+                const qty = parseFloat(document.getElementById("restock-qty")?.value) || 0;
+                const itemId = parseInt(document.getElementById("restock-item").value);
+                const item = getItem(itemId);
+                if (!item || qty <= 0) { updateRestockPreview(null); return; }
+                const { baseUnits, cost, label } = calcRestockDetails(item, _restockUnitType, _restockUnitId, qty);
+                updateRestockPreview({ label, cost, newStock: item.stock_quantity + baseUnits, baseUnit: item.base_unit });
+            }
+
+            function onDoRestock() {
+                const qty = parseFloat(document.getElementById("restock-qty").value);
+                const itemId = parseInt(document.getElementById("restock-item").value);
+                const result = RestockService.restock(itemId, _restockUnitType, _restockUnitId, qty);
+                if (!result.ok) { toast(result.error, "error"); return; }
+                document.getElementById("restock-qty").value = ""; updateRestockPreview(null);
+                renderRestockHistoryTable(RestockService.getHistory()); _refreshItemGrid();
+                toast(`Restocked ${result.item.item_name} +${fmtNum(result.baseUnits)} ${result.item.base_unit}`, "success");
+            }
+
+            function onOpenAddPricing() { populatePricingItemSelect(ItemService.list()); resetPricingForm(); openModal("add-pricing-modal"); }
+
+            function onSavePricing() {
+                const form = readPricingForm();
+                const result = PricingService.create(form);
+                if (!result.ok) { toast(result.error, "error"); return; }
+                closeModal("add-pricing-modal"); renderPricingTable(PricingService.list()); toast("Price rule added", "success");
+            }
+
+            function onTogglePricing(id) { PricingService.toggle(id); renderPricingTable(PricingService.list()); }
+            function onDeletePricing(id) { PricingService.remove(id); renderPricingTable(PricingService.list()); toast("Price rule deleted"); }
+
+            function onShowDashboard() { renderDashboard(DashboardService.getStats(), DashboardService.getRecentTransactions(), DashboardService.getInventoryStatus()); }
+
+            function init() { seedDatabase(); _attachGlobalListeners(); _refreshItemGrid(); }
+
+            function _attachGlobalListeners() {
+                document.addEventListener("input", (e) => {
+                    if (e.target.id === "restock-qty") onRestockQtyChange();
+                    if (e.target.id === "tendered") onTenderedChange();
+                });
+            }
+
+            return {
+                init,
+                showPage: (pageId, event) => {
+                    showPage(pageId, event);
+                    if (pageId === "dashboard") onShowDashboard();
+                    if (pageId === "inventory") renderInventoryTable(ItemService.list("all", _inventorySearch));
+                    if (pageId === "pricing") renderPricingTable(PricingService.list());
+                    if (pageId === "restock") initRestockUI();
+                },
+                onCategoryFilter, onPosSearch, onItemCardClick, onSellTypeSelect, onSellQtyChange,
+                onAddToCart, onRemoveCartItem, onClearCart, onTenderedChange, onCheckout,
+                onInventorySearch, onAddItem, onEditItem, onSaveItem, onDeleteItem,
+                addUnitVariantRow, initRestockUI, onRestockItemChange, onRestockUnitSelect, onDoRestock,
+                onOpenAddPricing, onSavePricing, onTogglePricing, onDeletePricing,
+                closeModal, openModal,
+            };
+        })();
+
         document.addEventListener('DOMContentLoaded', () => Logic.init());
     </script>
+
 </body>
 
 </html>
