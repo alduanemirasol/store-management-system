@@ -14,9 +14,11 @@
 
 <body>
 
+    <!-- RootApplication: Main application container wrapper. -->
     <div class="app">
 
 
+        <!-- SidebarNavigation: Left sidebar with logo and menu. -->
         <header>
             <div class="sidebar-logo-area">
                 <div class="logo">
@@ -42,10 +44,12 @@
         </header>
 
 
+        <!-- MainContent: Primary content area for pages. -->
         <div class="main-content">
             <main>
 
 
+                <!-- PagePOS: Point of sale page with products and cart. -->
                 <div class="page active" id="page-pos">
                     <div class="pos-layout">
 
@@ -117,6 +121,7 @@
                 </div>
 
 
+                <!-- PageInventory: Inventory management table page. -->
                 <div class="page" id="page-inventory">
                     <div class="page-header-row">
                         <div>
@@ -155,6 +160,7 @@
                 </div>
 
 
+                <!-- PageRestock: Restock inventory page. -->
                 <div class="page" id="page-restock">
                     <div class="page-header-row">
                         <div>
@@ -215,6 +221,7 @@
                 </div>
 
 
+                <!-- PagePricing: Custom pricing rules management page. -->
                 <div class="page" id="page-pricing">
                     <div class="page-header-row">
                         <div>
@@ -247,6 +254,7 @@
                 </div>
 
 
+                <!-- PageDashboard: Dashboard with stats and reports. -->
                 <div class="page" id="page-dashboard">
                     <div class="page-header-row">
                         <div>
@@ -322,9 +330,11 @@
     </div>
 
 
+    <!-- ToastContainer: Container for notification toasts. -->
     <div id="toast-container"></div>
 
 
+    <!-- ModalSell: Sale item selection modal. -->
     <div class="modal-backdrop" id="sell-modal">
         <div class="modal">
             <div class="modal-header">
@@ -340,6 +350,7 @@
     </div>
 
 
+    <!-- ModalAddItem: Add/edit inventory item modal. -->
     <div class="modal-backdrop" id="add-item-modal">
         <div class="modal">
             <div class="modal-header">
@@ -437,6 +448,7 @@
     </div>
 
 
+    <!-- ModalAddPricing: Add custom pricing rule modal. -->
     <div class="modal-backdrop" id="add-pricing-modal">
         <div class="modal">
             <div class="modal-header">
@@ -490,6 +502,7 @@
     </div>
 
 
+    <!-- ModalReceipt: Transaction receipt display modal. -->
     <div class="modal-backdrop" id="receipt-modal">
         <div class="modal" style="max-width: 400px;">
             <div class="modal-header">
@@ -504,6 +517,7 @@
         </div>
     </div>
 
+    <!-- JSModules: Load JavaScript modules in dependency order. -->
     <script src="js/data.js"></script>
     <script src="js/helpers.js"></script>
     <script src="js/services.js"></script>

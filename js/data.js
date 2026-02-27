@@ -1,3 +1,4 @@
+// Database: In-memory store for all application data.
 const db = {
   items: [],
   item_units: [],
@@ -13,18 +14,21 @@ const db = {
   },
 };
 
+// _createItem: Creates and stores a new inventory item.
 function _createItem(data) {
   const item = { id: db.next_id.item++, ...data };
   db.items.push(item);
   return item;
 }
 
+// _createUnit: Creates and stores a new unit variant for an item.
 function _createUnit(data) {
   const unit = { id: db.next_id.unit++, ...data };
   db.item_units.push(unit);
   return unit;
 }
 
+// seedDatabase: Populates initial sample inventory data.
 function seedDatabase() {
   const rice = _createItem({
     item_name: "Rice",

@@ -1,3 +1,4 @@
+// ItemService: Manages inventory item CRUD operations.
 const ItemService = (() => {
   function create(data) {
     const item = { id: db.next_id.item++, ...data };
@@ -42,6 +43,7 @@ const ItemService = (() => {
   return { create, update, remove, replaceUnits, list };
 })();
 
+// CartService: Manages shopping cart and checkout operations.
 const CartService = (() => {
   let _cart = [];
 
@@ -108,6 +110,7 @@ const CartService = (() => {
   return { addItem, removeItem, clear, getItems, getTotal, getChange, checkout };
 })();
 
+// RestockService: Manages inventory restocking operations.
 const RestockService = (() => {
   function restock(itemId, unitType, unitId, qty) {
     if (!qty || qty <= 0) return { ok: false, error: "Enter a valid quantity" };
@@ -136,6 +139,7 @@ const RestockService = (() => {
   return { restock, getHistory };
 })();
 
+// PricingService: Manages custom pricing rule operations.
 const PricingService = (() => {
   function create(data) {
     const { title, quantity, price } = data;
@@ -163,6 +167,7 @@ const PricingService = (() => {
   return { create, toggle, remove, list };
 })();
 
+// DashboardService: Provides dashboard statistics and reports.
 const DashboardService = (() => {
   function getStats() {
     const today = new Date().toDateString();

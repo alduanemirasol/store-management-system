@@ -1,3 +1,4 @@
+/* DesignTokens: CSS custom properties for theming. */
 :root {
   --cream: #faf8f4;
   --cream2: #f4f1eb;
@@ -41,6 +42,7 @@
   --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* BaseStyles: Reset and base element styles. */
 *,
 *::before,
 *::after {
@@ -96,6 +98,7 @@ input[type="number"]::-webkit-inner-spin-button {
   border-radius: 10px;
 }
 
+/* AppLayout: Main application flex container. */
 .app {
   display: flex;
   flex-direction: row;
@@ -118,6 +121,8 @@ main {
   width: 100%;
 }
 
+/* Page Visibility States */
+/* PageSection: Page visibility states. */
 .page {
   display: none;
 }
@@ -139,6 +144,7 @@ main {
   }
 }
 
+/* Sidebar: Left navigation sidebar. */
 header {
   background: var(--ivory);
   border-right: 1px solid var(--border);
@@ -257,6 +263,7 @@ nav button.active {
   text-align: center;
 }
 
+/* PageHeader: Title and actions row. */
 .page-header-row {
   display: flex;
   align-items: center;
@@ -282,6 +289,8 @@ nav button.active {
   margin-bottom: 22px;
 }
 
+/* Utility Classes */
+/* Utilities: Common utility classes. */
 .flex {
   display: flex;
 }
@@ -370,6 +379,7 @@ nav button.active {
   font-size: 13px;
 }
 
+/* Card: Card container component. */
 .card {
   background: var(--ivory);
   border: 1px solid var(--border);
@@ -401,6 +411,8 @@ nav button.active {
   padding: 20px 22px;
 }
 
+/* Button Styles */
+/* Button: Button component styles. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -475,6 +487,7 @@ nav button.active {
   justify-content: center;
 }
 
+/* FormGroup: Form field container. */
 .form-group {
   margin-bottom: 14px;
 }
@@ -535,6 +548,7 @@ textarea:focus {
   pointer-events: none;
 }
 
+/* TableWrap: Scrollable table wrapper. */
 .table-wrap {
   overflow-x: auto;
 }
@@ -576,6 +590,7 @@ tbody tr:hover td {
   background: var(--cream2);
 }
 
+/* Badge: Status badge component. */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -606,6 +621,7 @@ tbody tr:hover td {
   color: var(--orange);
 }
 
+/* Tag: Category filter tag. */
 .tag {
   display: inline-block;
   background: var(--cream2);
@@ -632,6 +648,7 @@ tbody tr:hover td {
   box-shadow: 0 2px 6px rgba(30, 77, 58, 0.2);
 }
 
+/* ModalBackdrop: Modal overlay container. */
 .modal-backdrop {
   display: none;
   position: fixed;
@@ -720,6 +737,7 @@ tbody tr:hover td {
   background: var(--cream2);
 }
 
+/* ToastContainer: Toast notification container. */
 #toast-container {
   position: fixed;
   bottom: 26px;
@@ -765,6 +783,7 @@ tbody tr:hover td {
   }
 }
 
+/* POSLayout: POS page two-column grid. */
 .pos-layout {
   display: grid;
   grid-template-columns: 1fr 390px;
@@ -799,6 +818,7 @@ tbody tr:hover td {
   overflow: hidden;
 }
 
+/* ItemGrid: Product card grid display. */
 .item-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
@@ -871,6 +891,7 @@ tbody tr:hover td {
   position: relative;
 }
 
+/* FilterBar: Category filter bar. */
 .filter-bar {
   padding: 12px 18px;
   border-bottom: 1px solid var(--border);
@@ -882,6 +903,8 @@ tbody tr:hover td {
   min-height: 52px;
 }
 
+/* Shopping Cart */
+/* CartItem: Shopping cart item row. */
 .cart-item {
   display: flex;
   align-items: flex-start;
@@ -947,6 +970,7 @@ tbody tr:hover td {
   color: var(--red);
 }
 
+/* CartTotals: Cart totals section. */
 .cart-totals {
   padding: 16px 20px;
   background: var(--cream2);
@@ -974,6 +998,7 @@ tbody tr:hover td {
   color: var(--forest);
 }
 
+/* CheckoutArea: Payment and checkout section. */
 .checkout-area {
   padding: 16px 20px 22px;
   background: var(--ivory);
@@ -988,6 +1013,7 @@ tbody tr:hover td {
   margin-bottom: 14px;
 }
 
+/* UnitOption: Unit selection button. */
 .unit-option {
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
@@ -1020,6 +1046,7 @@ tbody tr:hover td {
   margin-top: 2px;
 }
 
+/* SellPreview: Sale calculation preview box. */
 #sell-preview {
   border-radius: var(--radius-sm);
   padding: 12px 14px;
@@ -1027,6 +1054,7 @@ tbody tr:hover td {
   font-weight: 600;
 }
 
+/* RestockPreview: Restock calculation preview. */
 #restock-preview {
   background: var(--forest-soft);
   border: 1px solid rgba(30, 77, 58, 0.15);
@@ -1036,6 +1064,7 @@ tbody tr:hover td {
   color: var(--forest);
 }
 
+/* UnitVariantRow: Unit variant form row. */
 .unit-variant-row {
   gap: 8px;
   margin-bottom: 10px;
@@ -1046,6 +1075,7 @@ tbody tr:hover td {
   background: var(--cream2);
 }
 
+/* ReceiptItem: Receipt line item. */
 .receipt-item {
   display: flex;
   justify-content: space-between;
@@ -1058,6 +1088,7 @@ tbody tr:hover td {
   border-bottom: none;
 }
 
+/* StatCard: Dashboard stat card. */
 .stat-card {
   background: var(--ivory);
   border: 1px solid var(--border);
@@ -1109,6 +1140,7 @@ tbody tr:hover td {
   margin-top: 6px;
 }
 
+/* Tabs: Tab navigation component. */
 .tabs {
   display: flex;
   gap: 3px;
@@ -1140,6 +1172,7 @@ tbody tr:hover td {
   box-shadow: var(--shadow-xs);
 }
 
+/* Tablet: Tablet breakpoint styles. */
 @media (max-width: 960px) {
   .app {
     flex-direction: column;
@@ -1202,6 +1235,7 @@ tbody tr:hover td {
   }
 }
 
+/* Mobile: Mobile breakpoint styles. */
 @media (max-width: 640px) {
   main {
     padding: 16px;

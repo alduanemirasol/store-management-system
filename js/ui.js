@@ -1,3 +1,4 @@
+// toast: Shows a temporary notification message.
 function toast(msg, type = "") {
   const el = document.createElement("div");
   el.className = `toast ${type}`;
@@ -6,14 +7,17 @@ function toast(msg, type = "") {
   setTimeout(() => el.remove(), 3000);
 }
 
+// openModal: Opens a modal dialog by ID.
 function openModal(id) {
   document.getElementById(id).classList.add("open");
 }
 
+// closeModal: Closes a modal dialog by ID.
 function closeModal(id) {
   document.getElementById(id).classList.remove("open");
 }
 
+// showPage: Switches to a different page view.
 function showPage(pageId, event) {
   document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"));
   document.querySelectorAll("nav button").forEach((b) => b.classList.remove("active"));
@@ -21,6 +25,7 @@ function showPage(pageId, event) {
   if (event && event.target) event.target.classList.add("active");
 }
 
+// renderItemGrid: Renders inventory items as a card grid.
 function renderItemGrid(items) {
   const grid = document.getElementById("item-grid");
   if (!items.length) {
@@ -37,6 +42,7 @@ function renderItemGrid(items) {
   `).join("");
 }
 
+// renderSellModalBody: Renders the sale modal with options.
 function renderSellModalBody(item, units, activePricing, selection) {
   let html = `
     <div style="margin-bottom:16px; padding:12px 14px; background:var(--cream2); border-radius:var(--radius-sm); border:1px solid var(--border); font-size:14px; color:var(--text2)">
@@ -95,6 +101,7 @@ function renderSellModalBody(item, units, activePricing, selection) {
   document.getElementById("sell-modal-body").innerHTML = html;
 }
 
+// _unitOptionHTML: Generates HTML for a unit option button.
 function _unitOptionHTML(name, detail, isSelected, onclickHandler) {
   return `
     <div class="unit-option${isSelected ? " selected" : ""}" onclick="${onclickHandler}">
@@ -104,6 +111,7 @@ function _unitOptionHTML(name, detail, isSelected, onclickHandler) {
   `;
 }
 
+// updateSellPreview: Updates the sale preview display with calculations.
 function updateSellPreview(result, insufficientStock, stockMsg) {
   const prev = document.getElementById("sell-preview");
   if (!prev) return;
@@ -125,11 +133,13 @@ function updateSellPreview(result, insufficientStock, stockMsg) {
   }
 }
 
+// activateSellOption: Highlights the selected sell option.
 function activateSellOption(clickedEl) {
   document.querySelectorAll("#sell-modal-body .unit-option").forEach((el) => el.classList.remove("selected"));
   clickedEl.classList.add("selected");
 }
 
+// renderCart: Renders the shopping cart items and totals.
 function renderCart(cartItems, total) {
   const container = document.getElementById("cart-items");
 
@@ -155,6 +165,7 @@ function renderCart(cartItems, total) {
   renderChangeDisplay(total);
 }
 
+// renderChangeDisplay: Updates the change amount display.
 function renderChangeDisplay(total) {
   const tendered = parseFloat(document.getElementById("tendered")?.value) || 0;
   const change = tendered - total;
@@ -164,6 +175,7 @@ function renderChangeDisplay(total) {
   el.className = change < 0 ? "font-bold text-red" : "font-bold text-green";
 }
 
+// showReceipt: Displays the transaction receipt modal.
 function showReceipt(txn) {
   const itemsHTML = txn.items.map((i) => `
     <div class="receipt-item">
@@ -195,6 +207,7 @@ function showReceipt(txn) {
   openModal("receipt-modal");
 }
 
+// renderInventoryTable: Renders the inventory management table.
 function renderInventoryTable(items) {
   const tbody = document.getElementById("inventory-table");
   if (!items.length) {
@@ -228,6 +241,7 @@ function renderInventoryTable(items) {
   }).join("");
 }
 
+// populateItemForm: Fills the add/edit item form with data.
 function populateItemForm(item, units = []) {
   const isEdit = !!item;
   document.getElementById("add-item-title").textContent = isEdit ? "Edit Item" : "Add Item";
@@ -263,6 +277,7 @@ function populateItemForm(item, units = []) {
   units.forEach((u) => addUnitVariantRow(u));
 }
 
+// addUnitVariantRow: Adds a new unit variant row to the form.
 function addUnitVariantRow(data = {}) {
   const row = document.createElement("div");
   row.className = "grid-2 unit-variant-row";
@@ -295,6 +310,7 @@ function addUnitVariantRow(data = {}) {
   document.getElementById("unit-variants-list").appendChild(row);
 }
 
+// readUnitVariantRows: Reads all unit variant rows from the form.
 function readUnitVariantRows() {
   const rows = [];
   document.querySelectorAll("#unit-variants-list .unit-variant-row").forEach((row) => {
@@ -309,6 +325,7 @@ function readUnitVariantRows() {
   return rows;
 }
 
+// readItemForm: Reads all form fields into an item object.
 function readItemForm() {
   const unitSel = document.getElementById("ai-unit");
   const unitCustom = document.getElementById("ai-unit-custom");
@@ -329,6 +346,7 @@ function readItemForm() {
   };
 }
 
+// handleBaseUnitChange: Toggles custom unit input visibility.
 function handleBaseUnitChange(sel) {
   const customInput = document.getElementById("ai-unit-custom");
   if (sel.value === "custom") {
@@ -340,6 +358,7 @@ function handleBaseUnitChange(sel) {
   }
 }
 
+// populateRestockItemSelect: Populates the restock item dropdown.
 function populateRestockItemSelect(items) {
   const sel = document.getElementById("restock-item");
   sel.innerHTML =
@@ -348,6 +367,7 @@ function populateRestockItemSelect(items) {
   document.getElementById("restock-unit-section").style.display = "none";
 }
 
+// renderRestockUnits: Renders unit options for restocking.
 function renderRestockUnits(item, units) {
   let html = `
     <div class="unit-option selected" onclick="Logic.onRestockUnitSelect('base', null, this)">
@@ -369,11 +389,13 @@ function renderRestockUnits(item, units) {
   document.getElementById("restock-preview").style.display = "none";
 }
 
+// activateRestockOption: Highlights the selected restock option.
 function activateRestockOption(el) {
   document.querySelectorAll("#restock-units .unit-option").forEach((e) => e.classList.remove("selected"));
   el.classList.add("selected");
 }
 
+// updateRestockPreview: Updates restock calculation preview.
 function updateRestockPreview(data) {
   const prev = document.getElementById("restock-preview");
   if (!data) {
@@ -386,6 +408,7 @@ function updateRestockPreview(data) {
     Estimated cost: <strong>${fmt(data.cost)}</strong>`;
 }
 
+// renderRestockHistoryTable: Renders restock history table.
 function renderRestockHistoryTable(history) {
   const tbody = document.getElementById("restock-history");
   if (!history.length) {
@@ -403,6 +426,7 @@ function renderRestockHistoryTable(history) {
   `).join("");
 }
 
+// renderPricingTable: Renders custom pricing rules table.
 function renderPricingTable(rules) {
   const tbody = document.getElementById("pricing-table");
   if (!rules.length) {
@@ -433,12 +457,14 @@ function renderPricingTable(rules) {
   }).join("");
 }
 
+// populatePricingItemSelect: Populates pricing item dropdown.
 function populatePricingItemSelect(items) {
   document.getElementById("cp-item").innerHTML = items
     .map((i) => `<option value="${i.id}">${i.item_name}</option>`)
     .join("");
 }
 
+// readPricingForm: Reads pricing form fields into an object.
 function readPricingForm() {
   return {
     item_id: parseInt(document.getElementById("cp-item").value),
@@ -452,6 +478,7 @@ function readPricingForm() {
   };
 }
 
+// resetPricingForm: Clears all pricing form fields.
 function resetPricingForm() {
   ["cp-title", "cp-qty", "cp-price", "cp-start", "cp-end", "cp-note"].forEach((id) => {
     document.getElementById(id).value = "";
@@ -459,6 +486,7 @@ function resetPricingForm() {
   document.getElementById("cp-active").checked = true;
 }
 
+// renderDashboard: Renders dashboard stats and tables.
 function renderDashboard(stats, recentTxns, inventoryStatus) {
   document.getElementById("d-sales").textContent = fmt(stats.todaySales);
   document.getElementById("d-transactions").textContent = `${stats.todayTransactions} transactions`;

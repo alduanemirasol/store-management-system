@@ -1,3 +1,4 @@
+// Logic: Main application controller handling UI interactions.
 const Logic = (() => {
   let _sellSelection = { type: "base", unitId: null, pricingId: null, qty: 1 };
   let _currentSellItem = null;
@@ -7,18 +8,22 @@ const Logic = (() => {
   let _restockUnitType = "base";
   let _restockUnitId = null;
 
+  // _refreshItemGrid: Updates the item grid display.
   function _refreshItemGrid() {
     renderItemGrid(ItemService.list(_currentCategory, _posSearch));
   }
 
+  // _refreshCart: Updates the shopping cart display.
   function _refreshCart() {
     renderCart(CartService.getItems(), CartService.getTotal());
   }
 
+  // _refreshInventoryTable: Updates the inventory table display.
   function _refreshInventoryTable() {
     renderInventoryTable(ItemService.list("all", _inventorySearch));
   }
 
+  // _refreshSellPreview: Updates the sale preview calculations.
   function _refreshSellPreview() {
     const item = _currentSellItem;
     const qty = parseFloat(document.getElementById("sell-qty")?.value) || 0;
@@ -39,6 +44,7 @@ const Logic = (() => {
     updateSellPreview(result, insufficient, stockMsg);
   }
 
+  // _refreshRestockPreview: Updates the restock preview calculations.
   function _refreshRestockPreview() {
     const qty = parseFloat(document.getElementById("restock-qty")?.value) || 0;
     const itemId = parseInt(document.getElementById("restock-item").value);
@@ -53,6 +59,7 @@ const Logic = (() => {
     updateRestockPreview({ label, cost, newStock: item.stock_quantity + baseUnits, baseUnit: item.base_unit });
   }
 
+  // onCategoryFilter: Handles category filter button click.
   function onCategoryFilter(cat, el) {
     _currentCategory = cat;
     document.querySelectorAll(".tag[data-cat]").forEach((t) => t.classList.remove("active"));
@@ -60,11 +67,13 @@ const Logic = (() => {
     _refreshItemGrid();
   }
 
+  // onPosSearch: Handles POS search input change.
   function onPosSearch(val) {
     _posSearch = val;
     _refreshItemGrid();
   }
 
+  // onItemCardClick: Opens sale modal for selected item.
   function onItemCardClick(itemId) {
     _currentSellItem = getItem(itemId);
     _sellSelection = { type: "base", unitId: null, pricingId: null, qty: 1 };
@@ -77,6 +86,7 @@ const Logic = (() => {
     openModal("sell-modal");
   }
 
+  // onSellTypeSelect: Handles sell type option selection.
   function onSellTypeSelect(type, unitId, pricingId, el) {
     _sellSelection.type = type;
     _sellSelection.unitId = unitId;
@@ -85,10 +95,12 @@ const Logic = (() => {
     _refreshSellPreview();
   }
 
+  // onSellQtyChange: Handles quantity input change.
   function onSellQtyChange() {
     _refreshSellPreview();
   }
 
+  // onAddToCart: Adds item to cart and closes modal.
   function onAddToCart() {
     const qty = parseFloat(document.getElementById("sell-qty")?.value) || 0;
     const overrideEl = document.getElementById("sell-override");
@@ -110,20 +122,24 @@ const Logic = (() => {
     toast(`${_currentSellItem.item_name} added to order`, "success");
   }
 
+  // onRemoveCartItem: Removes item from cart by index.
   function onRemoveCartItem(index) {
     CartService.removeItem(index);
     _refreshCart();
   }
 
+  // onClearCart: Clears all items from cart.
   function onClearCart() {
     CartService.clear();
     _refreshCart();
   }
 
+  // onTenderedChange: Updates change display on tendered amount change.
   function onTenderedChange() {
     renderChangeDisplay(CartService.getTotal());
   }
 
+  // onCheckout: Processes cart checkout and shows receipt.
   function onCheckout() {
     const tendered = parseFloat(document.getElementById("tendered").value) || 0;
     const result = CartService.checkout(tendered);
@@ -136,21 +152,25 @@ const Logic = (() => {
     showReceipt(result.transaction);
   }
 
+  // onInventorySearch: Handles inventory search input change.
   function onInventorySearch(val) {
     _inventorySearch = val;
     _refreshInventoryTable();
   }
 
+  // onAddItem: Opens modal to add new inventory item.
   function onAddItem() {
     populateItemForm(null, []);
     openModal("add-item-modal");
   }
 
+  // onEditItem: Opens modal to edit existing item.
   function onEditItem(id) {
     populateItemForm(getItem(id), getUnits(id));
     openModal("add-item-modal");
   }
 
+  // onSaveItem: Saves item from form (create or update).
   function onSaveItem() {
     const form = readItemForm();
     if (!form.item_name || !form.base_unit) {
@@ -183,6 +203,7 @@ const Logic = (() => {
     _refreshItemGrid();
   }
 
+  // onDeleteItem: Deletes item after confirmation.
   function onDeleteItem(id) {
     if (!confirm("Delete this item?")) return;
     ItemService.remove(id);
@@ -191,6 +212,7 @@ const Logic = (() => {
     toast("Item deleted");
   }
 
+  // initRestockUI: Initializes restock page UI components.
   function initRestockUI() {
     _restockUnitType = "base";
     _restockUnitId = null;
@@ -198,6 +220,7 @@ const Logic = (() => {
     renderRestockHistoryTable(RestockService.getHistory());
   }
 
+  // onRestockItemChange: Handles restock item selection change.
   function onRestockItemChange() {
     const id = parseInt(document.getElementById("restock-item").value);
     if (!id) {
@@ -210,6 +233,7 @@ const Logic = (() => {
     _refreshRestockPreview();
   }
 
+  // onRestockUnitSelect: Handles restock unit option selection.
   function onRestockUnitSelect(type, unitId, el) {
     _restockUnitType = type;
     _restockUnitId = unitId;
@@ -217,6 +241,7 @@ const Logic = (() => {
     _refreshRestockPreview();
   }
 
+  // onDoRestock: Executes the restock operation.
   function onDoRestock() {
     const qty = parseFloat(document.getElementById("restock-qty").value);
     const itemId = parseInt(document.getElementById("restock-item").value);
@@ -231,12 +256,14 @@ const Logic = (() => {
     toast(`Restocked ${result.item.item_name} +${fmtNum(result.baseUnits)} ${result.item.base_unit}`, "success");
   }
 
+  // onOpenAddPricing: Opens modal to add new pricing rule.
   function onOpenAddPricing() {
     populatePricingItemSelect(ItemService.list());
     resetPricingForm();
     openModal("add-pricing-modal");
   }
 
+  // onSavePricing: Saves pricing rule from form.
   function onSavePricing() {
     const result = PricingService.create(readPricingForm());
     if (!result.ok) { toast(result.error, "error"); return; }
@@ -245,17 +272,20 @@ const Logic = (() => {
     toast("Price rule added", "success");
   }
 
+  // onTogglePricing: Toggles pricing rule active status.
   function onTogglePricing(id) {
     PricingService.toggle(id);
     renderPricingTable(PricingService.list());
   }
 
+  // onDeletePricing: Deletes pricing rule.
   function onDeletePricing(id) {
     PricingService.remove(id);
     renderPricingTable(PricingService.list());
     toast("Price rule deleted");
   }
 
+  // onShowDashboard: Renders dashboard with stats and reports.
   function onShowDashboard() {
     renderDashboard(
       DashboardService.getStats(),
@@ -264,12 +294,14 @@ const Logic = (() => {
     );
   }
 
+  // init: Initializes the application on page load.
   function init() {
     seedDatabase();
     _attachGlobalListeners();
     _refreshItemGrid();
   }
 
+  // _attachGlobalListeners: Sets up global event listeners.
   function _attachGlobalListeners() {
     document.addEventListener("input", (e) => {
       if (e.target.id === "restock-qty") _refreshRestockPreview();
