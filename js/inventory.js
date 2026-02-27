@@ -28,10 +28,10 @@ const KNOWN_BASE_UNITS = [
 // ===================== INVENTORY PAGE =====================
 function renderInventory() {
   const q = document.getElementById("inv-search").value.toLowerCase();
-  const cat = document.getElementById("inv-cat-filter").value;
+  const catEl = document.getElementById("inv-cat-filter");
+  const cat = catEl.value;
 
   // Refresh category filter dropdown
-  const catEl = document.getElementById("inv-cat-filter");
   const cur = catEl.value;
   catEl.innerHTML =
     '<option value="">All Categories</option>' +
@@ -52,6 +52,12 @@ function renderInventory() {
     );
 
   const tbody = document.getElementById("inv-tbody");
+  if (!items.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="page-empty">No items found.</td></tr>`;
+    updateInventoryLowStockPanel(getLowStockItems());
+    return;
+  }
+
   tbody.innerHTML = items
     .map((item) => {
       const low =
@@ -62,22 +68,30 @@ function renderInventory() {
       const catObj = db.categories.find((c) => c.name === item.category);
       const catEmoji = catObj ? catObj.emoji : "";
       const catColor = catObj ? catObj.color : "blue";
+      const stockColor = out
+        ? "color:var(--red)"
+        : low
+          ? "color:var(--orange)"
+          : "";
+
       return `<tr>
-      <td><strong>${item.emoji || "📦"} ${item.item_name}</strong></td>
-      <td><span class="badge badge-${catColor}">${catEmoji} ${item.category}</span></td>
-      <td>${item.base_unit}</td>
-      <td>
-        <strong ${out ? 'style="color:var(--red)"' : low ? 'style="color:var(--orange)"' : ""}>${formatStock(item)} ${item.base_unit}</strong>
-        ${units.length ? '<br><span style="font-size:11px;color:var(--text3);">' + units.map((u) => `1 ${u.unit_name}=${u.pack_quantity} ${item.base_unit}`).join(", ") + "</span>" : ""}
-        ${out ? '<br><span class="badge badge-red">Out of Stock</span>' : low ? '<br><span class="badge badge-orange">Low Stock</span>' : ""}
-      </td>
-      <td>₱${item.purchase_price_per_unit.toFixed(2)}/${item.base_unit}</td>
-      <td>₱${item.selling_price_per_unit.toFixed(2)}/${item.base_unit}</td>
-      <td>
-        <button class="btn btn-secondary btn-sm" onclick="editItem(${item.id})">Edit</button>
-        <button class="btn btn-sm" style="background:var(--green-light);color:var(--green);" onclick="quickRestock(${item.id})">Restock</button>
-      </td>
-    </tr>`;
+        <td><strong>${item.emoji || "📦"} ${item.item_name}</strong></td>
+        <td><span class="badge badge-${catColor}">${catEmoji} ${item.category}</span></td>
+        <td><span style="color:var(--text3);">${item.base_unit}</span></td>
+        <td>
+          <strong ${stockColor ? `style="${stockColor}"` : ""}>${formatStock(item)} ${item.base_unit}</strong>
+          ${units.length ? `<br><span style="font-size:11px;color:var(--text3);">${units.map((u) => `1 ${u.unit_name} = ${u.pack_quantity} ${item.base_unit}`).join(", ")}</span>` : ""}
+          ${out ? '<br><span class="badge badge-red">Out of Stock</span>' : low ? '<br><span class="badge badge-orange">Low Stock</span>' : ""}
+        </td>
+        <td>₱${item.purchase_price_per_unit.toFixed(2)}<span style="color:var(--text3);font-size:12px;">/${item.base_unit}</span></td>
+        <td>₱${item.selling_price_per_unit.toFixed(2)}<span style="color:var(--text3);font-size:12px;">/${item.base_unit}</span></td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-secondary btn-sm" onclick="editItem(${item.id})">Edit</button>
+            <button class="btn btn-sm" style="background:var(--green-light);color:var(--green);" onclick="quickRestock(${item.id})">Restock</button>
+          </div>
+        </td>
+      </tr>`;
     })
     .join("");
 
@@ -226,7 +240,7 @@ function renderItemVariants() {
       .map(
         (v, i) => `
     <div style="background:var(--surface2);border-radius:var(--radius);padding:14px;margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <strong style="font-size:13px;">Unit ${i + 1}</strong>
         <button class="btn btn-sm" style="background:var(--red-light);color:var(--red);" onclick="removeVariant(${i})">Remove</button>
       </div>
@@ -251,16 +265,15 @@ function renderItemVariants() {
         </div>
       </div>
       <div class="form-group" style="margin-top:8px;margin-bottom:0;">
-        <label>Note</label>
+        <label>Note <span style="font-weight:400;color:var(--text3);">(optional)</span></label>
         <input type="text" value="${v.note}" placeholder="Optional note" onchange="updateVariant(${i},'note',this.value)">
       </div>
-    </div>
-  `,
+    </div>`,
       )
       .join("") +
     (itemModalVariants.length
       ? ""
-      : '<p style="color:var(--text3);font-size:13px;">No unit variants yet.</p>');
+      : '<p class="helper">No unit variants yet.</p>');
   updateDefaultUnitSelect(document.getElementById("item-base-unit").value);
 }
 
@@ -286,7 +299,7 @@ function saveItem() {
   const defUnit = document.getElementById("item-default-unit").value;
 
   if (!name || !cat || !bu) {
-    toast("Fill in required fields", "error");
+    toast("Fill in required fields (name, category, base unit)", "error");
     return;
   }
 

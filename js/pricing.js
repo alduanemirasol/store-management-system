@@ -3,11 +3,11 @@
 function renderPricingPage() {
   const el = document.getElementById("pricing-list");
   if (!db.custom_pricing.length) {
-    el.innerHTML =
-      '<div class="card"><p style="color:var(--text3);">No custom pricing yet. Click "+ Add Custom Price" to create one.</p></div>';
+    el.innerHTML = `<div class="card"><p class="helper">No custom pricing yet. Click "+ Add Custom Price" to create one.</p></div>`;
     return;
   }
 
+  // Group by item
   const grouped = {};
   db.custom_pricing.forEach((cp) => {
     const item = db.items.find((i) => i.id === cp.item_id);
@@ -26,28 +26,26 @@ function renderPricingPage() {
       ${g.list
         .map((cp) => {
           const item = g.item;
-          const isActive = item
-            ? getActiveCustomPricing(item.id).find((c) => c.id === cp.id)
-            : false;
           return `<div class="cp-item">
-          <div class="cp-info">
-            <h4>${cp.title} ${cp.active ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-red">Inactive</span>'}</h4>
-            <p>${cp.quantity} ${item?.base_unit || "units"} for ₱${cp.price.toFixed(2)} (₱${(cp.price / cp.quantity).toFixed(2)} each)</p>
-            ${cp.note ? `<p>${cp.note}</p>` : ""}
-            ${cp.start_date || cp.end_date ? `<div class="cp-dates">📅 ${cp.start_date || "—"} to ${cp.end_date || "—"}</div>` : ""}
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-            <div class="cp-price">₱${cp.price.toFixed(2)}</div>
-            <div style="display:flex;gap:4px;">
-              <button class="btn btn-sm btn-secondary" onclick="toggleCustomPricing(${cp.id})">${cp.active ? "Deactivate" : "Activate"}</button>
-              <button class="btn btn-sm" style="background:var(--red-light);color:var(--red);" onclick="deleteCustomPricing(${cp.id})">Delete</button>
+            <div class="cp-info">
+              <h4>${cp.title} ${
+                cp.active
+                  ? '<span class="badge badge-green">Active</span>'
+                  : '<span class="badge badge-red">Inactive</span>'
+              }</h4>
+              <p>${cp.quantity} ${item?.base_unit || "units"} for ₱${cp.price.toFixed(2)} (₱${(cp.price / cp.quantity).toFixed(2)}/unit)</p>
+              ${cp.note ? `<p>${cp.note}</p>` : ""}
+              ${cp.start_date || cp.end_date ? `<div class="cp-dates">📅 ${cp.start_date || "—"} → ${cp.end_date || "—"}</div>` : ""}
+              <div class="cp-actions">
+                <button class="btn btn-sm btn-secondary" onclick="toggleCustomPricing(${cp.id})">${cp.active ? "Deactivate" : "Activate"}</button>
+                <button class="btn btn-sm" style="background:var(--red-light);color:var(--red);" onclick="deleteCustomPricing(${cp.id})">Delete</button>
+              </div>
             </div>
-          </div>
-        </div>`;
+            <div class="cp-price">₱${cp.price.toFixed(2)}</div>
+          </div>`;
         })
         .join("")}
-    </div>
-  `,
+    </div>`,
     )
     .join("");
 }

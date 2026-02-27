@@ -4,10 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShopEase POS & Inventory</title>
+    <title>ShopEase POS &amp; Inventory</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
-    <!-- Styles -->
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/components.css">
     <link rel="stylesheet" href="styles/pos.css">
@@ -15,13 +14,13 @@
 </head>
 
 <body>
-
     <div class="app">
+
         <!-- ===================== SIDEBAR ===================== -->
         <div class="sidebar">
             <div class="sidebar-logo">
                 <h1>🛒 ShopEase</h1>
-                <span>POS & Inventory</span>
+                <span>POS &amp; Inventory</span>
             </div>
             <nav class="nav">
                 <div class="nav-item active" onclick="showPage('pos')">
@@ -56,7 +55,7 @@
         <div class="main">
 
             <!-- Low Stock Alert Banner -->
-            <div id="low-stock-banner" style="display:none;" class="low-stock-banner">
+            <div id="low-stock-banner" class="low-stock-banner" style="display:none;">
                 <div class="low-stock-banner-left">
                     <span class="low-stock-banner-title">⚠️ Low Stock Alert</span>
                     <div class="low-stock-chips" id="low-stock-chips"></div>
@@ -68,7 +67,7 @@
             <div id="page-pos" class="page active" style="padding:0;">
                 <div class="pos-layout">
                     <!-- Items panel -->
-                    <div class="pos-items" style="background:var(--bg);">
+                    <div class="pos-items">
                         <div class="pos-search">
                             <div class="search-box">
                                 <span class="search-icon">🔍</span>
@@ -121,40 +120,45 @@
 
             <!-- ===================== INVENTORY PAGE ===================== -->
             <div id="page-inventory" class="page">
-                <div class="topbar" style="padding:0 0 16px;">
+                <div class="topbar">
                     <h2>📦 Inventory</h2>
                     <div class="topbar-actions">
                         <button class="btn btn-primary" onclick="openAddItemModal()">+ Add Item</button>
                     </div>
                 </div>
+
                 <div class="inv-controls">
-                    <input type="text" id="inv-search" placeholder="🔍 Search items..." oninput="renderInventory()">
+                    <div class="search-box" style="flex:1;">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="inv-search" placeholder="Search items..." oninput="renderInventory()">
+                    </div>
                     <select id="inv-cat-filter" onchange="renderInventory()" style="width:160px;">
                         <option value="">All Categories</option>
                     </select>
                 </div>
+
                 <!-- Low Stock Panel -->
                 <div id="inv-low-stock-panel" class="low-stock-panel" style="display:none;">
                     <div class="low-stock-panel-header">
                         <span class="low-stock-panel-title">⚠️ Items Needing Attention</span>
-                        <button class="btn btn-sm" style="background:var(--orange);color:#fff;"
-                            onclick="showPage('restock')">Go to Restock →</button>
+                        <button class="btn btn-warning btn-sm" onclick="showPage('restock')">Go to Restock →</button>
                     </div>
                     <div class="table-wrap">
                         <table class="low-stock-table">
                             <thead>
                                 <tr>
-                                    <th style="background:transparent;">Item</th>
-                                    <th style="background:transparent;">Current Stock</th>
-                                    <th style="background:transparent;">Min. Level</th>
-                                    <th style="background:transparent;">Status</th>
-                                    <th style="background:transparent;">Action</th>
+                                    <th>Item</th>
+                                    <th>Current Stock</th>
+                                    <th>Min. Level</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody id="low-stock-tbody"></tbody>
                         </table>
                     </div>
                 </div>
+
                 <div class="card">
                     <div class="table-wrap">
                         <table id="inv-table">
@@ -177,12 +181,14 @@
 
             <!-- ===================== RESTOCK PAGE ===================== -->
             <div id="page-restock" class="page">
-                <div class="topbar" style="padding:0 0 16px;">
+                <div class="topbar">
                     <h2>🔄 Restock Items</h2>
                 </div>
                 <div class="two-col">
                     <div class="card">
-                        <div class="card-header"><span class="card-title">Select Item to Restock</span></div>
+                        <div class="card-header">
+                            <span class="card-title">Select Item to Restock</span>
+                        </div>
                         <div class="form-group">
                             <label>Item</label>
                             <select id="restock-item" onchange="updateRestockOptions()">
@@ -201,15 +207,17 @@
                             </div>
                             <div id="restock-preview" class="restock-info" style="display:none;"></div>
                             <div class="form-group" style="margin-top:14px;">
-                                <label>Note (optional)</label>
+                                <label>Note <span style="font-weight:400;color:var(--text3);">(optional)</span></label>
                                 <input type="text" id="restock-note" placeholder="e.g. New delivery">
                             </div>
-                            <button class="btn btn-success" style="width:100%;justify-content:center;margin-top:8px;"
-                                onclick="doRestock()">✅ Confirm Restock</button>
+                            <button class="btn btn-success btn-block" style="margin-top:8px;" onclick="doRestock()">✅
+                                Confirm Restock</button>
                         </div>
                     </div>
                     <div class="card">
-                        <div class="card-header"><span class="card-title">Recent Restocks</span></div>
+                        <div class="card-header">
+                            <span class="card-title">Recent Restocks</span>
+                        </div>
                         <div id="restock-history"></div>
                     </div>
                 </div>
@@ -217,18 +225,22 @@
 
             <!-- ===================== CUSTOM PRICING PAGE ===================== -->
             <div id="page-pricing" class="page">
-                <div class="topbar" style="padding:0 0 16px;">
+                <div class="topbar">
                     <h2>🏷️ Custom Pricing</h2>
-                    <button class="btn btn-primary" onclick="openAddPricingModal()">+ Add Custom Price</button>
+                    <div class="topbar-actions">
+                        <button class="btn btn-primary" onclick="openAddPricingModal()">+ Add Custom Price</button>
+                    </div>
                 </div>
                 <div id="pricing-list"></div>
             </div>
 
             <!-- ===================== CATEGORIES PAGE ===================== -->
             <div id="page-categories" class="page">
-                <div class="topbar" style="padding:0 0 16px;">
+                <div class="topbar">
                     <h2>🗂️ Categories</h2>
-                    <button class="btn btn-primary" onclick="openAddCategoryModal()">+ Add Category</button>
+                    <div class="topbar-actions">
+                        <button class="btn btn-primary" onclick="openAddCategoryModal()">+ Add Category</button>
+                    </div>
                 </div>
                 <div class="card">
                     <div class="table-wrap">
@@ -250,7 +262,7 @@
 
             <!-- ===================== TRANSACTIONS PAGE ===================== -->
             <div id="page-transactions" class="page">
-                <div class="topbar" style="padding:0 0 16px;">
+                <div class="topbar">
                     <h2>📋 Transactions</h2>
                 </div>
                 <div class="stats-grid" id="txn-stats"></div>
@@ -260,7 +272,7 @@
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Date & Time</th>
+                                    <th>Date &amp; Time</th>
                                     <th>Items</th>
                                     <th>Total</th>
                                     <th>Details</th>
@@ -274,19 +286,20 @@
 
             <!-- ===================== RECENT SALES PAGE ===================== -->
             <div id="page-recentsales" class="page">
-                <div class="topbar" style="padding:0 0 16px;background:transparent;border-bottom:none;">
+                <div class="topbar">
                     <h2>🕒 Recent Sales</h2>
                     <div class="topbar-actions">
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <input type="text" id="rs-search" placeholder="🔍 Search item..."
-                                oninput="renderRecentSalesPage()" style="width:200px;">
-                            <select id="rs-filter-date" onchange="renderRecentSalesPage()" style="width:150px;">
-                                <option value="all">All Time</option>
-                                <option value="today">Today</option>
-                                <option value="week">This Week</option>
-                                <option value="month">This Month</option>
-                            </select>
+                        <div class="search-box" style="width:200px;">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="rs-search" placeholder="Search item..."
+                                oninput="renderRecentSalesPage()">
                         </div>
+                        <select id="rs-filter-date" onchange="renderRecentSalesPage()" style="width:150px;">
+                            <option value="all">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                        </select>
                     </div>
                 </div>
                 <div class="stats-grid" id="rs-stats"></div>
@@ -310,24 +323,25 @@
 
             <!-- ===================== STOCK LOGS PAGE ===================== -->
             <div id="page-stocklogs" class="page">
-                <div class="topbar" style="padding:0 0 16px;background:transparent;border-bottom:none;">
+                <div class="topbar">
                     <h2>📝 Stock Logs</h2>
                     <div class="topbar-actions">
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <input type="text" id="sl-search" placeholder="🔍 Search item..."
-                                oninput="renderStockLogsPage()" style="width:180px;">
-                            <select id="sl-filter-type" onchange="renderStockLogsPage()" style="width:140px;">
-                                <option value="all">All Types</option>
-                                <option value="sale">Sales Only</option>
-                                <option value="restock">Restocks Only</option>
-                            </select>
-                            <select id="sl-filter-date" onchange="renderStockLogsPage()" style="width:140px;">
-                                <option value="all">All Time</option>
-                                <option value="today">Today</option>
-                                <option value="week">This Week</option>
-                                <option value="month">This Month</option>
-                            </select>
+                        <div class="search-box" style="width:180px;">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="sl-search" placeholder="Search item..."
+                                oninput="renderStockLogsPage()">
                         </div>
+                        <select id="sl-filter-type" onchange="renderStockLogsPage()" style="width:140px;">
+                            <option value="all">All Types</option>
+                            <option value="sale">Sales Only</option>
+                            <option value="restock">Restocks Only</option>
+                        </select>
+                        <select id="sl-filter-date" onchange="renderStockLogsPage()" style="width:140px;">
+                            <option value="all">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                        </select>
                     </div>
                 </div>
                 <div class="stats-grid" id="sl-stats"></div>
@@ -366,6 +380,8 @@
                     <div class="tab active" onclick="switchTab('basic')">Basic Info</div>
                     <div class="tab" onclick="switchTab('units')">Unit Variants</div>
                 </div>
+
+                <!-- Basic Info Tab -->
                 <div id="tab-basic" class="tab-panel active">
                     <div class="form-row">
                         <div class="form-group">
@@ -422,7 +438,7 @@
                             </select>
                             <input type="hidden" id="item-base-unit">
                             <input type="text" id="item-base-unit-custom" placeholder="Type custom unit (e.g. bundle)"
-                                style="display:none;margin-top:6px;" oninput="onBaseUnitCustomInput()">
+                                oninput="onBaseUnitCustomInput()">
                             <p class="helper" id="item-base-unit-helper">Smallest standard unit</p>
                         </div>
                         <div class="form-group">
@@ -436,7 +452,8 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Initial Stock (in base units)</label>
+                            <label>Initial Stock <span style="font-weight:400;color:var(--text3);">(in base
+                                    units)</span></label>
                             <input type="number" id="item-stock" step="any" min="0" placeholder="0">
                         </div>
                         <div class="form-group">
@@ -448,13 +465,16 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Low Stock Threshold (in base units)</label>
+                        <label>Low Stock Threshold <span style="font-weight:400;color:var(--text3);">(in base
+                                units)</span></label>
                         <input type="number" id="item-low-stock" step="any" min="0" placeholder="e.g. 10">
                     </div>
                 </div>
+
+                <!-- Unit Variants Tab -->
                 <div id="tab-units" class="tab-panel">
-                    <p style="color:var(--text3);font-size:13px;margin-bottom:14px;">Define alternative units for buying
-                        and selling (e.g. sack, tray, pack).</p>
+                    <p class="helper" style="margin-bottom:14px;">Define alternative units for buying and selling (e.g.
+                        sack, tray, pack).</p>
                     <div id="unit-variants-list"></div>
                     <button class="btn btn-secondary btn-sm" onclick="addUnitVariant()">+ Add Unit Variant</button>
                 </div>
@@ -504,7 +524,6 @@
                                         style="padding-left:26px;" oninput="updateCartPreview()">
                                 </div>
                             </div>
-                            <div class="manual-price-vs" id="normal-price-ref"></div>
                         </div>
                         <p class="helper" style="margin-top:6px;">Normal price: <strong
                                 id="normal-price-display">—</strong></p>
@@ -515,7 +534,8 @@
                     <span class="price-preview-label" id="preview-label">Total</span>
                     <span class="price-preview-value" id="preview-value">₱0.00</span>
                 </div>
-                <div id="stock-warning" style="display:none;" class="restock-info"></div>
+                <div id="stock-warning" class="restock-info"
+                    style="display:none;background:var(--orange-light);color:var(--orange);"></div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('modal-add-cart')">Cancel</button>
@@ -544,7 +564,8 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Quantity (in base units) *</label>
+                        <label>Quantity <span style="font-weight:400;color:var(--text3);">(in base units)</span>
+                            *</label>
                         <input type="number" id="cp-qty" step="any" min="0.01" placeholder="e.g. 3">
                     </div>
                     <div class="form-group">
@@ -554,21 +575,21 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Start Date (optional)</label>
+                        <label>Start Date <span style="font-weight:400;color:var(--text3);">(optional)</span></label>
                         <input type="date" id="cp-start">
                     </div>
                     <div class="form-group">
-                        <label>End Date (optional)</label>
+                        <label>End Date <span style="font-weight:400;color:var(--text3);">(optional)</span></label>
                         <input type="date" id="cp-end">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Note (optional)</label>
+                    <label>Note <span style="font-weight:400;color:var(--text3);">(optional)</span></label>
                     <input type="text" id="cp-note" placeholder="Additional notes">
                 </div>
-                <div class="form-group" style="display:flex;align-items:center;gap:8px;">
-                    <input type="checkbox" id="cp-active" checked style="width:auto;">
-                    <label style="margin:0;">Active</label>
+                <div class="form-group check-row">
+                    <input type="checkbox" id="cp-active" checked>
+                    <label for="cp-active">Active immediately</label>
                 </div>
             </div>
             <div class="modal-footer">
@@ -580,7 +601,7 @@
 
     <!-- Add / Edit Category Modal -->
     <div class="modal-backdrop" id="modal-category">
-        <div class="modal" style="width:420px;">
+        <div class="modal modal-sm">
             <div class="modal-header">
                 <h3 id="cat-modal-title">Add Category</h3>
                 <button class="close-btn" onclick="closeModal('modal-category')">✕</button>
@@ -594,9 +615,9 @@
                     <div class="form-group">
                         <label>Emoji Icon</label>
                         <div style="display:flex;gap:8px;align-items:center;">
-                            <input type="text" id="cat-emoji" placeholder="e.g. 🧃" maxlength="4"
-                                style="width:70px;text-align:center;font-size:20px;">
-                            <div id="cat-emoji-presets" style="display:flex;flex-wrap:wrap;gap:5px;flex:1;"></div>
+                            <input type="text" id="cat-emoji" placeholder="🧃" maxlength="4"
+                                style="width:60px;text-align:center;font-size:20px;padding:6px;">
+                            <div id="cat-emoji-presets" style="display:flex;flex-wrap:wrap;gap:4px;flex:1;"></div>
                         </div>
                     </div>
                     <div class="form-group">
@@ -605,7 +626,7 @@
                         <input type="hidden" id="cat-color" value="blue">
                     </div>
                 </div>
-                <div id="cat-preview-row" style="margin-top:4px;">
+                <div class="form-group">
                     <label>Preview</label>
                     <div style="margin-top:6px;">
                         <span id="cat-badge-preview" class="badge badge-blue">📦 Category</span>
@@ -614,7 +635,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('modal-category')">Cancel</button>
-                <button class="btn btn-primary" id="cat-save-btn" onclick="saveCategory()">Save Category</button>
+                <button class="btn btn-primary" onclick="saveCategory()">Save Category</button>
             </div>
         </div>
     </div>
@@ -631,15 +652,10 @@
     </div>
 
     <!-- ===================== SCRIPTS ===================== -->
-    <!-- Data Layer -->
     <script src="data/store.js"></script>
-    <!-- Utility Helpers -->
     <script src="js/helpers.js"></script>
-    <!-- Services (pricing & unit calculations) -->
     <script src="js/services.js"></script>
-    <!-- Navigation -->
     <script src="js/navigation.js"></script>
-    <!-- Feature Modules -->
     <script src="js/pos.js"></script>
     <script src="js/inventory.js"></script>
     <script src="js/categories.js"></script>
@@ -647,13 +663,13 @@
     <script src="js/pricing.js"></script>
     <script src="js/reports.js"></script>
     <script src="js/alerts.js"></script>
-    <!-- App Initialization -->
     <script>
         seedData();
         renderPOSItems();
         updateLowStockAlerts();
         renderRecentSales();
     </script>
+
 </body>
 
 </html>

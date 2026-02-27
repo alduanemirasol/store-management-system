@@ -49,8 +49,7 @@ function populateCategorySelect(selectId, selectedName) {
 function renderCategoriesPage() {
   const tbody = document.getElementById("cat-tbody");
   if (!db.categories.length) {
-    tbody.innerHTML =
-      '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px;">No categories yet.</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="5" class="page-empty">No categories yet.</td></tr>`;
     return;
   }
   tbody.innerHTML = db.categories
@@ -59,22 +58,24 @@ function renderCategoriesPage() {
       const colorObj =
         CAT_COLORS.find((c) => c.key === cat.color) || CAT_COLORS[0];
       return `<tr>
-      <td><strong>${cat.name}</strong></td>
-      <td style="font-size:20px;">${cat.emoji || "—"}</td>
-      <td>
-        <span class="badge badge-${cat.color}" style="gap:4px;">
-          <span style="width:8px;height:8px;border-radius:50%;background:${colorObj.text};display:inline-block;"></span>
-          ${colorObj.label}
-        </span>
-      </td>
-      <td>${itemCount} item${itemCount !== 1 ? "s" : ""}</td>
-      <td style="display:flex;gap:6px;align-items:center;">
-        <button class="btn btn-secondary btn-sm" onclick="openEditCategoryModal(${cat.id})">Edit</button>
-        <button class="btn btn-sm" style="background:var(--red-light);color:var(--red);"
-          onclick="deleteCategory(${cat.id})"
-          ${itemCount > 0 ? 'disabled title="Cannot delete: category has items"' : ""}>Delete</button>
-      </td>
-    </tr>`;
+        <td><strong>${cat.name}</strong></td>
+        <td style="font-size:20px;">${cat.emoji || "—"}</td>
+        <td>
+          <span class="badge badge-${cat.color}">
+            <span style="width:8px;height:8px;border-radius:50%;background:${colorObj.text};display:inline-block;"></span>
+            ${colorObj.label}
+          </span>
+        </td>
+        <td>${itemCount} item${itemCount !== 1 ? "s" : ""}</td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-secondary btn-sm" onclick="openEditCategoryModal(${cat.id})">Edit</button>
+            <button class="btn btn-sm" style="background:var(--red-light);color:var(--red);"
+              onclick="deleteCategory(${cat.id})"
+              ${itemCount > 0 ? 'disabled title="Cannot delete: category has items"' : ""}>Delete</button>
+          </div>
+        </td>
+      </tr>`;
     })
     .join("");
 }
@@ -111,8 +112,7 @@ function openEditCategoryModal(catId) {
 function renderCatEmojiPresets(selected) {
   const el = document.getElementById("cat-emoji-presets");
   el.innerHTML = CAT_EMOJIS.map(
-    (e) =>
-      `<span onclick="pickCatEmoji('${e}')" title="${e}"
+    (e) => `<span onclick="pickCatEmoji('${e}')" title="${e}"
       style="cursor:pointer;font-size:18px;padding:3px 5px;border-radius:6px;border:2px solid ${e === selected ? "var(--accent)" : "transparent"};transition:all 0.12s;"
       onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">${e}</span>`,
   ).join("");
@@ -127,8 +127,7 @@ function pickCatEmoji(emoji) {
 function renderCatColorPresets(selected) {
   const el = document.getElementById("cat-color-presets");
   el.innerHTML = CAT_COLORS.map(
-    (c) =>
-      `<div onclick="pickCatColor('${c.key}')" title="${c.label}"
+    (c) => `<div onclick="pickCatColor('${c.key}')" title="${c.label}"
       style="width:24px;height:24px;border-radius:50%;background:${c.bg};border:2.5px solid ${c.key === selected ? c.text : "transparent"};cursor:pointer;box-shadow:inset 0 0 0 2px ${c.text};transition:all 0.12s;"
       onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></div>`,
   ).join("");

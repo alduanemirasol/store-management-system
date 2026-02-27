@@ -36,8 +36,8 @@ function updateLowStockAlerts() {
       .map((item) => {
         const isOut = item.stock_quantity <= 0;
         return `<span class="low-stock-chip ${isOut ? "out" : ""}" onclick="showPage('inventory')" title="Click to view inventory">
-                ${item.emoji || "📦"} ${item.item_name}: ${formatStock(item)} ${item.base_unit}${isOut ? " (Out)" : ""}
-            </span>`;
+          ${item.emoji || "📦"} ${item.item_name}: ${formatStock(item)} ${item.base_unit}${isOut ? " (Out)" : ""}
+        </span>`;
       })
       .join("");
   } else {
@@ -72,27 +72,28 @@ function updateInventoryLowStockPanel(lowItems) {
             )
           : 100;
       const barColor = isOut ? "var(--red)" : "var(--orange)";
+      const stockColor = isOut ? "var(--red)" : "var(--orange)";
       return `<tr>
-            <td><strong>${item.emoji || "📦"} ${item.item_name}</strong></td>
-            <td>
-                <strong style="color:${isOut ? "var(--red)" : "var(--orange)"}">
-                    ${formatStock(item)} ${item.base_unit}
-                </strong>
-                <div style="margin-top:4px;background:rgba(0,0,0,0.08);border-radius:4px;height:5px;width:100px;overflow:hidden;">
-                    <div style="width:${pct}%;background:${barColor};height:100%;border-radius:4px;transition:width 0.3s;"></div>
-                </div>
-            </td>
-            <td style="color:var(--text2);">${item.low_stock_threshold} ${item.base_unit}</td>
-            <td>${
-              isOut
-                ? '<span class="badge badge-red">Out of Stock</span>'
-                : '<span class="badge badge-orange">Low Stock</span>'
-            }</td>
-            <td>
-                <button class="btn btn-sm" style="background:var(--green-light);color:var(--green);" onclick="quickRestock(${item.id})">Restock</button>
-                <button class="btn btn-sm btn-secondary" style="margin-left:4px;" onclick="editItem(${item.id})">Edit Min.</button>
-            </td>
-        </tr>`;
+        <td><strong>${item.emoji || "📦"} ${item.item_name}</strong></td>
+        <td>
+          <strong style="color:${stockColor};">${formatStock(item)} ${item.base_unit}</strong>
+          <div style="margin-top:4px;background:rgba(0,0,0,0.08);border-radius:4px;height:5px;width:100px;overflow:hidden;">
+            <div style="width:${pct}%;background:${barColor};height:100%;border-radius:4px;transition:width 0.3s;"></div>
+          </div>
+        </td>
+        <td style="color:var(--text2);">${item.low_stock_threshold} ${item.base_unit}</td>
+        <td>${
+          isOut
+            ? '<span class="badge badge-red">Out of Stock</span>'
+            : '<span class="badge badge-orange">Low Stock</span>'
+        }</td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-sm" style="background:var(--green-light);color:var(--green);" onclick="quickRestock(${item.id})">Restock</button>
+            <button class="btn btn-sm btn-secondary" onclick="editItem(${item.id})">Edit Min.</button>
+          </div>
+        </td>
+      </tr>`;
     })
     .join("");
 }

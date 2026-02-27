@@ -1,16 +1,15 @@
-/* ===================== INVENTORY ===================== */
+/* ===================== INVENTORY CONTROLS ===================== */
 .inv-controls {
   display: flex;
   gap: 10px;
   align-items: center;
   margin-bottom: 16px;
 }
-
-.inv-controls input {
+.inv-controls .search-box {
   flex: 1;
 }
 
-/* ===================== RESTOCK ===================== */
+/* ===================== RESTOCK INFO ===================== */
 .restock-info {
   background: var(--green-light);
   border-radius: var(--radius);
@@ -30,24 +29,35 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 }
-
 .cp-info h4 {
   font-size: 13px;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .cp-info p {
   font-size: 12px;
   color: var(--text3);
+  margin-top: 2px;
 }
 .cp-price {
   font-size: 16px;
   font-weight: 800;
   color: var(--green);
+  white-space: nowrap;
 }
 .cp-dates {
   font-size: 11px;
   color: var(--text3);
+  margin-top: 3px;
+}
+.cp-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
 }
 
 /* ===================== TRANSACTIONS ===================== */
@@ -63,17 +73,14 @@
 /* ===================== BASE UNIT CUSTOM INPUT ===================== */
 #item-base-unit-custom {
   transition: all 0.15s;
-}
-#item-base-unit-select option[value="__custom__"] {
-  color: var(--accent);
-  font-style: italic;
+  margin-top: 6px;
 }
 
 /* ===================== LOW STOCK ALERT BANNER ===================== */
 .low-stock-banner {
   background: var(--orange-light);
   border-bottom: 1px solid #f97316;
-  padding: 10px 24px;
+  padding: 10px 26px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -127,7 +134,6 @@
   cursor: pointer;
   transition: all 0.12s;
 }
-
 .low-stock-chip:hover {
   background: var(--orange);
   color: #fff;
@@ -151,8 +157,9 @@
   border-radius: 6px;
   flex-shrink: 0;
   font-weight: 700;
+  line-height: 1;
+  transition: background 0.12s;
 }
-
 .low-stock-dismiss:hover {
   background: rgba(234, 88, 12, 0.15);
 }
@@ -182,7 +189,36 @@
   gap: 6px;
 }
 
-.low-stock-table td,
-.low-stock-table th {
+/* Make low-stock table rows inherit the panel background */
+.low-stock-table th,
+.low-stock-table td {
   background: transparent !important;
+}
+
+/* ===================== RESTOCK HISTORY ENTRY ===================== */
+.restock-entry {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.restock-entry:last-child {
+  border-bottom: none;
+}
+.restock-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.restock-entry-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+.restock-entry-meta {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 2px;
+}
+.restock-entry-note {
+  font-size: 11px;
+  color: var(--text2);
+  margin-top: 2px;
 }

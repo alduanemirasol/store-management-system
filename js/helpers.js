@@ -47,6 +47,12 @@ function relativeTime(date) {
   return Math.floor(diffMin / 1440) + "d ago";
 }
 
+// Generate a new unique id for a given table name
+function newId(table) {
+  const arr = db[table] || [];
+  return arr.length ? Math.max(...arr.map((r) => r.id || 0)) + 1 : 1;
+}
+
 // ===================== MODAL BACKDROP CLOSE =====================
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".modal-backdrop").forEach((m) => {

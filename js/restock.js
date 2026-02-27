@@ -76,7 +76,7 @@ function doRestock() {
   const itemId = parseInt(document.getElementById("restock-item").value);
   const qty = parseFloat(document.getElementById("restock-qty").value) || 0;
   if (!itemId || qty <= 0) {
-    toast("Enter valid quantity", "error");
+    toast("Enter a valid quantity", "error");
     return;
   }
 
@@ -90,7 +90,7 @@ function doRestock() {
     item_id: item.id,
     item_name: item.item_name,
     unit: selectedRestockUnit,
-    qty: qty,
+    qty,
     base_qty: baseQty,
     base_unit: item.base_unit,
     note: document.getElementById("restock-note").value,
@@ -132,7 +132,7 @@ function renderRestockHistory() {
   const el = document.getElementById("restock-history");
   if (!db.restock_history.length) {
     el.innerHTML =
-      '<div style="color:var(--text3);font-size:13px;padding:10px 0;">No restocks yet.</div>';
+      '<p class="helper" style="padding:8px 0;">No restocks yet.</p>';
     return;
   }
   el.innerHTML = db.restock_history
@@ -142,14 +142,14 @@ function renderRestockHistory() {
         r.unit === "base"
           ? r.base_unit
           : getRestockUnitLabel(r.item_id, r.unit);
-      return `<div style="padding:10px 0;border-bottom:1px solid var(--border);">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <strong style="font-size:13px;">${r.item_name}</strong>
-        <span class="badge badge-green">+${r.base_qty.toLocaleString()} ${r.base_unit}</span>
-      </div>
-      <div style="font-size:11px;color:var(--text3);margin-top:2px;">${r.qty} ${unitLabel} • ${new Date(r.date).toLocaleString()}</div>
-      ${r.note ? `<div style="font-size:11px;color:var(--text2);">${r.note}</div>` : ""}
-    </div>`;
+      return `<div class="restock-entry">
+        <div class="restock-entry-header">
+          <span class="restock-entry-title">${r.item_name}</span>
+          <span class="badge badge-green">+${r.base_qty.toLocaleString()} ${r.base_unit}</span>
+        </div>
+        <div class="restock-entry-meta">${r.qty} ${unitLabel} · ${new Date(r.date).toLocaleString()}</div>
+        ${r.note ? `<div class="restock-entry-note">${r.note}</div>` : ""}
+      </div>`;
     })
     .join("");
 }
