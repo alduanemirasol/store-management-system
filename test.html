@@ -1,0 +1,2378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopEase POS & Inventory</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f5f6fa;
+            --surface: #ffffff;
+            --surface2: #f0f2f8;
+            --border: #e2e6f0;
+            --border2: #d0d6e8;
+            --text: #1a1d2e;
+            --text2: #4a5068;
+            --text3: #8892aa;
+            --accent: #3b6ef0;
+            --accent-light: #eef2ff;
+            --accent-hover: #2d5cd8;
+            --green: #16a34a;
+            --green-light: #dcfce7;
+            --red: #dc2626;
+            --red-light: #fee2e2;
+            --orange: #ea580c;
+            --orange-light: #ffedd5;
+            --yellow: #d97706;
+            --yellow-light: #fef3c7;
+            --radius: 10px;
+            --radius-lg: 16px;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Layout */
+        .app {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 220px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .main {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Sidebar */
+        .sidebar-logo {
+            padding: 20px 16px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-logo h1 {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-logo span {
+            font-size: 11px;
+            color: var(--text3);
+            font-weight: 400;
+        }
+
+        .nav {
+            padding: 12px 8px;
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 13.5px;
+            font-weight: 500;
+            color: var(--text2);
+            transition: all 0.15s;
+            margin-bottom: 2px;
+        }
+
+        .nav-item:hover {
+            background: var(--surface2);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            background: var(--accent-light);
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .nav-item .icon {
+            width: 18px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        /* Top bar */
+        .topbar {
+            padding: 14px 24px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .topbar h2 {
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border-radius: var(--radius);
+            border: none;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background: var(--surface2);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn-success {
+            background: var(--green);
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            background: #15803d;
+        }
+
+        .btn-danger {
+            background: var(--red);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .btn-icon {
+            padding: 6px 8px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.15s;
+        }
+
+        .btn-icon:hover {
+            background: var(--surface2);
+        }
+
+        /* Page content */
+        .page {
+            display: none;
+            flex: 1;
+            overflow: auto;
+            padding: 20px 24px;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 18px;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text3);
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .stat-sub {
+            font-size: 11px;
+            color: var(--text3);
+            margin-top: 2px;
+        }
+
+        .stat-card.blue .stat-value {
+            color: var(--accent);
+        }
+
+        .stat-card.green .stat-value {
+            color: var(--green);
+        }
+
+        .stat-card.orange .stat-value {
+            color: var(--orange);
+        }
+
+        .stat-card.red .stat-value {
+            color: var(--red);
+        }
+
+        /* Table */
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 10px 14px;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+        }
+
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13.5px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: var(--surface2);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-green {
+            background: var(--green-light);
+            color: var(--green);
+        }
+
+        .badge-red {
+            background: var(--red-light);
+            color: var(--red);
+        }
+
+        .badge-orange {
+            background: var(--orange-light);
+            color: var(--orange);
+        }
+
+        .badge-blue {
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+
+        .badge-yellow {
+            background: var(--yellow-light);
+            color: var(--yellow);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text2);
+            margin-bottom: 5px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border2);
+            border-radius: var(--radius);
+            font-family: 'Inter', sans-serif;
+            font-size: 13.5px;
+            color: var(--text);
+            background: var(--surface);
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 110, 240, 0.1);
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+        }
+
+        /* Modal */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            width: 560px;
+            max-width: 95vw;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-lg);
+            animation: modalIn 0.2s ease;
+        }
+
+        .modal-lg {
+            width: 720px;
+        }
+
+        @keyframes modalIn {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .modal-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: 14px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: var(--text3);
+            padding: 2px 6px;
+            border-radius: 6px;
+        }
+
+        .close-btn:hover {
+            background: var(--surface2);
+            color: var(--text);
+        }
+
+        /* POS layout */
+        .pos-layout {
+            display: flex;
+            gap: 0;
+            height: calc(100vh - 53px);
+            overflow: hidden;
+        }
+
+        .pos-items {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+        }
+
+        .pos-cart {
+            width: 360px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            background: var(--surface);
+        }
+
+        .pos-search {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            padding-left: 36px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text3);
+            font-size: 15px;
+            pointer-events: none;
+        }
+
+        .pos-categories {
+            display: flex;
+            gap: 6px;
+            padding: 10px 16px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            flex-shrink: 0;
+        }
+
+        .pos-categories::-webkit-scrollbar {
+            height: 0;
+        }
+
+        .cat-chip {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text2);
+            transition: all 0.15s;
+        }
+
+        .cat-chip.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        .pos-grid {
+            padding: 14px 16px;
+            overflow-y: auto;
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            align-content: start;
+        }
+
+        .item-card {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 14px 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .item-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 110, 240, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .item-card.low-stock {
+            border-color: var(--orange);
+        }
+
+        .item-emoji {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .item-name {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .item-stock {
+            font-size: 11px;
+            color: var(--text3);
+        }
+
+        .item-price {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-top: 4px;
+        }
+
+        /* Cart */
+        .cart-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .cart-header h3 {
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .cart-count {
+            font-size: 12px;
+            color: var(--text3);
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 12px;
+        }
+
+        .cart-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text3);
+        }
+
+        .cart-empty-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .cart-item {
+            background: var(--surface2);
+            border-radius: var(--radius);
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .cart-item-detail {
+            font-size: 11px;
+            color: var(--text3);
+            margin-top: 1px;
+        }
+
+        .cart-item-price {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent);
+            white-space: nowrap;
+        }
+
+        .cart-item-remove {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text3);
+            font-size: 16px;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .cart-item-remove:hover {
+            color: var(--red);
+        }
+
+        /* Cart quantity stepper */
+        .qty-stepper {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 6px;
+        }
+
+        .qty-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 7px;
+            border: 1.5px solid var(--border2);
+            background: var(--surface);
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            transition: all 0.12s;
+            flex-shrink: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .qty-btn:hover {
+            background: var(--accent-light);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .qty-btn.minus:hover {
+            background: var(--red-light);
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        .qty-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .qty-input {
+            width: 48px;
+            height: 26px;
+            text-align: center;
+            border: 1.5px solid var(--border2);
+            border-radius: 7px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text);
+            background: var(--surface);
+            padding: 0 4px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.12s;
+        }
+
+        .qty-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(59, 110, 240, 0.1);
+        }
+
+        .qty-input.over-stock {
+            border-color: var(--red);
+            background: var(--red-light);
+            color: var(--red);
+        }
+
+        .qty-unit-label {
+            font-size: 11px;
+            color: var(--text3);
+            margin-left: 2px;
+        }
+
+        .cart-footer {
+            padding: 14px 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .cart-total-label {
+            font-size: 12px;
+            color: var(--text3);
+        }
+
+        .cart-total-value {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .cart-grand-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            padding-top: 10px;
+            border-top: 2px solid var(--border);
+        }
+
+        .cart-grand-label {
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .cart-grand-value {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .cart-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .cart-actions .btn {
+            flex: 1;
+            justify-content: center;
+        }
+
+        /* Add to cart modal specific */
+        .unit-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .unit-option {
+            padding: 7px 14px;
+            border-radius: var(--radius);
+            border: 1.5px solid var(--border2);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.15s;
+            background: var(--surface);
+        }
+
+        .unit-option:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .unit-option.active {
+            border-color: var(--accent);
+            background: var(--accent-light);
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .unit-option.custom {
+            border-color: var(--orange);
+        }
+
+        .unit-option.custom.active {
+            background: var(--orange-light);
+            color: var(--orange);
+            border-color: var(--orange);
+        }
+
+        .price-preview {
+            background: var(--accent-light);
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+        }
+
+        .price-preview-label {
+            font-size: 13px;
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .price-preview-value {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        /* Inventory page */
+        .inv-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .inv-controls input {
+            flex: 1;
+        }
+
+        /* Restock */
+        .restock-info {
+            background: var(--green-light);
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--green);
+            font-weight: 500;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+
+        .tab {
+            padding: 10px 18px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text3);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: all 0.15s;
+        }
+
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+            font-weight: 600;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* Transactions */
+        .txn-meta {
+            font-size: 11px;
+            color: var(--text3);
+        }
+
+        .txn-items-detail {
+            font-size: 12px;
+            color: var(--text2);
+        }
+
+        /* Custom pricing list */
+        .cp-item {
+            background: var(--surface2);
+            border-radius: var(--radius);
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cp-info h4 {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .cp-info p {
+            font-size: 12px;
+            color: var(--text3);
+        }
+
+        .cp-price {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--green);
+        }
+
+        .cp-dates {
+            font-size: 11px;
+            color: var(--text3);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--text);
+            color: #fff;
+            padding: 12px 18px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 999;
+            animation: toastIn 0.3s ease;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .toast.success {
+            background: var(--green);
+        }
+
+        .toast.error {
+            background: var(--red);
+        }
+
+        .toast.info {
+            background: var(--accent);
+        }
+
+        @keyframes toastIn {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 10px;
+        }
+
+        /* Divider */
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 14px 0;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text2);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .helper {
+            font-size: 11.5px;
+            color: var(--text3);
+            margin-top: 4px;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .low-stock-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--orange);
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <h1>🛒 ShopEase</h1>
+                <span>POS & Inventory</span>
+            </div>
+            <nav class="nav">
+                <div class="nav-item active" onclick="showPage('pos')">
+                    <span class="icon">🏪</span> Point of Sale
+                </div>
+                <div class="nav-item" onclick="showPage('inventory')">
+                    <span class="icon">📦</span> Inventory
+                </div>
+                <div class="nav-item" onclick="showPage('restock')">
+                    <span class="icon">🔄</span> Restock
+                </div>
+                <div class="nav-item" onclick="showPage('pricing')">
+                    <span class="icon">🏷️</span> Custom Pricing
+                </div>
+                <div class="nav-item" onclick="showPage('transactions')">
+                    <span class="icon">📋</span> Transactions
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main -->
+        <div class="main">
+
+            <!-- POS Page -->
+            <div id="page-pos" class="page active" style="padding:0;">
+                <div class="pos-layout">
+                    <!-- Items panel -->
+                    <div class="pos-items" style="background:var(--bg);">
+                        <div class="pos-search">
+                            <div class="search-box">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" id="pos-search" placeholder="Search items..."
+                                    oninput="renderPOSItems()">
+                            </div>
+                        </div>
+                        <div class="pos-categories" id="pos-categories"></div>
+                        <div class="pos-grid" id="pos-grid"></div>
+                    </div>
+                    <!-- Cart panel -->
+                    <div class="pos-cart">
+                        <div class="cart-header">
+                            <h3>Current Order</h3>
+                            <div class="cart-count" id="cart-count">0 items</div>
+                        </div>
+                        <div class="cart-items" id="cart-items">
+                            <div class="cart-empty">
+                                <div class="cart-empty-icon">🛒</div>
+                                <div>No items yet.<br>Click an item to add.</div>
+                            </div>
+                        </div>
+                        <div class="cart-footer">
+                            <div class="cart-total">
+                                <span class="cart-total-label">Subtotal</span>
+                                <span class="cart-total-value" id="cart-subtotal">₱0.00</span>
+                            </div>
+                            <div class="cart-grand-total">
+                                <span class="cart-grand-label">Total</span>
+                                <span class="cart-grand-value" id="cart-total">₱0.00</span>
+                            </div>
+                            <div class="cart-actions">
+                                <button class="btn btn-secondary" onclick="clearCart()">Clear</button>
+                                <button class="btn btn-success" onclick="checkout()" id="checkout-btn"
+                                    disabled>Checkout</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory Page -->
+            <div id="page-inventory" class="page">
+                <div class="topbar" style="padding:0 0 16px;">
+                    <h2>📦 Inventory</h2>
+                    <div class="topbar-actions">
+                        <button class="btn btn-primary" onclick="openAddItemModal()">+ Add Item</button>
+                    </div>
+                </div>
+                <div class="inv-controls">
+                    <input type="text" id="inv-search" placeholder="🔍 Search items..." oninput="renderInventory()">
+                    <select id="inv-cat-filter" onchange="renderInventory()" style="width:160px;">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table id="inv-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Category</th>
+                                    <th>Base Unit</th>
+                                    <th>Stock</th>
+                                    <th>Buy Price</th>
+                                    <th>Sell Price</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inv-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Restock Page -->
+            <div id="page-restock" class="page">
+                <div class="topbar" style="padding:0 0 16px;">
+                    <h2>🔄 Restock Items</h2>
+                </div>
+                <div class="two-col">
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">Select Item to Restock</span></div>
+                        <div class="form-group">
+                            <label>Item</label>
+                            <select id="restock-item" onchange="updateRestockOptions()">
+                                <option value="">— Select item —</option>
+                            </select>
+                        </div>
+                        <div id="restock-form" style="display:none;">
+                            <div class="form-group">
+                                <label>Restock Unit</label>
+                                <div class="unit-options" id="restock-units"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Quantity</label>
+                                <input type="number" id="restock-qty" min="0.01" step="any" placeholder="Enter quantity"
+                                    oninput="updateRestockPreview()">
+                            </div>
+                            <div id="restock-preview" class="restock-info" style="display:none;"></div>
+                            <div class="form-group" style="margin-top:14px;">
+                                <label>Note (optional)</label>
+                                <input type="text" id="restock-note" placeholder="e.g. New delivery">
+                            </div>
+                            <button class="btn btn-success" style="width:100%;justify-content:center;margin-top:8px;"
+                                onclick="doRestock()">✅ Confirm Restock</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">Recent Restocks</span></div>
+                        <div id="restock-history"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Pricing Page -->
+            <div id="page-pricing" class="page">
+                <div class="topbar" style="padding:0 0 16px;">
+                    <h2>🏷️ Custom Pricing</h2>
+                    <button class="btn btn-primary" onclick="openAddPricingModal()">+ Add Custom Price</button>
+                </div>
+                <div id="pricing-list"></div>
+            </div>
+
+            <!-- Transactions Page -->
+            <div id="page-transactions" class="page">
+                <div class="topbar" style="padding:0 0 16px;">
+                    <h2>📋 Transactions</h2>
+                </div>
+                <div class="stats-grid" id="txn-stats"></div>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Date & Time</th>
+                                    <th>Items</th>
+                                    <th>Total</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="txn-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div class="modal-backdrop" id="modal-add-item">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h3 id="item-modal-title">Add New Item</h3>
+                <button class="close-btn" onclick="closeModal('modal-add-item')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('basic')">Basic Info</div>
+                    <div class="tab" onclick="switchTab('units')">Unit Variants</div>
+                </div>
+                <div id="tab-basic" class="tab-panel active">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Item Name *</label>
+                            <input type="text" id="item-name" placeholder="e.g. Rice">
+                        </div>
+                        <div class="form-group">
+                            <label>Category *</label>
+                            <input type="text" id="item-category" placeholder="e.g. Grains, Dairy, Vegetables"
+                                list="category-list">
+                            <datalist id="category-list"></datalist>
+                        </div>
+                    </div>
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label>Base Unit *</label>
+                            <input type="text" id="item-base-unit" placeholder="e.g. kg, piece, mL">
+                            <p class="helper">Smallest standard unit</p>
+                        </div>
+                        <div class="form-group">
+                            <label>Purchase Price / Base Unit</label>
+                            <input type="number" id="item-buy-price" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label>Selling Price / Base Unit</label>
+                            <input type="number" id="item-sell-price" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Initial Stock (in base units)</label>
+                            <input type="number" id="item-stock" step="any" min="0" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Default Selling Unit</label>
+                            <select id="item-default-unit">
+                                <option value="base">Base unit</option>
+                            </select>
+                            <p class="helper">Auto-selected in POS</p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Low Stock Threshold (in base units)</label>
+                        <input type="number" id="item-low-stock" step="any" min="0" placeholder="e.g. 10">
+                    </div>
+                </div>
+                <div id="tab-units" class="tab-panel">
+                    <p style="color:var(--text3);font-size:13px;margin-bottom:14px;">Define alternative units for buying
+                        and selling (e.g. sack, tray, pack).</p>
+                    <div id="unit-variants-list"></div>
+                    <button class="btn btn-secondary btn-sm" onclick="addUnitVariant()">+ Add Unit Variant</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modal-add-item')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveItem()">Save Item</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add to Cart Modal -->
+    <div class="modal-backdrop" id="modal-add-cart">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="cart-modal-title">Add to Cart</h3>
+                <button class="close-btn" onclick="closeModal('modal-add-cart')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Selling Option</label>
+                    <div class="unit-options" id="cart-unit-options"></div>
+                </div>
+                <div class="form-group" id="cart-qty-group">
+                    <label>Quantity</label>
+                    <input type="number" id="cart-qty" step="any" min="0.01" placeholder="Enter quantity"
+                        oninput="updateCartPreview()">
+                </div>
+                <div id="custom-price-override" style="display:none;">
+                    <div class="form-group">
+                        <label>Price Override (PHP)</label>
+                        <input type="number" id="cart-manual-price" step="0.01" min="0" placeholder="Manual price"
+                            oninput="updateCartPreview()">
+                    </div>
+                </div>
+                <div class="price-preview" id="cart-price-preview">
+                    <span class="price-preview-label" id="preview-label">Total</span>
+                    <span class="price-preview-value" id="preview-value">₱0.00</span>
+                </div>
+                <div id="stock-warning" style="display:none;" class="restock-info"
+                    style="background:var(--orange-light);color:var(--orange);"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modal-add-cart')">Cancel</button>
+                <button class="btn btn-primary" id="add-cart-btn" onclick="addToCart()">Add to Cart</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Pricing Modal -->
+    <div class="modal-backdrop" id="modal-custom-price">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="cp-modal-title">Add Custom Pricing</h3>
+                <button class="close-btn" onclick="closeModal('modal-custom-price')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Item *</label>
+                    <select id="cp-item">
+                        <option value="">— Select item —</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Title *</label>
+                    <input type="text" id="cp-title" placeholder="e.g. 3 for 5 deal">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Quantity (in base units) *</label>
+                        <input type="number" id="cp-qty" step="any" min="0.01" placeholder="e.g. 3">
+                    </div>
+                    <div class="form-group">
+                        <label>Price (PHP) *</label>
+                        <input type="number" id="cp-price" step="0.01" min="0" placeholder="e.g. 5.00">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Start Date (optional)</label>
+                        <input type="date" id="cp-start">
+                    </div>
+                    <div class="form-group">
+                        <label>End Date (optional)</label>
+                        <input type="date" id="cp-end">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Note (optional)</label>
+                    <input type="text" id="cp-note" placeholder="Additional notes">
+                </div>
+                <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+                    <input type="checkbox" id="cp-active" checked style="width:auto;">
+                    <label style="margin:0;">Active</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modal-custom-price')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveCustomPricing()">Save Pricing</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction Detail Modal -->
+    <div class="modal-backdrop" id="modal-txn-detail">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Transaction Details</h3>
+                <button class="close-btn" onclick="closeModal('modal-txn-detail')">✕</button>
+            </div>
+            <div class="modal-body" id="txn-detail-body"></div>
+        </div>
+    </div>
+
+    <script>
+        // ===================== DATA STORE =====================
+        let db = {
+            items: [],
+            item_units: [],
+            custom_pricing: [],
+            transactions: [],
+            restock_history: []
+        };
+
+        let editingItemId = null;
+        let pendingCartItem = null;
+        let selectedRestockUnit = null;
+        let cart = [];
+        let posFilterCat = '';
+        let itemModalVariants = [];
+
+        // ===================== SEED DATA =====================
+        function seedData() {
+            // Items
+            db.items = [
+                { id: 1, item_name: 'Rice', category: 'Grains', base_unit: 'kg', purchase_price_per_unit: 55, selling_price_per_unit: 57, stock_quantity: 150, low_stock_threshold: 20, default_selling_unit: 'base', emoji: '🌾' },
+                { id: 2, item_name: 'Egg', category: 'Dairy & Eggs', base_unit: 'piece', purchase_price_per_unit: 9, selling_price_per_unit: 9, stock_quantity: 90, low_stock_threshold: 30, default_selling_unit: 'base', emoji: '🥚' },
+                { id: 3, item_name: 'Cooking Oil', category: 'Condiments', base_unit: 'mL', purchase_price_per_unit: 0.148, selling_price_per_unit: 0.148, stock_quantity: 60000, low_stock_threshold: 5000, default_selling_unit: 'unit-1', emoji: '🫙' },
+                { id: 4, item_name: 'Candy', category: 'Sweets', base_unit: 'piece', purchase_price_per_unit: 1, selling_price_per_unit: 1.5, stock_quantity: 500, low_stock_threshold: 50, default_selling_unit: 'base', emoji: '🍬' },
+                { id: 5, item_name: 'Cabbage', category: 'Vegetables', base_unit: 'kg', purchase_price_per_unit: 100, selling_price_per_unit: 180.50, stock_quantity: 25, low_stock_threshold: 5, default_selling_unit: 'unit-1', emoji: '🥬' },
+            ];
+
+            // Item units (alternative units)
+            db.item_units = [
+                // Rice: sack = 50 kg
+                { id: 1, item_id: 1, unit_name: 'sack', pack_quantity: 50, purchase_price: 2750, selling_price: 2850, note: '1 sack = 50 kg' },
+                // Egg: tray = 30 pieces
+                { id: 2, item_id: 2, unit_name: 'tray', pack_quantity: 30, purchase_price: 270, selling_price: 270, note: '1 tray = 30 pieces' },
+                // Cooking Oil: 250mL unit, container=20000mL
+                { id: 3, item_id: 3, unit_name: '250 mL', pack_quantity: 250, purchase_price: 33, selling_price: 37, note: '250 mL serving' },
+                { id: 4, item_id: 3, unit_name: 'container', pack_quantity: 20000, purchase_price: 2960, selling_price: 2960, note: '1 container = 20,000 mL' },
+                // Candy: pack = 100 pieces
+                { id: 5, item_id: 4, unit_name: 'pack', pack_quantity: 100, purchase_price: 100, selling_price: 130, note: '1 pack = 100 pieces' },
+                // Cabbage: sack=25kg, piece pricing
+                { id: 6, item_id: 5, unit_name: 'piece', pack_quantity: 0.5, purchase_price: 50, selling_price: 25, note: '~0.5 kg per piece' },
+                { id: 7, item_id: 5, unit_name: 'sack', pack_quantity: 25, purchase_price: 2500, selling_price: 4512.50, note: '1 sack = 25 kg' },
+            ];
+
+            // Custom pricing
+            db.custom_pricing = [
+                { id: 1, item_id: 4, title: '3 for 5 Deal', quantity: 3, price: 5, note: 'Buy 3 candies for 5 PHP', active: true, start_date: '', end_date: '' },
+            ];
+
+            // Set Cooking Oil default to 250mL (unit-1 = id 3 in item_units)
+            // default_selling_unit format: 'base', 'unit-{item_unit_id}', 'custom-{cp_id}'
+
+            nextId = { items: 6, item_units: 8, custom_pricing: 2, transactions: 1, restock_history: 1 };
+        }
+
+        let nextId = {};
+
+        function newId(type) {
+            return nextId[type]++;
+        }
+
+        // ===================== NAVIGATION =====================
+        function showPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+            document.querySelectorAll('.nav-item')[['pos', 'inventory', 'restock', 'pricing', 'transactions'].indexOf(page)].classList.add('active');
+
+            if (page === 'pos') renderPOSItems();
+            if (page === 'inventory') renderInventory();
+            if (page === 'restock') initRestockPage();
+            if (page === 'pricing') renderPricingPage();
+            if (page === 'transactions') renderTransactions();
+        }
+
+        // ===================== POS =====================
+        function renderPOSCategories() {
+            const cats = ['All', ...new Set(db.items.map(i => i.category))];
+            const el = document.getElementById('pos-categories');
+            el.innerHTML = cats.map(c => `<div class="cat-chip ${(c === 'All' && !posFilterCat) || c === posFilterCat ? 'active' : ''}" onclick="setPosFilter('${c}')">${c}</div>`).join('');
+        }
+
+        function setPosFilter(cat) {
+            posFilterCat = cat === 'All' ? '' : cat;
+            renderPOSCategories();
+            renderPOSItems();
+        }
+
+        function renderPOSItems() {
+            renderPOSCategories();
+            const q = document.getElementById('pos-search').value.toLowerCase();
+            let items = db.items;
+            if (posFilterCat) items = items.filter(i => i.category === posFilterCat);
+            if (q) items = items.filter(i => i.item_name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q));
+
+            const grid = document.getElementById('pos-grid');
+            if (!items.length) {
+                grid.innerHTML = '<div style="color:var(--text3);padding:20px;grid-column:1/-1;">No items found</div>';
+                return;
+            }
+            grid.innerHTML = items.map(item => {
+                const low = item.low_stock_threshold && item.stock_quantity <= item.low_stock_threshold;
+                const outOfStock = item.stock_quantity <= 0;
+                return `<div class="item-card ${low ? 'low-stock' : ''}" onclick="openCartModal(${item.id})" style="${outOfStock ? 'opacity:0.5;pointer-events:none;' : ''}">
+      <div class="item-emoji">${item.emoji || '📦'}</div>
+      <div class="item-name">${item.item_name}</div>
+      <div class="item-stock">${formatStock(item)} ${item.base_unit}${outOfStock ? ' — <b style="color:var(--red)">Out</b>' : low ? ' — <span style="color:var(--orange)">Low</span>' : ''}</div>
+      <div class="item-price">₱${item.selling_price_per_unit.toFixed(2)}/${item.base_unit}</div>
+    </div>`;
+            }).join('');
+        }
+
+        function formatStock(item) {
+            return Number(item.stock_quantity).toLocaleString(undefined, { maximumFractionDigits: 2 });
+        }
+
+        // ===================== CART MODAL =====================
+        let cartModalItem = null;
+        let cartModalUnit = null; // 'base', 'unit-{id}', 'custom-{id}'
+
+        function openCartModal(itemId) {
+            const item = db.items.find(i => i.id === itemId);
+            if (!item) return;
+            cartModalItem = item;
+
+            document.getElementById('cart-modal-title').textContent = item.item_name;
+
+            // Build unit options: base unit, item_units, active custom_pricing
+            const opts = [];
+            opts.push({ type: 'base', label: item.base_unit, id: 'base' });
+            db.item_units.filter(u => u.item_id === item.id).forEach(u => {
+                opts.push({ type: 'unit', label: u.unit_name, id: 'unit-' + u.id });
+            });
+            const activeCustom = getActiveCustomPricing(item.id);
+            activeCustom.forEach(cp => {
+                opts.push({ type: 'custom', label: cp.title, id: 'custom-' + cp.id });
+            });
+
+            // Determine default
+            const defUnit = item.default_selling_unit || 'base';
+
+            const optEl = document.getElementById('cart-unit-options');
+            optEl.innerHTML = opts.map(o => `
+    <div class="unit-option ${o.type === 'custom' ? 'custom' : ''} ${o.id === defUnit ? 'active' : ''}" 
+         onclick="selectCartUnit('${o.id}', this)">${o.label}${o.type === 'custom' ? ' 🏷️' : ''}</div>
+  `).join('');
+
+            cartModalUnit = defUnit;
+            document.getElementById('cart-qty').value = '1';
+            document.getElementById('cart-manual-price').value = '';
+            document.getElementById('stock-warning').style.display = 'none';
+
+            updateCartUnitUI();
+            updateCartPreview();
+            openModal('modal-add-cart');
+        }
+
+        function selectCartUnit(unitId, el) {
+            cartModalUnit = unitId;
+            document.querySelectorAll('.unit-option').forEach(o => o.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('cart-qty').value = '1';
+            updateCartUnitUI();
+            updateCartPreview();
+        }
+
+        function updateCartUnitUI() {
+            const isCustom = cartModalUnit && cartModalUnit.startsWith('custom-');
+            const overrideEl = document.getElementById('custom-price-override');
+            overrideEl.style.display = 'none'; // show override only on manual
+
+            // For custom pricing: qty group is quantity multiplier
+            const qtyLabel = document.querySelector('#cart-qty-group label');
+            if (isCustom) {
+                const cpId = parseInt(cartModalUnit.split('-')[1]);
+                const cp = db.custom_pricing.find(c => c.id === cpId);
+                if (cp) {
+                    qtyLabel.textContent = `Number of deals (1 deal = ${cp.quantity} ${cartModalItem.base_unit})`;
+                }
+            } else {
+                qtyLabel.textContent = 'Quantity';
+            }
+        }
+
+        function updateCartPreview() {
+            if (!cartModalItem) return;
+            const qty = parseFloat(document.getElementById('cart-qty').value) || 0;
+            const { price, label } = calcPrice(cartModalItem, cartModalUnit, qty);
+            document.getElementById('preview-label').textContent = label;
+            document.getElementById('preview-value').textContent = '₱' + price.toFixed(2);
+
+            // Stock check
+            const baseQty = toBaseUnits(cartModalItem, cartModalUnit, qty);
+            const warn = document.getElementById('stock-warning');
+            if (baseQty > cartModalItem.stock_quantity) {
+                warn.style.display = 'block';
+                warn.style.background = 'var(--orange-light)';
+                warn.style.color = 'var(--orange)';
+                warn.textContent = `⚠️ Only ${formatStock(cartModalItem)} ${cartModalItem.base_unit} in stock.`;
+                document.getElementById('add-cart-btn').disabled = true;
+            } else {
+                warn.style.display = 'none';
+                document.getElementById('add-cart-btn').disabled = false;
+            }
+        }
+
+        function calcPrice(item, unitId, qty) {
+            if (!unitId || unitId === 'base') {
+                return { price: item.selling_price_per_unit * qty, label: `${qty} ${item.base_unit}` };
+            }
+            if (unitId.startsWith('custom-')) {
+                const cpId = parseInt(unitId.split('-')[1]);
+                const cp = db.custom_pricing.find(c => c.id === cpId);
+                if (cp) return { price: cp.price * qty, label: `${qty} × ${cp.title}` };
+            }
+            if (unitId.startsWith('unit-')) {
+                const uid = parseInt(unitId.split('-')[1]);
+                const u = db.item_units.find(x => x.id === uid);
+                if (u) return { price: u.selling_price * qty, label: `${qty} × ${u.unit_name}` };
+            }
+            return { price: 0, label: '' };
+        }
+
+        function toBaseUnits(item, unitId, qty) {
+            if (!unitId || unitId === 'base') return qty;
+            if (unitId.startsWith('custom-')) {
+                const cpId = parseInt(unitId.split('-')[1]);
+                const cp = db.custom_pricing.find(c => c.id === cpId);
+                if (cp) return cp.quantity * qty;
+            }
+            if (unitId.startsWith('unit-')) {
+                const uid = parseInt(unitId.split('-')[1]);
+                const u = db.item_units.find(x => x.id === uid);
+                if (u) return u.pack_quantity * qty;
+            }
+            return qty;
+        }
+
+        function getUnitLabel(item, unitId) {
+            if (!unitId || unitId === 'base') return item.base_unit;
+            if (unitId.startsWith('unit-')) {
+                const uid = parseInt(unitId.split('-')[1]);
+                const u = db.item_units.find(x => x.id === uid);
+                return u ? u.unit_name : item.base_unit;
+            }
+            if (unitId.startsWith('custom-')) {
+                const cpId = parseInt(unitId.split('-')[1]);
+                const cp = db.custom_pricing.find(c => c.id === cpId);
+                return cp ? cp.title : item.base_unit;
+            }
+            return item.base_unit;
+        }
+
+        function addToCart() {
+            const qty = parseFloat(document.getElementById('cart-qty').value) || 0;
+            if (qty <= 0) { toast('Enter a valid quantity', 'error'); return; }
+            const item = cartModalItem;
+            const unitId = cartModalUnit;
+            const baseQty = toBaseUnits(item, unitId, qty);
+            if (baseQty > item.stock_quantity) { toast('Not enough stock!', 'error'); return; }
+
+            const { price, label } = calcPrice(item, unitId, qty);
+
+            // base_qty_per_unit: how many base units is 1 qty of this selling unit
+            const base_qty_per_unit = qty > 0 ? baseQty / qty : 0;
+
+            cart.push({
+                cartId: Date.now() + Math.random(),
+                item_id: item.id,
+                item_name: item.item_name,
+                unit_id: unitId,
+                qty: qty,
+                base_qty: baseQty,
+                base_qty_per_unit: base_qty_per_unit,
+                unit_label: getUnitLabel(item, unitId),
+                price: price,
+                detail: label,
+                emoji: item.emoji || '📦'
+            });
+
+            closeModal('modal-add-cart');
+            renderCart();
+            toast(`${item.item_name} added to cart`, 'success');
+        }
+
+        // ===================== CART =====================
+        function renderCart() {
+            const el = document.getElementById('cart-items');
+            if (!cart.length) {
+                el.innerHTML = '<div class="cart-empty"><div class="cart-empty-icon">🛒</div><div>No items yet.<br>Click an item to add.</div></div>';
+                document.getElementById('checkout-btn').disabled = true;
+                document.getElementById('cart-count').textContent = '0 items';
+                document.getElementById('cart-subtotal').textContent = '₱0.00';
+                document.getElementById('cart-total').textContent = '₱0.00';
+                return;
+            }
+
+            el.innerHTML = cart.map(ci => {
+                const item = db.items.find(i => i.id === ci.item_id);
+                // Max qty this line can go up to (based on available stock, not counting other cart lines for same item)
+                const otherCartBase = cart.filter(x => x.cartId !== ci.cartId && x.item_id === ci.item_id).reduce((s, x) => s + x.base_qty, 0);
+                const availableBase = item ? (item.stock_quantity - otherCartBase) : 0;
+                const maxQty = ci.base_qty_per_unit > 0 ? Math.floor(availableBase / ci.base_qty_per_unit) : availableBase;
+                const overStock = ci.base_qty > (item ? item.stock_quantity : 0);
+
+                return `
+    <div class="cart-item" data-cart-id="${ci.cartId}">
+      <span style="font-size:20px;flex-shrink:0;">${ci.emoji}</span>
+      <div class="cart-item-info" style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;">
+          <div class="cart-item-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ci.item_name}</div>
+          <button class="cart-item-remove" onclick="removeFromCart('${ci.cartId}')" title="Remove item">🗑</button>
+        </div>
+        <div class="cart-item-detail">${ci.unit_label}${ci.unit_id && ci.unit_id.startsWith('custom-') ? ' 🏷️' : ''}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
+          <div class="qty-stepper">
+            <button class="qty-btn minus" onclick="changeCartQty('${ci.cartId}', -1)" ${ci.qty <= getMinStep(ci) ? 'disabled' : ''}>−</button>
+            <input class="qty-input ${overStock ? 'over-stock' : ''}"
+              type="number" min="${getMinStep(ci)}" step="${getMinStep(ci)}"
+              value="${ci.qty}"
+              onchange="setCartQty('${ci.cartId}', parseFloat(this.value) || ${getMinStep(ci)})"
+              onblur="setCartQty('${ci.cartId}', parseFloat(this.value) || ${getMinStep(ci)})"
+            >
+            <button class="qty-btn" onclick="changeCartQty('${ci.cartId}', 1)">+</button>
+            <span class="qty-unit-label">${ci.unit_label}</span>
+          </div>
+          <div class="cart-item-price" style="${overStock ? 'color:var(--red)' : ''}">₱${ci.price.toFixed(2)}</div>
+        </div>
+        ${overStock ? `<div style="font-size:11px;color:var(--red);margin-top:3px;">⚠️ Exceeds available stock</div>` : ''}
+      </div>
+    </div>`;
+            }).join('');
+
+            updateCartTotals();
+        }
+
+        function getMinStep(ci) {
+            // For custom pricing, minimum is 1 deal; for base/unit, minimum is smallest sensible increment
+            return ci.unit_id && ci.unit_id.startsWith('custom-') ? 1 : (Number.isInteger(ci.qty) ? 1 : 0.01);
+        }
+
+        function updateCartTotals() {
+            const total = cart.reduce((s, i) => s + i.price, 0);
+            document.getElementById('cart-count').textContent = `${cart.length} line${cart.length !== 1 ? 's' : ''}`;
+            document.getElementById('cart-subtotal').textContent = '₱' + total.toFixed(2);
+            document.getElementById('cart-total').textContent = '₱' + total.toFixed(2);
+            document.getElementById('checkout-btn').disabled = cart.length === 0;
+        }
+
+        function changeCartQty(cartId, delta) {
+            const ci = cart.find(i => i.cartId == cartId);
+            if (!ci) return;
+            const step = getMinStep(ci);
+            const newQty = Math.max(step, parseFloat((ci.qty + delta * step).toFixed(4)));
+            applyCartQty(ci, newQty);
+            renderCart();
+        }
+
+        function setCartQty(cartId, newQty) {
+            const ci = cart.find(i => i.cartId == cartId);
+            if (!ci) return;
+            const step = getMinStep(ci);
+            const clamped = Math.max(step, parseFloat((newQty || step).toFixed(4)));
+            applyCartQty(ci, clamped);
+            renderCart();
+        }
+
+        function applyCartQty(ci, newQty) {
+            const item = db.items.find(i => i.id === ci.item_id);
+            if (!item) return;
+            ci.qty = newQty;
+            ci.base_qty = toBaseUnits(item, ci.unit_id, newQty);
+            const { price, label } = calcPrice(item, ci.unit_id, newQty);
+            ci.price = price;
+            ci.detail = label;
+        }
+
+        function removeFromCart(cartId) {
+            cart = cart.filter(i => i.cartId != cartId);
+            renderCart();
+        }
+
+        function clearCart() {
+            cart = [];
+            renderCart();
+        }
+
+        function checkout() {
+            if (!cart.length) return;
+
+            // Deduct stock
+            for (const ci of cart) {
+                const item = db.items.find(i => i.id === ci.item_id);
+                if (!item) continue;
+                if (ci.base_qty > item.stock_quantity) {
+                    toast(`Not enough stock for ${item.item_name}!`, 'error');
+                    return;
+                }
+                item.stock_quantity -= ci.base_qty;
+            }
+
+            // Save transaction
+            const txn = {
+                id: newId('transactions'),
+                date: new Date().toISOString(),
+                items: [...cart],
+                total: cart.reduce((s, i) => s + i.price, 0)
+            };
+            db.transactions.unshift(txn);
+
+            toast(`✅ Checkout complete! Total: ₱${txn.total.toFixed(2)}`, 'success');
+            clearCart();
+            renderPOSItems();
+        }
+
+        // ===================== INVENTORY =====================
+        function renderInventory() {
+            const q = document.getElementById('inv-search').value.toLowerCase();
+            const cat = document.getElementById('inv-cat-filter').value;
+
+            // Update cat filter options
+            const cats = [...new Set(db.items.map(i => i.category))];
+            const catEl = document.getElementById('inv-cat-filter');
+            const cur = catEl.value;
+            catEl.innerHTML = '<option value="">All Categories</option>' + cats.map(c => `<option value="${c}" ${c === cur ? 'selected' : ''}>${c}</option>`).join('');
+
+            let items = db.items;
+            if (cat) items = items.filter(i => i.category === cat);
+            if (q) items = items.filter(i => i.item_name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q));
+
+            const tbody = document.getElementById('inv-tbody');
+            tbody.innerHTML = items.map(item => {
+                const low = item.low_stock_threshold && item.stock_quantity <= item.low_stock_threshold;
+                const out = item.stock_quantity <= 0;
+                const units = db.item_units.filter(u => u.item_id === item.id);
+                return `<tr>
+      <td><strong>${item.emoji || '📦'} ${item.item_name}</strong></td>
+      <td><span class="badge badge-blue">${item.category}</span></td>
+      <td>${item.base_unit}</td>
+      <td>
+        <strong ${out ? 'style="color:var(--red)"' : low ? 'style="color:var(--orange)"' : ''}>${formatStock(item)} ${item.base_unit}</strong>
+        ${units.length ? '<br><span style="font-size:11px;color:var(--text3);">' + units.map(u => `1 ${u.unit_name}=${u.pack_quantity} ${item.base_unit}`).join(', ') + '</span>' : ''}
+        ${out ? '<br><span class="badge badge-red">Out of Stock</span>' : low ? '<br><span class="badge badge-orange">Low Stock</span>' : ''}
+      </td>
+      <td>₱${item.purchase_price_per_unit.toFixed(2)}/${item.base_unit}</td>
+      <td>₱${item.selling_price_per_unit.toFixed(2)}/${item.base_unit}</td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="editItem(${item.id})">Edit</button>
+        <button class="btn btn-sm" style="background:var(--green-light);color:var(--green);" onclick="quickRestock(${item.id})">Restock</button>
+      </td>
+    </tr>`;
+            }).join('');
+        }
+
+        function quickRestock(itemId) {
+            showPage('restock');
+            setTimeout(() => {
+                document.getElementById('restock-item').value = itemId;
+                updateRestockOptions();
+            }, 100);
+        }
+
+        // ===================== ITEM MODAL =====================
+        function openAddItemModal() {
+            editingItemId = null;
+            document.getElementById('item-modal-title').textContent = 'Add New Item';
+            document.getElementById('item-name').value = '';
+            document.getElementById('item-category').value = '';
+            document.getElementById('item-base-unit').value = '';
+            document.getElementById('item-buy-price').value = '';
+            document.getElementById('item-sell-price').value = '';
+            document.getElementById('item-stock').value = '0';
+            document.getElementById('item-low-stock').value = '';
+            itemModalVariants = [];
+            renderItemVariants();
+            switchTab('basic');
+
+            // Update datalist
+            const cats = [...new Set(db.items.map(i => i.category))];
+            document.getElementById('category-list').innerHTML = cats.map(c => `<option value="${c}">`).join('');
+
+            openModal('modal-add-item');
+        }
+
+        function editItem(itemId) {
+            const item = db.items.find(i => i.id === itemId);
+            if (!item) return;
+            editingItemId = itemId;
+            document.getElementById('item-modal-title').textContent = 'Edit Item';
+            document.getElementById('item-name').value = item.item_name;
+            document.getElementById('item-category').value = item.category;
+            document.getElementById('item-base-unit').value = item.base_unit;
+            document.getElementById('item-buy-price').value = item.purchase_price_per_unit;
+            document.getElementById('item-sell-price').value = item.selling_price_per_unit;
+            document.getElementById('item-stock').value = item.stock_quantity;
+            document.getElementById('item-low-stock').value = item.low_stock_threshold || '';
+
+            itemModalVariants = db.item_units.filter(u => u.item_id === itemId).map(u => ({ ...u }));
+            renderItemVariants();
+
+            // Update default unit select
+            updateDefaultUnitSelect(item.base_unit);
+            document.getElementById('item-default-unit').value = item.default_selling_unit || 'base';
+
+            switchTab('basic');
+            openModal('modal-add-item');
+        }
+
+        function updateDefaultUnitSelect(baseUnit) {
+            const sel = document.getElementById('item-default-unit');
+            let opts = `<option value="base">${baseUnit || 'base unit'}</option>`;
+            itemModalVariants.forEach(v => {
+                opts += `<option value="unit-${v.id}">${v.unit_name}</option>`;
+            });
+            sel.innerHTML = opts;
+        }
+
+        function addUnitVariant() {
+            itemModalVariants.push({ id: 'new-' + Date.now(), item_id: editingItemId, unit_name: '', pack_quantity: '', purchase_price: '', selling_price: '', note: '' });
+            renderItemVariants();
+        }
+
+        function renderItemVariants() {
+            const el = document.getElementById('unit-variants-list');
+            el.innerHTML = itemModalVariants.map((v, i) => `
+    <div style="background:var(--surface2);border-radius:var(--radius);padding:14px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+        <strong style="font-size:13px;">Unit ${i + 1}</strong>
+        <button class="btn btn-sm" style="background:var(--red-light);color:var(--red);" onclick="removeVariant(${i})">Remove</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin:0;">
+          <label>Unit Name</label>
+          <input type="text" value="${v.unit_name}" placeholder="e.g. sack, tray" onchange="updateVariant(${i},'unit_name',this.value)">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label>Qty (in base units)</label>
+          <input type="number" value="${v.pack_quantity}" placeholder="e.g. 50" step="any" onchange="updateVariant(${i},'pack_quantity',parseFloat(this.value))">
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:8px;">
+        <div class="form-group" style="margin:0;">
+          <label>Purchase Price</label>
+          <input type="number" value="${v.purchase_price}" placeholder="0.00" step="0.01" onchange="updateVariant(${i},'purchase_price',parseFloat(this.value))">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label>Selling Price</label>
+          <input type="number" value="${v.selling_price}" placeholder="0.00" step="0.01" onchange="updateVariant(${i},'selling_price',parseFloat(this.value))">
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:8px;margin-bottom:0;">
+        <label>Note</label>
+        <input type="text" value="${v.note}" placeholder="Optional note" onchange="updateVariant(${i},'note',this.value)">
+      </div>
+    </div>
+  `).join('') + (itemModalVariants.length ? '' : '<p style="color:var(--text3);font-size:13px;">No unit variants yet.</p>');
+            updateDefaultUnitSelect(document.getElementById('item-base-unit').value);
+        }
+
+        function updateVariant(i, key, val) { itemModalVariants[i][key] = val; updateDefaultUnitSelect(document.getElementById('item-base-unit').value); }
+        function removeVariant(i) { itemModalVariants.splice(i, 1); renderItemVariants(); }
+
+        function saveItem() {
+            const name = document.getElementById('item-name').value.trim();
+            const cat = document.getElementById('item-category').value.trim();
+            const bu = document.getElementById('item-base-unit').value.trim();
+            const bp = parseFloat(document.getElementById('item-buy-price').value) || 0;
+            const sp = parseFloat(document.getElementById('item-sell-price').value) || 0;
+            const stock = parseFloat(document.getElementById('item-stock').value) || 0;
+            const lowStock = parseFloat(document.getElementById('item-low-stock').value) || 0;
+            const defUnit = document.getElementById('item-default-unit').value;
+
+            if (!name || !cat || !bu) { toast('Fill in required fields', 'error'); return; }
+
+            if (editingItemId) {
+                const item = db.items.find(i => i.id === editingItemId);
+                Object.assign(item, { item_name: name, category: cat, base_unit: bu, purchase_price_per_unit: bp, selling_price_per_unit: sp, stock_quantity: stock, low_stock_threshold: lowStock, default_selling_unit: defUnit });
+                // Update units
+                db.item_units = db.item_units.filter(u => u.item_id !== editingItemId);
+                itemModalVariants.forEach(v => {
+                    const id = typeof v.id === 'string' && v.id.startsWith('new-') ? newId('item_units') : v.id;
+                    if (v.unit_name) db.item_units.push({ ...v, id, item_id: editingItemId });
+                });
+                toast('Item updated!', 'success');
+            } else {
+                const id = newId('items');
+                const emojis = { 'Grains': '🌾', 'Dairy & Eggs': '🥚', 'Condiments': '🫙', 'Sweets': '🍬', 'Vegetables': '🥬', 'Meat': '🥩', 'Beverages': '🧃', 'Snacks': '🍿' };
+                db.items.push({ id, item_name: name, category: cat, base_unit: bu, purchase_price_per_unit: bp, selling_price_per_unit: sp, stock_quantity: stock, low_stock_threshold: lowStock, default_selling_unit: defUnit || 'base', emoji: emojis[cat] || '📦' });
+                itemModalVariants.forEach(v => {
+                    if (v.unit_name) db.item_units.push({ ...v, id: newId('item_units'), item_id: id });
+                });
+                toast('Item added!', 'success');
+            }
+
+            closeModal('modal-add-item');
+            renderInventory();
+        }
+
+        // ===================== RESTOCK =====================
+        function initRestockPage() {
+            const sel = document.getElementById('restock-item');
+            sel.innerHTML = '<option value="">— Select item —</option>' + db.items.map(i => `<option value="${i.id}">${i.emoji || ''} ${i.item_name}</option>`).join('');
+            updateRestockOptions();
+            renderRestockHistory();
+        }
+
+        function updateRestockOptions() {
+            const itemId = parseInt(document.getElementById('restock-item').value);
+            const formEl = document.getElementById('restock-form');
+            if (!itemId) { formEl.style.display = 'none'; return; }
+            formEl.style.display = 'block';
+
+            const item = db.items.find(i => i.id === itemId);
+            const units = db.item_units.filter(u => u.item_id === itemId);
+
+            const optEl = document.getElementById('restock-units');
+            const opts = [
+                { id: 'base', label: item.base_unit },
+                ...units.map(u => ({ id: 'unit-' + u.id, label: u.unit_name + ` (${u.pack_quantity} ${item.base_unit})` }))
+            ];
+
+            selectedRestockUnit = 'base';
+            optEl.innerHTML = opts.map(o => `<div class="unit-option ${o.id === 'base' ? 'active' : ''}" onclick="selectRestockUnit('${o.id}', this)">${o.label}</div>`).join('');
+
+            document.getElementById('restock-qty').value = '';
+            document.getElementById('restock-preview').style.display = 'none';
+        }
+
+        function selectRestockUnit(unitId, el) {
+            selectedRestockUnit = unitId;
+            document.querySelectorAll('#restock-units .unit-option').forEach(o => o.classList.remove('active'));
+            el.classList.add('active');
+            updateRestockPreview();
+        }
+
+        function updateRestockPreview() {
+            const itemId = parseInt(document.getElementById('restock-item').value);
+            const qty = parseFloat(document.getElementById('restock-qty').value) || 0;
+            if (!itemId || !qty) { document.getElementById('restock-preview').style.display = 'none'; return; }
+            const item = db.items.find(i => i.id === itemId);
+            const baseQty = toBaseUnits(item, selectedRestockUnit, qty);
+            const prev = document.getElementById('restock-preview');
+            prev.style.display = 'block';
+            prev.textContent = `✅ +${baseQty.toLocaleString()} ${item.base_unit} will be added. New stock: ${(item.stock_quantity + baseQty).toLocaleString()} ${item.base_unit}`;
+        }
+
+        function doRestock() {
+            const itemId = parseInt(document.getElementById('restock-item').value);
+            const qty = parseFloat(document.getElementById('restock-qty').value) || 0;
+            if (!itemId || qty <= 0) { toast('Enter valid quantity', 'error'); return; }
+            const item = db.items.find(i => i.id === itemId);
+            const baseQty = toBaseUnits(item, selectedRestockUnit, qty);
+            item.stock_quantity += baseQty;
+
+            db.restock_history.unshift({
+                id: newId('restock_history'),
+                date: new Date().toISOString(),
+                item_id: item.id,
+                item_name: item.item_name,
+                unit: selectedRestockUnit,
+                qty: qty,
+                base_qty: baseQty,
+                base_unit: item.base_unit,
+                note: document.getElementById('restock-note').value
+            });
+
+            toast(`Restocked ${baseQty.toLocaleString()} ${item.base_unit} of ${item.item_name}`, 'success');
+            document.getElementById('restock-qty').value = '';
+            document.getElementById('restock-note').value = '';
+            updateRestockPreview();
+            renderRestockHistory();
+            renderPOSItems();
+        }
+
+        function renderRestockHistory() {
+            const el = document.getElementById('restock-history');
+            if (!db.restock_history.length) {
+                el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:10px 0;">No restocks yet.</div>';
+                return;
+            }
+            el.innerHTML = db.restock_history.slice(0, 10).map(r => {
+                const unitLabel = r.unit === 'base' ? r.base_unit : getRestockUnitLabel(r.item_id, r.unit);
+                return `<div style="padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <strong style="font-size:13px;">${r.item_name}</strong>
+        <span class="badge badge-green">+${r.base_qty.toLocaleString()} ${r.base_unit}</span>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">${r.qty} ${unitLabel} • ${new Date(r.date).toLocaleString()}</div>
+      ${r.note ? `<div style="font-size:11px;color:var(--text2);">${r.note}</div>` : ''}
+    </div>`;
+            }).join('');
+        }
+
+        function getRestockUnitLabel(itemId, unitId) {
+            if (!unitId || unitId === 'base') return '';
+            if (unitId.startsWith('unit-')) {
+                const uid = parseInt(unitId.split('-')[1]);
+                const u = db.item_units.find(x => x.id === uid);
+                return u ? u.unit_name : '';
+            }
+            return '';
+        }
+
+        // ===================== CUSTOM PRICING =====================
+        function getActiveCustomPricing(itemId) {
+            const today = new Date().toISOString().split('T')[0];
+            return db.custom_pricing.filter(cp => {
+                if (cp.item_id !== itemId) return false;
+                if (!cp.active) return false;
+                if (cp.start_date && cp.start_date > today) return false;
+                if (cp.end_date && cp.end_date < today) return false;
+                return true;
+            });
+        }
+
+        function renderPricingPage() {
+            const el = document.getElementById('pricing-list');
+            if (!db.custom_pricing.length) {
+                el.innerHTML = '<div class="card"><p style="color:var(--text3);">No custom pricing yet. Click "+ Add Custom Price" to create one.</p></div>';
+                return;
+            }
+            const grouped = {};
+            db.custom_pricing.forEach(cp => {
+                const item = db.items.find(i => i.id === cp.item_id);
+                const key = item ? item.item_name : 'Unknown';
+                if (!grouped[key]) grouped[key] = { item, list: [] };
+                grouped[key].list.push(cp);
+            });
+
+            el.innerHTML = Object.entries(grouped).map(([name, g]) => `
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-header">
+        <span class="card-title">${g.item?.emoji || '📦'} ${name}</span>
+      </div>
+      ${g.list.map(cp => {
+                const item = g.item;
+                const isActive = item ? getActiveCustomPricing(item.id).find(c => c.id === cp.id) : false;
+                return `<div class="cp-item">
+          <div class="cp-info">
+            <h4>${cp.title} ${cp.active ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-red">Inactive</span>'}</h4>
+            <p>${cp.quantity} ${item?.base_unit || 'units'} for ₱${cp.price.toFixed(2)} (₱${(cp.price / cp.quantity).toFixed(2)} each)</p>
+            ${cp.note ? `<p>${cp.note}</p>` : ''}
+            ${cp.start_date || cp.end_date ? `<div class="cp-dates">📅 ${cp.start_date || '—'} to ${cp.end_date || '—'}</div>` : ''}
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+            <div class="cp-price">₱${cp.price.toFixed(2)}</div>
+            <div style="display:flex;gap:4px;">
+              <button class="btn btn-sm btn-secondary" onclick="toggleCustomPricing(${cp.id})">${cp.active ? 'Deactivate' : 'Activate'}</button>
+              <button class="btn btn-sm" style="background:var(--red-light);color:var(--red);" onclick="deleteCustomPricing(${cp.id})">Delete</button>
+            </div>
+          </div>
+        </div>`;
+            }).join('')}
+    </div>
+  `).join('');
+        }
+
+        function openAddPricingModal() {
+            document.getElementById('cp-modal-title').textContent = 'Add Custom Pricing';
+            document.getElementById('cp-item').innerHTML = '<option value="">— Select item —</option>' + db.items.map(i => `<option value="${i.id}">${i.emoji || ''} ${i.item_name}</option>`).join('');
+            document.getElementById('cp-title').value = '';
+            document.getElementById('cp-qty').value = '';
+            document.getElementById('cp-price').value = '';
+            document.getElementById('cp-start').value = '';
+            document.getElementById('cp-end').value = '';
+            document.getElementById('cp-note').value = '';
+            document.getElementById('cp-active').checked = true;
+            openModal('modal-custom-price');
+        }
+
+        function saveCustomPricing() {
+            const itemId = parseInt(document.getElementById('cp-item').value);
+            const title = document.getElementById('cp-title').value.trim();
+            const qty = parseFloat(document.getElementById('cp-qty').value);
+            const price = parseFloat(document.getElementById('cp-price').value);
+            if (!itemId || !title || !qty || !price) { toast('Fill in all required fields', 'error'); return; }
+
+            db.custom_pricing.push({
+                id: newId('custom_pricing'),
+                item_id: itemId,
+                title,
+                quantity: qty,
+                price,
+                note: document.getElementById('cp-note').value,
+                active: document.getElementById('cp-active').checked,
+                start_date: document.getElementById('cp-start').value,
+                end_date: document.getElementById('cp-end').value
+            });
+            toast('Custom pricing saved!', 'success');
+            closeModal('modal-custom-price');
+            renderPricingPage();
+        }
+
+        function toggleCustomPricing(cpId) {
+            const cp = db.custom_pricing.find(c => c.id === cpId);
+            if (cp) { cp.active = !cp.active; renderPricingPage(); toast(`Pricing ${cp.active ? 'activated' : 'deactivated'}`, 'info'); }
+        }
+
+        function deleteCustomPricing(cpId) {
+            db.custom_pricing = db.custom_pricing.filter(c => c.id !== cpId);
+            renderPricingPage();
+            toast('Custom pricing deleted', 'info');
+        }
+
+        // ===================== TRANSACTIONS =====================
+        function renderTransactions() {
+            const stats = document.getElementById('txn-stats');
+            const total = db.transactions.reduce((s, t) => s + t.total, 0);
+            const today = new Date().toDateString();
+            const todayTxns = db.transactions.filter(t => new Date(t.date).toDateString() === today);
+            const todayTotal = todayTxns.reduce((s, t) => s + t.total, 0);
+
+            stats.innerHTML = `
+    <div class="stat-card blue"><div class="stat-label">Total Transactions</div><div class="stat-value">${db.transactions.length}</div></div>
+    <div class="stat-card green"><div class="stat-label">Total Revenue</div><div class="stat-value">₱${total.toFixed(0)}</div></div>
+    <div class="stat-card orange"><div class="stat-label">Today's Sales</div><div class="stat-value">${todayTxns.length}</div></div>
+    <div class="stat-card blue"><div class="stat-label">Today's Revenue</div><div class="stat-value">₱${todayTotal.toFixed(0)}</div></div>
+  `;
+
+            const tbody = document.getElementById('txn-tbody');
+            if (!db.transactions.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px;">No transactions yet.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = db.transactions.map((txn, i) => `
+    <tr>
+      <td><strong>#${String(txn.id).padStart(4, '0')}</strong></td>
+      <td><div class="txn-meta">${new Date(txn.date).toLocaleDateString()}</div>${new Date(txn.date).toLocaleTimeString()}</td>
+      <td>${txn.items.length} item${txn.items.length !== 1 ? 's' : ''} — <span class="txn-items-detail">${txn.items.map(i => i.item_name).join(', ')}</span></td>
+      <td><strong>₱${txn.total.toFixed(2)}</strong></td>
+      <td><button class="btn btn-secondary btn-sm" onclick="viewTxnDetail(${txn.id})">View</button></td>
+    </tr>
+  `).join('');
+        }
+
+        function viewTxnDetail(txnId) {
+            const txn = db.transactions.find(t => t.id === txnId);
+            if (!txn) return;
+            document.getElementById('txn-detail-body').innerHTML = `
+    <div style="margin-bottom:14px;">
+      <strong>Transaction #${String(txn.id).padStart(4, '0')}</strong><br>
+      <span style="color:var(--text3);font-size:12px;">${new Date(txn.date).toLocaleString()}</span>
+    </div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr>
+        <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text3);">Item</th>
+        <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text3);">Detail</th>
+        <th style="text-align:right;padding:8px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text3);">Price</th>
+      </tr></thead>
+      <tbody>
+        ${txn.items.map(ci => `<tr>
+          <td style="padding:8px;">${ci.emoji || '📦'} ${ci.item_name}</td>
+          <td style="padding:8px;font-size:12px;color:var(--text3);">${ci.detail}</td>
+          <td style="padding:8px;text-align:right;font-weight:600;">₱${ci.price.toFixed(2)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    <div style="text-align:right;margin-top:14px;padding-top:10px;border-top:2px solid var(--border);">
+      <strong style="font-size:18px;">Total: ₱${txn.total.toFixed(2)}</strong>
+    </div>
+  `;
+            openModal('modal-txn-detail');
+        }
+
+        // ===================== TABS =====================
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach((t, i) => {
+                t.classList.toggle('active', (['basic', 'units'][i]) === tab);
+            });
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+        }
+
+        // ===================== MODALS =====================
+        function openModal(id) { document.getElementById(id).classList.add('open'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+        document.querySelectorAll('.modal-backdrop').forEach(m => {
+            m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+        });
+
+        // ===================== TOAST =====================
+        function toast(msg, type = '') {
+            const el = document.createElement('div');
+            el.className = 'toast ' + type;
+            el.textContent = msg;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 3000);
+        }
+
+        // ===================== INIT =====================
+        seedData();
+        renderPOSItems();
+    </script>
+</body>
+
+</html>
