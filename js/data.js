@@ -1,10 +1,12 @@
 // Storage: Persistent storage key and functions.
 const STORAGE_KEY = 'marketpos_data';
 
+// saveToStorage: Saves the current database to localStorage.
 function saveToStorage() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
 }
 
+// loadFromStorage: Loads database from localStorage if available.
 function loadFromStorage() {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored) {
@@ -17,6 +19,7 @@ function loadFromStorage() {
     db.next_id = data.next_id || { item: 1, unit: 1, pricing: 1, txn: 1, restock: 1 };
     return true;
   }
+  // Return false if no stored data exists.
   return false;
 }
 
