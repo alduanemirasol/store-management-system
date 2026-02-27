@@ -1,4 +1,13 @@
-// UI: Displays temporary notification message.
+/**
+ * ui.js
+ * All DOM rendering and UI interaction functions.
+ * Depends on: helpers.js (fmt, fmtNum, getCategoryIcon, getUnits)
+ * Renders to specific element IDs defined in index.html.
+ */
+
+// ─── Shared DOM Utilities ─────────────────────────────────────────────────────
+
+/** Displays a temporary toast notification at the bottom-right. */
 function toast(msg, type = "") {
   const el = document.createElement("div");
   el.className = `toast ${type}`;
@@ -6,63 +15,68 @@ function toast(msg, type = "") {
   document.getElementById("toast-container").appendChild(el);
   setTimeout(() => el.remove(), 3000);
 }
-// UI: Opens modal dialog by ID.
+
+/** Opens a modal dialog by its backdrop element ID. */
 function openModal(id) {
   document.getElementById(id).classList.add("open");
 }
-// UI: Closes modal dialog by ID.
+
+/** Closes a modal dialog by its backdrop element ID. */
 function closeModal(id) {
   document.getElementById(id).classList.remove("open");
 }
-// UI: Switches active page and updates navigation.
+
+/**
+ * Switches the active page and highlights the clicked nav button.
+ * Pure DOM operation — no page-specific logic here.
+ * Page-specific setup (e.g. restock init, dashboard render) is handled by Logic.showPage.
+ */
 function showPage(pageId, event) {
-  document
-    .querySelectorAll(".page")
-    .forEach((p) => p.classList.remove("active"));
-  document
-    .querySelectorAll("nav button")
-    .forEach((b) => b.classList.remove("active"));
+  document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"));
+  document.querySelectorAll("nav button").forEach((b) => b.classList.remove("active"));
   document.getElementById("page-" + pageId).classList.add("active");
   if (event && event.target) event.target.classList.add("active");
-  if (pageId === "restock") Logic.initRestockUI();
 }
-// Render: Draws item cards in POS grid.
+
+// ─── POS / Item Grid ──────────────────────────────────────────────────────────
+
+/** Renders the product grid from a filtered list of items. */
 function renderItemGrid(items) {
   const grid = document.getElementById("item-grid");
   if (!items.length) {
-    grid.innerHTML =
-      '<div class="empty" style="grid-column:1/-1">No items found</div>';
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1">No products found</div>';
     return;
   }
-  grid.innerHTML = items
-    .map(
-      (item) => `
+  grid.innerHTML = items.map((item) => `
     <div class="item-card" onclick="Logic.onItemCardClick(${item.id})">
-      <div class="item-icon">${getCategoryIcon(item.category)}</div>
+      <span class="item-icon">${getCategoryIcon(item.category)}</span>
       <div class="item-name">${item.item_name}</div>
       <div class="item-price">${fmt(item.selling_price_per_unit)}/${item.base_unit}</div>
       <div class="item-stock">${fmtNum(item.stock_quantity)} ${item.base_unit}</div>
     </div>
-  `,
-    )
-    .join("");
+  `).join("");
 }
-// Render: Builds sale modal body with options.
+
+// ─── Sell Modal ───────────────────────────────────────────────────────────────
+
+/** Builds the sell-type option list inside the sell modal body. */
 function renderSellModalBody(item, units, activePricing, selection) {
   let html = `
-    <div style="margin-bottom:16px;font-size:13px;color:var(--text2)">
-      Stock: <strong>${fmtNum(item.stock_quantity)} ${item.base_unit}</strong>
+    <div style="margin-bottom:16px; padding:12px 14px; background:var(--cream2); border-radius:var(--radius-sm); border:1px solid var(--border); font-size:14px; color:var(--text2)">
+      Available stock: <strong style="color:var(--text)">${fmtNum(item.stock_quantity)} ${item.base_unit}</strong>
     </div>
-    <div style="font-weight:700;font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">
-      Sell By
-    </div>
+    <div style="font-weight:700; font-size:12px; color:var(--text3); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px;">Sell By</div>
   `;
+
+  // Base unit option
   html += _unitOptionHTML(
-    `By ${item.base_unit} (base)`,
-    `${fmt(item.selling_price_per_unit)} / ${item.base_unit}`,
+    `By ${item.base_unit}`,
+    `${fmt(item.selling_price_per_unit)} per ${item.base_unit}`,
     selection.type === "base",
     `Logic.onSellTypeSelect('base', null, null, this)`,
   );
+
+  // Pack/unit options
   units.forEach((u) => {
     const selected = selection.type === "unit" && selection.unitId === u.id;
     html += _unitOptionHTML(
@@ -72,39 +86,45 @@ function renderSellModalBody(item, units, activePricing, selection) {
       `Logic.onSellTypeSelect('unit', ${u.id}, null, this)`,
     );
   });
+
+  // Custom pricing options
   activePricing.forEach((p) => {
-    const selected =
-      selection.type === "pricing" && selection.pricingId === p.id;
+    const selected = selection.type === "pricing" && selection.pricingId === p.id;
     html += _unitOptionHTML(
-      `🏷️ ${p.title}`,
+      `🏷 ${p.title}`,
       `${fmt(p.price)} for ${p.quantity} ${item.base_unit}${p.note ? " · " + p.note : ""}`,
       selected,
       `Logic.onSellTypeSelect('pricing', null, ${p.id}, this)`,
     );
   });
+
   html += `
     <div class="divider"></div>
     <div class="form-group">
-      <label>Quantity (how many of the selected unit)</label>
-      <input type="number" id="sell-qty" value="${selection.qty || 1}"
-             min="0.01" step="any" oninput="Logic.onSellQtyChange()">
+      <label>Quantity</label>
+      <input type="number" id="sell-qty" value="${selection.qty || 1}" min="0.01" step="any" oninput="Logic.onSellQtyChange()">
     </div>
   `;
+
   if (item.allow_override) {
     html += `
       <div class="form-group">
-        <label>Manual Price Override (₱) — leave blank to use default</label>
-        <input type="number" id="sell-override" placeholder="Override price"
-               min="0" step="0.01" oninput="Logic.onSellQtyChange()">
+        <label>Manual Price Override (₱) — leave blank for default</label>
+        <input type="number" id="sell-override" placeholder="Override price" min="0" step="0.01" oninput="Logic.onSellQtyChange()">
       </div>
     `;
   }
-  html += `<div id="sell-preview" style="border-radius:var(--radius-sm);padding:12px;font-size:13px;font-weight:600;"></div>`;
-  document.getElementById("sell-modal-title").textContent =
-    `Add ${item.item_name}`;
+
+  html += `<div id="sell-preview" style="border-radius:var(--radius-sm); padding:12px 14px; font-size:14px; font-weight:600;"></div>`;
+
+  document.getElementById("sell-modal-title").textContent = `Add ${item.item_name}`;
   document.getElementById("sell-modal-body").innerHTML = html;
 }
-// Render: Returns HTML for unit option button.
+
+/**
+ * Returns HTML for a single selectable unit-option button.
+ * @private
+ */
 function _unitOptionHTML(name, detail, isSelected, onclickHandler) {
   return `
     <div class="unit-option${isSelected ? " selected" : ""}" onclick="${onclickHandler}">
@@ -113,57 +133,64 @@ function _unitOptionHTML(name, detail, isSelected, onclickHandler) {
     </div>
   `;
 }
-// UI: Updates sale preview with total and stock warning.
+
+/** Updates the sell preview box with total info or a stock warning. */
 function updateSellPreview(result, insufficientStock, stockMsg) {
   const prev = document.getElementById("sell-preview");
   if (!prev) return;
+
   if (insufficientStock) {
     prev.style.background = "var(--red-soft)";
     prev.style.color = "var(--red)";
+    prev.style.border = "1px solid rgba(192,57,43,0.18)";
     prev.textContent = `⚠ ${stockMsg}`;
   } else if (result) {
-    prev.style.background = "var(--accent-soft)";
-    prev.style.color = "var(--accent)";
+    prev.style.background = "var(--forest-soft)";
+    prev.style.color = "var(--forest)";
+    prev.style.border = "1px solid rgba(30,77,58,0.15)";
     prev.textContent = `${result.label} → ${fmt(result.total)}`;
   } else {
     prev.textContent = "";
+    prev.style.background = "";
+    prev.style.border = "";
   }
 }
-// UI: Highlights selected unit option in modal.
+
+/** Removes the "selected" class from all sell options, then adds it to the clicked element. */
 function activateSellOption(clickedEl) {
-  document.querySelectorAll("#sell-modal-body .unit-option").forEach((el) => {
-    el.classList.remove("selected");
-  });
+  document.querySelectorAll("#sell-modal-body .unit-option").forEach((el) => el.classList.remove("selected"));
   clickedEl.classList.add("selected");
 }
-// Render: Draws cart items and updates total.
+
+// ─── Cart ─────────────────────────────────────────────────────────────────────
+
+/** Renders the cart item list, subtotal, and total; then refreshes the change display. */
 function renderCart(cartItems, total) {
   const container = document.getElementById("cart-items");
+
   if (!cartItems.length) {
-    container.innerHTML = '<div class="empty">No items yet</div>';
+    container.innerHTML = '<div class="empty">No items in order</div>';
   } else {
-    container.innerHTML = cartItems
-      .map(
-        (c, i) => `
+    container.innerHTML = cartItems.map((c, i) => `
       <div class="cart-item">
         <div class="cart-item-info">
           <div class="cart-item-name">${c.item_name}</div>
           <div class="cart-item-detail">${c.label}</div>
           <div class="qty-ctrl">
-            <button class="qty-btn" onclick="Logic.onRemoveCartItem(${i})">🗑</button>
+            <button class="qty-btn" onclick="Logic.onRemoveCartItem(${i})" title="Remove">✕</button>
           </div>
         </div>
         <div class="cart-item-price">${fmt(c.price)}</div>
       </div>
-    `,
-      )
-      .join("");
+    `).join("");
   }
+
   document.getElementById("subtotal").textContent = fmt(total);
   document.getElementById("total").textContent = fmt(total);
   renderChangeDisplay(total);
 }
-// UI: Updates change amount display based on tendered.
+
+/** Recalculates and displays the change amount based on the tendered input. */
 function renderChangeDisplay(total) {
   const tendered = parseFloat(document.getElementById("tendered")?.value) || 0;
   const change = tendered - total;
@@ -172,105 +199,126 @@ function renderChangeDisplay(total) {
   el.textContent = fmt(Math.max(0, change));
   el.className = change < 0 ? "font-bold text-red" : "font-bold text-green";
 }
-// Render: Displays receipt after successful checkout.
+
+// ─── Receipt ──────────────────────────────────────────────────────────────────
+
+/** Populates and opens the receipt modal after a successful checkout. */
 function showReceipt(txn) {
-  const itemsHTML = txn.items
-    .map(
-      (i) => `
+  const itemsHTML = txn.items.map((i) => `
     <div class="receipt-item">
       <span>
-        ${i.item_name}<br>
-        <span style="font-size:11px;color:var(--text2)">${i.label}</span>
+        <strong>${i.item_name}</strong><br>
+        <span style="font-size:11px; color:var(--text2)">${i.label}</span>
       </span>
-      <span style="font-weight:700">${fmt(i.price)}</span>
+      <span style="font-weight:700; color:var(--forest)">${fmt(i.price)}</span>
     </div>
-  `,
-    )
-    .join("");
+  `).join("");
+
   document.getElementById("receipt-body").innerHTML = `
-    <div style="text-align:center;margin-bottom:16px">
-      <div style="font-size:24px">🧾</div>
-      <div style="font-weight:800;font-size:18px">MarketPOS</div>
-      <div style="font-size:12px;color:var(--text2)">${txn.time.toLocaleString()}</div>
+    <div style="text-align:center; margin-bottom:20px; padding-bottom:16px; border-bottom:2px dashed var(--border)">
+      <div style="font-size:28px; margin-bottom:6px">🧾</div>
+      <div style="font-family:'Inter',sans-serif; font-weight:800; font-size:22px; color:var(--forest); letter-spacing:-0.5px">Market POS</div>
+      <div style="font-size:12px; color:var(--text3); margin-top:3px; letter-spacing:0.5px">Sales & Inventory</div>
+      <div style="font-size:12px; color:var(--text2); margin-top:6px">${txn.time.toLocaleString()}</div>
     </div>
-    <div class="divider"></div>
     ${itemsHTML}
-    <div class="divider"></div>
-    <div class="receipt-item"><strong>Total</strong><strong>${fmt(txn.total)}</strong></div>
-    <div class="receipt-item"><span>Tendered</span><span>${fmt(txn.tendered)}</span></div>
-    <div class="receipt-item">
-      <strong>Change</strong>
-      <strong class="text-green">${fmt(txn.change)}</strong>
+    <div style="padding-top:12px; margin-top:4px; border-top:2px solid var(--border)">
+      <div class="receipt-item"><strong>Total</strong><strong style="color:var(--forest)">${fmt(txn.total)}</strong></div>
+      <div class="receipt-item"><span style="color:var(--text2)">Tendered</span><span>${fmt(txn.tendered)}</span></div>
+      <div class="receipt-item" style="border:none">
+        <strong>Change</strong>
+        <strong class="text-green">${fmt(txn.change)}</strong>
+      </div>
     </div>
   `;
   openModal("receipt-modal");
 }
-// Render: Draws inventory table with item data.
+
+// ─── Inventory Table ──────────────────────────────────────────────────────────
+
+/** Renders the full inventory table from an item list. */
 function renderInventoryTable(items) {
   const tbody = document.getElementById("inventory-table");
   if (!items.length) {
-    tbody.innerHTML =
-      '<tr><td colspan="8" class="empty">No items found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">No items found</td></tr>';
     return;
   }
-  tbody.innerHTML = items
-    .map((item) => {
-      const units = getUnits(item.id);
-      const stockLow = item.stock_quantity < 10;
-      return `
+  tbody.innerHTML = items.map((item) => {
+    const units = getUnits(item.id);
+    const stockLow = item.stock_quantity < 10;
+    return `
       <tr>
-        <td><div style="font-weight:700">${getCategoryIcon(item.category)} ${item.item_name}</div></td>
+        <td><div style="font-weight:700; font-size:15px; color:var(--text)">${getCategoryIcon(item.category)} ${item.item_name}</div></td>
         <td><span class="badge badge-blue">${item.category}</span></td>
-        <td>${item.base_unit}</td>
+        <td style="color:var(--text2); font-size:14px">${item.base_unit}</td>
         <td>
-          <span class="${stockLow ? "text-red font-bold" : "font-bold"}">${fmtNum(item.stock_quantity)}</span>
-          <span class="text-muted text-sm"> ${item.base_unit}</span>
-          ${stockLow ? '<span class="badge badge-red" style="margin-left:4px">Low</span>' : ""}
+          <span class="${stockLow ? "text-red font-bold" : "font-bold"}" style="font-size:14px">${fmtNum(item.stock_quantity)}</span>
+          <span class="text-muted" style="font-size:13px"> ${item.base_unit}</span>
+          ${stockLow ? '<span class="badge badge-red" style="margin-left:5px">Low</span>' : ""}
         </td>
-        <td>${fmt(item.purchase_price_per_unit)}/${item.base_unit}</td>
-        <td>${fmt(item.selling_price_per_unit)}/${item.base_unit}</td>
-        <td><span class="text-sm text-muted">${units.length} variant${units.length !== 1 ? "s" : ""}</span></td>
+        <td style="color:var(--text2); font-size:14px">${fmt(item.purchase_price_per_unit)}/${item.base_unit}</td>
+        <td style="font-weight:600; color:var(--forest); font-size:14px">${fmt(item.selling_price_per_unit)}/${item.base_unit}</td>
+        <td><span style="font-size:13px; color:var(--text2)">${units.length} variant${units.length !== 1 ? "s" : ""}</span></td>
         <td>
           <div class="flex gap-8">
             <button class="btn btn-ghost btn-sm" onclick="Logic.onEditItem(${item.id})">Edit</button>
-            <button class="btn btn-danger btn-sm" onclick="Logic.onDeleteItem(${item.id})">Del</button>
+            <button class="btn btn-danger btn-sm" onclick="Logic.onDeleteItem(${item.id})">Delete</button>
           </div>
         </td>
       </tr>
     `;
-    })
-    .join("");
+  }).join("");
 }
-// Render: Populates item form fields for add/edit.
+
+// ─── Add/Edit Item Form ───────────────────────────────────────────────────────
+
+/**
+ * Populates the add/edit item modal form.
+ * Handles custom-unit detection and renders existing unit variant rows.
+ */
 function populateItemForm(item, units = []) {
   const isEdit = !!item;
-  document.getElementById("add-item-title").textContent = isEdit
-    ? "Edit Item"
-    : "Add Item";
+  document.getElementById("add-item-title").textContent = isEdit ? "Edit Item" : "Add Item";
   document.getElementById("edit-item-id").value = isEdit ? item.id : "";
   document.getElementById("ai-name").value = isEdit ? item.item_name : "";
   document.getElementById("ai-cat").value = isEdit ? item.category : "Grains";
-  document.getElementById("ai-unit").value = isEdit ? item.base_unit : "";
   document.getElementById("ai-stock").value = isEdit ? item.stock_quantity : "";
-  document.getElementById("ai-buy").value = isEdit
-    ? item.purchase_price_per_unit
-    : "";
-  document.getElementById("ai-sell").value = isEdit
-    ? item.selling_price_per_unit
-    : "";
-  document.getElementById("ai-override").checked = isEdit
-    ? item.allow_override || false
-    : false;
+  document.getElementById("ai-buy").value = isEdit ? item.purchase_price_per_unit : "";
+  document.getElementById("ai-sell").value = isEdit ? item.selling_price_per_unit : "";
+  document.getElementById("ai-override").checked = isEdit ? item.allow_override || false : false;
+
+  // Resolve base unit — fall back to "custom" if the value isn't a preset option
+  const unitSel = document.getElementById("ai-unit");
+  const unitCustom = document.getElementById("ai-unit-custom");
+  if (isEdit && item.base_unit) {
+    const knownOpt = Array.from(unitSel.options).find((o) => o.value === item.base_unit);
+    if (knownOpt) {
+      unitSel.value = item.base_unit;
+      unitCustom.style.display = "none";
+      unitCustom.value = "";
+    } else {
+      unitSel.value = "custom";
+      unitCustom.style.display = "block";
+      unitCustom.value = item.base_unit;
+    }
+  } else {
+    unitSel.value = "";
+    unitCustom.style.display = "none";
+    unitCustom.value = "";
+  }
+
   const list = document.getElementById("unit-variants-list");
   list.innerHTML = "";
   units.forEach((u) => addUnitVariantRow(u));
 }
-// Render: Adds new unit variant row to form.
+
+/**
+ * Appends a new unit variant row to the form.
+ * Can be pre-populated with an existing unit's data.
+ */
 function addUnitVariantRow(data = {}) {
   const row = document.createElement("div");
-  row.className = "grid-2";
-  row.style.cssText =
-    "gap:8px;margin-bottom:8px;align-items:end;border:1px solid var(--border);border-radius:8px;padding:10px;";
+  row.className = "grid-2 unit-variant-row";
   row.setAttribute("data-unit-id", data.id || "");
   row.innerHTML = `
     <div class="form-group" style="margin:0">
@@ -289,20 +337,21 @@ function addUnitVariantRow(data = {}) {
       <label>Sell Price</label>
       <input class="uv-sell" type="number" value="${data.selling_price || ""}" placeholder="0.00" min="0" step="0.01">
     </div>
-    <div class="form-group" style="margin:0;grid-column:1/-1">
+    <div class="form-group" style="margin:0; grid-column:1/-1">
       <label>Note</label>
       <input class="uv-note" type="text" value="${data.note || ""}" placeholder="Optional note">
     </div>
     <div style="grid-column:1/-1">
-      <button onclick="this.closest('.grid-2').remove()" class="btn btn-danger btn-sm">Remove</button>
+      <button onclick="this.closest('.unit-variant-row').remove()" class="btn btn-danger btn-sm">Remove</button>
     </div>
   `;
   document.getElementById("unit-variants-list").appendChild(row);
 }
-// Query: Reads all unit variant rows from form.
+
+/** Reads all unit variant rows from the form into an array of objects. */
 function readUnitVariantRows() {
   const rows = [];
-  document.querySelectorAll("#unit-variants-list .grid-2").forEach((row) => {
+  document.querySelectorAll("#unit-variants-list .unit-variant-row").forEach((row) => {
     rows.push({
       unit_name: row.querySelector(".uv-name").value.trim(),
       pack_quantity: parseFloat(row.querySelector(".uv-pack").value) || 1,
@@ -313,38 +362,57 @@ function readUnitVariantRows() {
   });
   return rows;
 }
-// Query: Collects item form data into object.
+
+/** Collects all item form fields into a plain data object. */
 function readItemForm() {
+  const unitSel = document.getElementById("ai-unit");
+  const unitCustom = document.getElementById("ai-unit-custom");
+  const base_unit = unitSel.value === "custom"
+    ? unitCustom.value.trim()
+    : unitSel.value.trim();
+
   return {
     id: document.getElementById("edit-item-id").value,
     item_name: document.getElementById("ai-name").value.trim(),
     category: document.getElementById("ai-cat").value,
-    base_unit: document.getElementById("ai-unit").value.trim(),
+    base_unit,
     stock_quantity: parseFloat(document.getElementById("ai-stock").value) || 0,
-    purchase_price_per_unit:
-      parseFloat(document.getElementById("ai-buy").value) || 0,
-    selling_price_per_unit:
-      parseFloat(document.getElementById("ai-sell").value) || 0,
+    purchase_price_per_unit: parseFloat(document.getElementById("ai-buy").value) || 0,
+    selling_price_per_unit: parseFloat(document.getElementById("ai-sell").value) || 0,
     allow_override: document.getElementById("ai-override").checked,
     units: readUnitVariantRows(),
   };
 }
-// Render: Populates restock item dropdown.
+
+/** Shows/hides the custom unit text input based on the dropdown selection. */
+function handleBaseUnitChange(sel) {
+  const customInput = document.getElementById("ai-unit-custom");
+  if (sel.value === "custom") {
+    customInput.style.display = "block";
+    customInput.focus();
+  } else {
+    customInput.style.display = "none";
+    customInput.value = "";
+  }
+}
+
+// ─── Restock ──────────────────────────────────────────────────────────────────
+
+/** Populates the restock item dropdown and hides the unit section. */
 function populateRestockItemSelect(items) {
   const sel = document.getElementById("restock-item");
   sel.innerHTML =
-    '<option value="">-- Choose item --</option>' +
-    items
-      .map((i) => `<option value="${i.id}">${i.item_name}</option>`)
-      .join("");
+    '<option value="">— Choose an item —</option>' +
+    items.map((i) => `<option value="${i.id}">${i.item_name}</option>`).join("");
   document.getElementById("restock-unit-section").style.display = "none";
 }
-// Render: Draws restock unit options for item.
+
+/** Renders restock unit/pack options for the selected item. */
 function renderRestockUnits(item, units) {
   let html = `
     <div class="unit-option selected" onclick="Logic.onRestockUnitSelect('base', null, this)">
       <div class="unit-name">By ${item.base_unit}</div>
-      <div class="unit-detail">${fmt(item.purchase_price_per_unit)} / ${item.base_unit}</div>
+      <div class="unit-detail">${fmt(item.purchase_price_per_unit)} per ${item.base_unit}</div>
     </div>
   `;
   units.forEach((u) => {
@@ -360,14 +428,14 @@ function renderRestockUnits(item, units) {
   document.getElementById("restock-qty").value = "";
   document.getElementById("restock-preview").style.display = "none";
 }
-// UI: Highlights selected restock option.
+
+/** Removes "selected" from all restock options, then adds it to the clicked element. */
 function activateRestockOption(el) {
-  document
-    .querySelectorAll("#restock-units .unit-option")
-    .forEach((e) => e.classList.remove("selected"));
+  document.querySelectorAll("#restock-units .unit-option").forEach((e) => e.classList.remove("selected"));
   el.classList.add("selected");
 }
-// UI: Updates restock preview with calculations.
+
+/** Shows or hides the restock calculation preview panel. */
 function updateRestockPreview(data) {
   const prev = document.getElementById("restock-preview");
   if (!data) {
@@ -375,73 +443,70 @@ function updateRestockPreview(data) {
     return;
   }
   prev.style.display = "block";
-  prev.innerHTML = `Adding <strong>${data.label}</strong> → Stock goes to
+  prev.innerHTML = `Adding <strong>${data.label}</strong> → stock will be
     <strong>${fmtNum(data.newStock)} ${data.baseUnit}</strong><br>
     Estimated cost: <strong>${fmt(data.cost)}</strong>`;
 }
-// Render: Draws restock history table.
+
+/** Renders the restock history table. */
 function renderRestockHistoryTable(history) {
   const tbody = document.getElementById("restock-history");
   if (!history.length) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty">No history</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">No history yet</td></tr>';
     return;
   }
-  tbody.innerHTML = history
-    .map(
-      (r) => `
+  tbody.innerHTML = history.map((r) => `
     <tr>
-      <td>${r.item_name}</td>
-      <td>${r.unit}</td>
-      <td>${r.qty}</td>
-      <td class="text-green font-bold">+${fmtNum(r.base_units)}</td>
-      <td class="text-sm text-muted">${r.time.toLocaleTimeString()}</td>
+      <td style="font-weight:600; font-size:14px">${r.item_name}</td>
+      <td style="color:var(--text2); font-size:14px">${r.unit}</td>
+      <td style="font-size:14px">${r.qty}</td>
+      <td class="text-green font-bold" style="font-size:14px">+${fmtNum(r.base_units)}</td>
+      <td style="font-size:13px; color:var(--text2)">${r.time.toLocaleTimeString()}</td>
     </tr>
-  `,
-    )
-    .join("");
+  `).join("");
 }
-// Render: Draws pricing rules table.
+
+// ─── Pricing Table ────────────────────────────────────────────────────────────
+
+/** Renders the custom pricing rules table. */
 function renderPricingTable(rules) {
   const tbody = document.getElementById("pricing-table");
   if (!rules.length) {
-    tbody.innerHTML =
-      '<tr><td colspan="9" class="empty">No pricing rules</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="empty">No pricing rules</td></tr>';
     return;
   }
-  tbody.innerHTML = rules
-    .map((p) => {
-      const item = getItem(p.item_id);
-      const perUnit = p.quantity ? (p.price / p.quantity).toFixed(4) : "-";
-      return `
+  tbody.innerHTML = rules.map((p) => {
+    const item = getItem(p.item_id);
+    const perUnit = p.quantity ? (p.price / p.quantity).toFixed(4) : "-";
+    return `
       <tr>
-        <td><strong>${item?.item_name || "?"}</strong></td>
-        <td>${p.title}</td>
-        <td>${p.quantity} ${item?.base_unit || ""}</td>
-        <td><strong>${fmt(p.price)}</strong></td>
-        <td class="text-muted text-sm">₱${perUnit}/${item?.base_unit}</td>
+        <td style="font-weight:700; font-size:14px">${item?.item_name || "?"}</td>
+        <td style="font-size:14px">${p.title}</td>
+        <td style="color:var(--text2); font-size:14px">${p.quantity} ${item?.base_unit || ""}</td>
+        <td style="font-weight:700; color:var(--forest); font-size:14px">${fmt(p.price)}</td>
+        <td style="color:var(--text2); font-size:13px">₱${perUnit}/${item?.base_unit}</td>
         <td><span class="badge ${p.active ? "badge-green" : "badge-red"}">${p.active ? "Active" : "Inactive"}</span></td>
-        <td class="text-sm text-muted">${p.start_date || "—"} to ${p.end_date || "—"}</td>
-        <td class="text-sm text-muted">${p.note || "—"}</td>
+        <td style="font-size:13px; color:var(--text2)">${p.start_date || "—"} to ${p.end_date || "—"}</td>
+        <td style="font-size:13px; color:var(--text2)">${p.note || "—"}</td>
         <td>
           <div class="flex gap-8">
-            <button class="btn btn-ghost btn-sm" onclick="Logic.onTogglePricing(${p.id})">
-              ${p.active ? "Deactivate" : "Activate"}
-            </button>
-            <button class="btn btn-danger btn-sm" onclick="Logic.onDeletePricing(${p.id})">Del</button>
+            <button class="btn btn-ghost btn-sm" onclick="Logic.onTogglePricing(${p.id})">${p.active ? "Deactivate" : "Activate"}</button>
+            <button class="btn btn-danger btn-sm" onclick="Logic.onDeletePricing(${p.id})">Delete</button>
           </div>
         </td>
       </tr>
     `;
-    })
-    .join("");
+  }).join("");
 }
-// Render: Populates pricing item dropdown.
+
+/** Populates the pricing rule form's item dropdown. */
 function populatePricingItemSelect(items) {
   document.getElementById("cp-item").innerHTML = items
     .map((i) => `<option value="${i.id}">${i.item_name}</option>`)
     .join("");
 }
-// Query: Reads pricing form data into object.
+
+/** Reads all pricing form fields into a plain data object. */
 function readPricingForm() {
   return {
     item_id: parseInt(document.getElementById("cp-item").value),
@@ -454,49 +519,41 @@ function readPricingForm() {
     end_date: document.getElementById("cp-end").value,
   };
 }
-// UI: Resets pricing form to default values.
+
+/** Resets the pricing form to blank/default values. */
 function resetPricingForm() {
-  ["cp-title", "cp-qty", "cp-price", "cp-start", "cp-end", "cp-note"].forEach(
-    (id) => {
-      document.getElementById(id).value = "";
-    },
-  );
+  ["cp-title", "cp-qty", "cp-price", "cp-start", "cp-end", "cp-note"].forEach((id) => {
+    document.getElementById(id).value = "";
+  });
   document.getElementById("cp-active").checked = true;
 }
-// Render: Draws dashboard with stats and tables.
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+
+/** Populates all dashboard stat cards and both summary tables. */
 function renderDashboard(stats, recentTxns, inventoryStatus) {
   document.getElementById("d-sales").textContent = fmt(stats.todaySales);
-  document.getElementById("d-transactions").textContent =
-    `${stats.todayTransactions} transactions`;
+  document.getElementById("d-transactions").textContent = `${stats.todayTransactions} transactions`;
   document.getElementById("d-items").textContent = stats.todayItems;
   document.getElementById("d-catalog").textContent = stats.catalogCount;
   document.getElementById("d-lowstock").textContent = stats.lowStockCount;
+
   const txnTbody = document.getElementById("txn-table");
-  if (!recentTxns.length) {
-    txnTbody.innerHTML =
-      '<tr><td colspan="3" class="empty">No transactions</td></tr>';
-  } else {
-    txnTbody.innerHTML = recentTxns
-      .map(
-        (t) => `
-      <tr>
-        <td class="text-sm text-muted">${t.time.toLocaleTimeString()}</td>
-        <td>${t.items.length} item${t.items.length !== 1 ? "s" : ""}</td>
-        <td class="font-bold text-green">${fmt(t.total)}</td>
-      </tr>
-    `,
-      )
-      .join("");
-  }
-  document.getElementById("stock-table").innerHTML = inventoryStatus
-    .map(
-      ({ item, status }) => `
+  txnTbody.innerHTML = !recentTxns.length
+    ? '<tr><td colspan="3" class="empty">No transactions today</td></tr>'
+    : recentTxns.map((t) => `
+        <tr>
+          <td style="font-size:13px; color:var(--text2)">${t.time.toLocaleTimeString()}</td>
+          <td style="font-size:14px">${t.items.length} item${t.items.length !== 1 ? "s" : ""}</td>
+          <td class="font-bold text-green" style="font-size:14px">${fmt(t.total)}</td>
+        </tr>
+      `).join("");
+
+  document.getElementById("stock-table").innerHTML = inventoryStatus.map(({ item, status }) => `
     <tr>
-      <td>${getCategoryIcon(item.category)} ${item.item_name}</td>
-      <td>${fmtNum(item.stock_quantity)} ${item.base_unit}</td>
+      <td style="font-weight:500; font-size:14px">${getCategoryIcon(item.category)} ${item.item_name}</td>
+      <td style="font-size:14px">${fmtNum(item.stock_quantity)} ${item.base_unit}</td>
       <td><span class="badge ${status.badgeClass}">${status.badgeText}</span></td>
     </tr>
-  `,
-    )
-    .join("");
+  `).join("");
 }
