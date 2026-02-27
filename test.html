@@ -1590,6 +1590,9 @@
                 <div class="nav-item" onclick="showPage('recentsales')">
                     <span class="icon">🕒</span> Recent Sales
                 </div>
+                <div class="nav-item" onclick="showPage('stocklogs')">
+                    <span class="icon">📝</span> Stock Logs
+                </div>
             </nav>
         </div>
 
@@ -1844,6 +1847,47 @@
                                 </tr>
                             </thead>
                             <tbody id="rs-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stock Logs Page -->
+            <div id="page-stocklogs" class="page">
+                <div class="topbar" style="padding:0 0 16px;background:transparent;border-bottom:none;">
+                    <h2>📝 Stock Logs</h2>
+                    <div class="topbar-actions">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <input type="text" id="sl-search" placeholder="🔍 Search item..."
+                                oninput="renderStockLogsPage()" style="width:180px;">
+                            <select id="sl-filter-type" onchange="renderStockLogsPage()" style="width:140px;">
+                                <option value="all">All Types</option>
+                                <option value="sale">Sales Only</option>
+                                <option value="restock">Restocks Only</option>
+                            </select>
+                            <select id="sl-filter-date" onchange="renderStockLogsPage()" style="width:140px;">
+                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-grid" id="sl-stats"></div>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Change Type</th>
+                                    <th>Qty Change</th>
+                                    <th>Date &amp; Time</th>
+                                    <th>Note</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sl-tbody"></tbody>
                         </table>
                     </div>
                 </div>
@@ -2137,7 +2181,8 @@
             custom_pricing: [],
             transactions: [],
             restock_history: [],
-            categories: []
+            categories: [],
+            stock_logs: []
         };
 
         let editingItemId = null;
@@ -2190,7 +2235,7 @@
             // Set Cooking Oil default to 250mL (unit-1 = id 3 in item_units)
             // default_selling_unit format: 'base', 'unit-{item_unit_id}', 'custom-{cp_id}'
 
-            nextId = { items: 6, item_units: 8, custom_pricing: 2, transactions: 1, restock_history: 1, categories: 6 };
+            nextId = { items: 6, item_units: 8, custom_pricing: 2, transactions: 1, restock_history: 1, categories: 6, stock_logs: 1 };
         }
 
         let nextId = {};
@@ -2204,7 +2249,7 @@
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById('page-' + page).classList.add('active');
-            const pages = ['pos', 'inventory', 'restock', 'pricing', 'categories', 'transactions', 'recentsales'];
+            const pages = ['pos', 'inventory', 'restock', 'pricing', 'categories', 'transactions', 'recentsales', 'stocklogs'];
             const idx = pages.indexOf(page);
             if (idx >= 0) document.querySelectorAll('.nav-item')[idx].classList.add('active');
 
@@ -2215,6 +2260,7 @@
             if (page === 'categories') renderCategoriesPage();
             if (page === 'transactions') renderTransactions();
             if (page === 'recentsales') renderRecentSalesPage();
+            if (page === 'stocklogs') renderStockLogsPage();
         }
 
         // ===================== POS =====================
@@ -2671,6 +2717,86 @@
             renderCart();
         }
 
+        // ===================== STOCK LOGS PAGE =====================
+        function renderStockLogsPage() {
+            const searchQ = (document.getElementById('sl-search')?.value || '').toLowerCase();
+            const typeFilter = document.getElementById('sl-filter-type')?.value || 'all';
+            const dateFilter = document.getElementById('sl-filter-date')?.value || 'all';
+
+            const now = new Date();
+            const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const startOfWeek = new Date(startOfDay); startOfWeek.setDate(startOfDay.getDate() - startOfDay.getDay());
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+            let logs = [...db.stock_logs];
+
+            // Date filter
+            if (dateFilter === 'today') logs = logs.filter(l => new Date(l.date) >= startOfDay);
+            else if (dateFilter === 'week') logs = logs.filter(l => new Date(l.date) >= startOfWeek);
+            else if (dateFilter === 'month') logs = logs.filter(l => new Date(l.date) >= startOfMonth);
+
+            // Type filter
+            if (typeFilter !== 'all') logs = logs.filter(l => l.change_type === typeFilter);
+
+            // Search
+            if (searchQ) logs = logs.filter(l => l.item_name.toLowerCase().includes(searchQ));
+
+            // Sort newest first
+            logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // Stats
+            const totalLogs = logs.length;
+            const restockLogs = logs.filter(l => l.change_type === 'restock');
+            const saleLogs = logs.filter(l => l.change_type === 'sale');
+            const totalIn = restockLogs.reduce((s, l) => s + l.qty_change, 0);
+            const totalOut = saleLogs.reduce((s, l) => s + Math.abs(l.qty_change), 0);
+
+            document.getElementById('sl-stats').innerHTML = `
+                <div class="stat-card blue"><div class="stat-label">Total Log Entries</div><div class="stat-value">${totalLogs}</div></div>
+                <div class="stat-card green"><div class="stat-label">Restock Events</div><div class="stat-value">${restockLogs.length}</div></div>
+                <div class="stat-card orange"><div class="stat-label">Sale Events</div><div class="stat-value">${saleLogs.length}</div></div>
+                <div class="stat-card blue"><div class="stat-label">Net Units Change</div><div class="stat-value" style="font-size:18px;">${(totalIn - totalOut) >= 0 ? '+' : ''}${parseFloat((totalIn - totalOut).toFixed(2)).toLocaleString()}</div></div>
+            `;
+
+            const tbody = document.getElementById('sl-tbody');
+            if (!logs.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px;">No stock logs found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = logs.map(l => {
+                const d = new Date(l.date);
+                const dateStr = d.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+                const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const diffMin = Math.floor((now - d) / 60000);
+                const relTime = diffMin < 1 ? 'Just now' : diffMin < 60 ? diffMin + 'm ago' : diffMin < 1440 ? Math.floor(diffMin / 60) + 'h ago' : Math.floor(diffMin / 1440) + 'd ago';
+
+                const isSale = l.change_type === 'sale';
+                const isRestock = l.change_type === 'restock';
+                const typeBadge = isSale
+                    ? '<span class="badge badge-orange">📤 Sale</span>'
+                    : '<span class="badge badge-green">📦 Restock</span>';
+
+                const qtyColor = isSale ? 'var(--red)' : 'var(--green)';
+                const qtySign = isSale ? '' : '+';
+                const qtyVal = parseFloat(Math.abs(l.qty_change).toFixed(4));
+                const qtyStr = `${qtySign}${isSale ? '-' : ''}${qtyVal.toLocaleString()}`;
+
+                return `<tr>
+                    <td><strong>${l.emoji} ${l.item_name}</strong></td>
+                    <td>${typeBadge}</td>
+                    <td><strong style="color:${qtyColor};font-size:14px;">${qtyStr}</strong>
+                        <span style="font-size:11px;color:var(--text3);margin-left:3px;">${l.unit_label}</span>
+                    </td>
+                    <td>
+                        <div style="font-size:13px;">${dateStr}</div>
+                        <div style="font-size:11px;color:var(--text3);">${timeStr} &nbsp;·&nbsp; ${relTime}</div>
+                    </td>
+                    <td style="font-size:12px;color:var(--text2);">${l.note || '—'}</td>
+                </tr>`;
+            }).join('');
+        }
+
         // ===================== RECENT SALES PAGE =====================
         function renderRecentSalesPage() {
             const searchQ = (document.getElementById('rs-search')?.value || '').toLowerCase();
@@ -2813,12 +2939,31 @@
             };
             db.transactions.unshift(txn);
 
+            // Log stock changes for each sold item
+            const saleDate = txn.date;
+            for (const ci of txn.items) {
+                db.stock_logs.unshift({
+                    id: newId('stock_logs'),
+                    date: saleDate,
+                    item_id: ci.item_id,
+                    item_name: ci.item_name,
+                    emoji: ci.emoji || '📦',
+                    change_type: 'sale',
+                    qty_change: -ci.base_qty,
+                    unit_label: ci.unit_label || '',
+                    qty_display: ci.qty,
+                    ref_id: txn.id,
+                    note: `Order #${String(txn.id).padStart(4, '0')}`
+                });
+            }
+
             toast(`✅ Checkout complete! Total: ₱${txn.total.toFixed(2)}`, 'success');
             clearCart();
             renderPOSItems();
             updateLowStockAlerts();
             renderRecentSales();
             if (document.getElementById('page-recentsales').classList.contains('active')) renderRecentSalesPage();
+            if (document.getElementById('page-stocklogs').classList.contains('active')) renderStockLogsPage();
         }
 
         // ===================== INVENTORY =====================
@@ -3308,6 +3453,23 @@
                 note: document.getElementById('restock-note').value
             });
 
+            // Log stock change
+            const restockEntry = db.restock_history[0];
+            const restockUnitLabel = selectedRestockUnit === 'base' ? item.base_unit : getRestockUnitLabel(item.id, selectedRestockUnit);
+            db.stock_logs.unshift({
+                id: newId('stock_logs'),
+                date: restockEntry.date,
+                item_id: item.id,
+                item_name: item.item_name,
+                emoji: item.emoji || '📦',
+                change_type: 'restock',
+                qty_change: baseQty,
+                unit_label: restockUnitLabel || item.base_unit,
+                qty_display: qty,
+                ref_id: restockEntry.id,
+                note: restockEntry.note || ''
+            });
+
             toast(`Restocked ${baseQty.toLocaleString()} ${item.base_unit} of ${item.item_name}`, 'success');
             document.getElementById('restock-qty').value = '';
             document.getElementById('restock-note').value = '';
@@ -3316,6 +3478,7 @@
             renderPOSItems();
             bannerDismissed = false;
             updateLowStockAlerts();
+            if (document.getElementById('page-stocklogs').classList.contains('active')) renderStockLogsPage();
         }
 
         function renderRestockHistory() {
