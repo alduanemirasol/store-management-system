@@ -1115,6 +1115,16 @@
             color: var(--orange);
             font-weight: 600;
         }
+
+        /* Base unit custom input reveal animation */
+        #item-base-unit-custom {
+            transition: all 0.15s;
+        }
+
+        #item-base-unit-select option[value="__custom__"] {
+            color: var(--accent);
+            font-style: italic;
+        }
     </style>
 </head>
 
@@ -1333,8 +1343,43 @@
                     <div class="form-row-3">
                         <div class="form-group">
                             <label>Base Unit *</label>
-                            <input type="text" id="item-base-unit" placeholder="e.g. kg, piece, mL">
-                            <p class="helper">Smallest standard unit</p>
+                            <select id="item-base-unit-select" onchange="onBaseUnitSelectChange()">
+                                <option value="">— Select base unit —</option>
+                                <optgroup label="Weight">
+                                    <option value="kg">kg — kilogram</option>
+                                    <option value="g">g — gram</option>
+                                    <option value="lb">lb — pound</option>
+                                    <option value="oz">oz — ounce</option>
+                                </optgroup>
+                                <optgroup label="Volume">
+                                    <option value="mL">mL — milliliter</option>
+                                    <option value="L">L — liter</option>
+                                    <option value="fl oz">fl oz — fluid ounce</option>
+                                    <option value="cup">cup</option>
+                                </optgroup>
+                                <optgroup label="Count">
+                                    <option value="piece">piece</option>
+                                    <option value="pack">pack</option>
+                                    <option value="box">box</option>
+                                    <option value="bottle">bottle</option>
+                                    <option value="bag">bag</option>
+                                    <option value="can">can</option>
+                                    <option value="sachet">sachet</option>
+                                    <option value="roll">roll</option>
+                                    <option value="pair">pair</option>
+                                    <option value="set">set</option>
+                                </optgroup>
+                                <optgroup label="Length">
+                                    <option value="m">m — meter</option>
+                                    <option value="cm">cm — centimeter</option>
+                                </optgroup>
+                                <option value="__custom__">✏️ Custom unit…</option>
+                            </select>
+                            <!-- Hidden real value holder + custom input -->
+                            <input type="hidden" id="item-base-unit">
+                            <input type="text" id="item-base-unit-custom" placeholder="Type custom unit (e.g. bundle)"
+                                style="display:none;margin-top:6px;" oninput="onBaseUnitCustomInput()">
+                            <p class="helper" id="item-base-unit-helper">Smallest standard unit</p>
                         </div>
                         <div class="form-group">
                             <label>Purchase Price / Base Unit</label>
@@ -1942,13 +1987,74 @@
             }, 100);
         }
 
+        // ===================== BASE UNIT SELECT HELPERS =====================
+        const KNOWN_BASE_UNITS = ['kg', 'g', 'lb', 'oz', 'mL', 'L', 'fl oz', 'cup', 'piece', 'pack', 'box', 'bottle', 'bag', 'can', 'sachet', 'roll', 'pair', 'set', 'm', 'cm'];
+
+        function onBaseUnitSelectChange() {
+            const sel = document.getElementById('item-base-unit-select');
+            const customInput = document.getElementById('item-base-unit-custom');
+            const hidden = document.getElementById('item-base-unit');
+            const helper = document.getElementById('item-base-unit-helper');
+
+            if (sel.value === '__custom__') {
+                customInput.style.display = 'block';
+                customInput.focus();
+                hidden.value = customInput.value.trim();
+                helper.textContent = 'Enter your custom unit name below';
+            } else {
+                customInput.style.display = 'none';
+                hidden.value = sel.value;
+                helper.textContent = sel.value ? `Stock and prices are tracked per ${sel.value}` : 'Smallest standard unit';
+            }
+            // Keep default unit select in sync
+            updateDefaultUnitSelect(hidden.value);
+        }
+
+        function onBaseUnitCustomInput() {
+            const val = document.getElementById('item-base-unit-custom').value.trim();
+            document.getElementById('item-base-unit').value = val;
+            document.getElementById('item-base-unit-helper').textContent = val ? `Stock and prices are tracked per ${val}` : 'Type your unit name above';
+            updateDefaultUnitSelect(val);
+        }
+
+        /** Set the base unit selector to a given value, handling custom units gracefully */
+        function setBaseUnitSelector(unitValue) {
+            const sel = document.getElementById('item-base-unit-select');
+            const customInput = document.getElementById('item-base-unit-custom');
+            const hidden = document.getElementById('item-base-unit');
+            const helper = document.getElementById('item-base-unit-helper');
+
+            hidden.value = unitValue || '';
+
+            if (!unitValue) {
+                sel.value = '';
+                customInput.style.display = 'none';
+                helper.textContent = 'Smallest standard unit';
+                return;
+            }
+
+            // Check if it matches a known option
+            const isKnown = KNOWN_BASE_UNITS.includes(unitValue);
+            if (isKnown) {
+                sel.value = unitValue;
+                customInput.style.display = 'none';
+                helper.textContent = `Stock and prices are tracked per ${unitValue}`;
+            } else {
+                // It's a custom unit — select the custom option and show the input pre-filled
+                sel.value = '__custom__';
+                customInput.style.display = 'block';
+                customInput.value = unitValue;
+                helper.textContent = `Stock and prices are tracked per ${unitValue}`;
+            }
+        }
+
         // ===================== ITEM MODAL =====================
         function openAddItemModal() {
             editingItemId = null;
             document.getElementById('item-modal-title').textContent = 'Add New Item';
             document.getElementById('item-name').value = '';
             document.getElementById('item-category').value = '';
-            document.getElementById('item-base-unit').value = '';
+            setBaseUnitSelector('');
             document.getElementById('item-buy-price').value = '';
             document.getElementById('item-sell-price').value = '';
             document.getElementById('item-stock').value = '0';
@@ -1971,7 +2077,7 @@
             document.getElementById('item-modal-title').textContent = 'Edit Item';
             document.getElementById('item-name').value = item.item_name;
             document.getElementById('item-category').value = item.category;
-            document.getElementById('item-base-unit').value = item.base_unit;
+            setBaseUnitSelector(item.base_unit);
             document.getElementById('item-buy-price').value = item.purchase_price_per_unit;
             document.getElementById('item-sell-price').value = item.selling_price_per_unit;
             document.getElementById('item-stock').value = item.stock_quantity;
