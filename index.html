@@ -16,7 +16,7 @@
 
     <div class="app">
 
-        <!-- ── SIDEBAR ──────────────────────────────────────────────────────────── -->
+
         <header>
             <div class="sidebar-logo-area">
                 <div class="logo">
@@ -41,11 +41,11 @@
             <div class="sidebar-footer">Market POS v1.0</div>
         </header>
 
-        <!-- ── MAIN CONTENT ──────────────────────────────────────────────────────── -->
+
         <div class="main-content">
             <main>
 
-                <!-- ── POS PAGE ──────────────────────────────────────────────────────── -->
+
                 <div class="page active" id="page-pos">
                     <div class="pos-layout">
 
@@ -116,7 +116,7 @@
                     </div>
                 </div>
 
-                <!-- ── INVENTORY PAGE ─────────────────────────────────────────────────── -->
+
                 <div class="page" id="page-inventory">
                     <div class="page-header-row">
                         <div>
@@ -154,7 +154,7 @@
                     </div>
                 </div>
 
-                <!-- ── RESTOCK PAGE ───────────────────────────────────────────────────── -->
+
                 <div class="page" id="page-restock">
                     <div class="page-header-row">
                         <div>
@@ -214,7 +214,7 @@
                     </div>
                 </div>
 
-                <!-- ── PRICING PAGE ───────────────────────────────────────────────────── -->
+
                 <div class="page" id="page-pricing">
                     <div class="page-header-row">
                         <div>
@@ -246,7 +246,7 @@
                     </div>
                 </div>
 
-                <!-- ── DASHBOARD PAGE ─────────────────────────────────────────────────── -->
+
                 <div class="page" id="page-dashboard">
                     <div class="page-header-row">
                         <div>
@@ -321,10 +321,10 @@
         </div>
     </div>
 
-    <!-- ── TOAST CONTAINER ───────────────────────────────────────────────────────── -->
+
     <div id="toast-container"></div>
 
-    <!-- ── SELL MODAL ────────────────────────────────────────────────────────────── -->
+
     <div class="modal-backdrop" id="sell-modal">
         <div class="modal">
             <div class="modal-header">
@@ -339,7 +339,7 @@
         </div>
     </div>
 
-    <!-- ── ADD / EDIT ITEM MODAL ─────────────────────────────────────────────────── -->
+
     <div class="modal-backdrop" id="add-item-modal">
         <div class="modal">
             <div class="modal-header">
@@ -436,7 +436,7 @@
         </div>
     </div>
 
-    <!-- ── ADD PRICING MODAL ──────────────────────────────────────────────────────── -->
+
     <div class="modal-backdrop" id="add-pricing-modal">
         <div class="modal">
             <div class="modal-header">
@@ -489,7 +489,7 @@
         </div>
     </div>
 
-    <!-- ── RECEIPT MODAL ──────────────────────────────────────────────────────────── -->
+
     <div class="modal-backdrop" id="receipt-modal">
         <div class="modal" style="max-width: 400px;">
             <div class="modal-header">
@@ -504,15 +504,6 @@
         </div>
     </div>
 
-    <!-- ── SCRIPTS ────────────────────────────────────────────────────────────────── -->
-    <!--
-  Load order matters — each file depends on the ones above it:
-    data.js     → defines `db` and `seedDatabase`
-    helpers.js  → pure utils that read from `db`
-    services.js → business logic using helpers
-    ui.js       → DOM rendering using helpers + services
-    logic.js    → wires events to services & ui; exposes `Logic`
--->
     <script src="js/data.js"></script>
     <script src="js/helpers.js"></script>
     <script src="js/services.js"></script>

@@ -1,13 +1,3 @@
-/**
- * ui.js
- * All DOM rendering and UI interaction functions.
- * Depends on: helpers.js (fmt, fmtNum, getCategoryIcon, getUnits)
- * Renders to specific element IDs defined in index.html.
- */
-
-// ─── Shared DOM Utilities ─────────────────────────────────────────────────────
-
-/** Displays a temporary toast notification at the bottom-right. */
 function toast(msg, type = "") {
   const el = document.createElement("div");
   el.className = `toast ${type}`;
@@ -16,21 +6,14 @@ function toast(msg, type = "") {
   setTimeout(() => el.remove(), 3000);
 }
 
-/** Opens a modal dialog by its backdrop element ID. */
 function openModal(id) {
   document.getElementById(id).classList.add("open");
 }
 
-/** Closes a modal dialog by its backdrop element ID. */
 function closeModal(id) {
   document.getElementById(id).classList.remove("open");
 }
 
-/**
- * Switches the active page and highlights the clicked nav button.
- * Pure DOM operation — no page-specific logic here.
- * Page-specific setup (e.g. restock init, dashboard render) is handled by Logic.showPage.
- */
 function showPage(pageId, event) {
   document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"));
   document.querySelectorAll("nav button").forEach((b) => b.classList.remove("active"));
@@ -38,9 +21,6 @@ function showPage(pageId, event) {
   if (event && event.target) event.target.classList.add("active");
 }
 
-// ─── POS / Item Grid ──────────────────────────────────────────────────────────
-
-/** Renders the product grid from a filtered list of items. */
 function renderItemGrid(items) {
   const grid = document.getElementById("item-grid");
   if (!items.length) {
@@ -57,9 +37,6 @@ function renderItemGrid(items) {
   `).join("");
 }
 
-// ─── Sell Modal ───────────────────────────────────────────────────────────────
-
-/** Builds the sell-type option list inside the sell modal body. */
 function renderSellModalBody(item, units, activePricing, selection) {
   let html = `
     <div style="margin-bottom:16px; padding:12px 14px; background:var(--cream2); border-radius:var(--radius-sm); border:1px solid var(--border); font-size:14px; color:var(--text2)">
@@ -68,7 +45,6 @@ function renderSellModalBody(item, units, activePricing, selection) {
     <div style="font-weight:700; font-size:12px; color:var(--text3); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px;">Sell By</div>
   `;
 
-  // Base unit option
   html += _unitOptionHTML(
     `By ${item.base_unit}`,
     `${fmt(item.selling_price_per_unit)} per ${item.base_unit}`,
@@ -76,7 +52,6 @@ function renderSellModalBody(item, units, activePricing, selection) {
     `Logic.onSellTypeSelect('base', null, null, this)`,
   );
 
-  // Pack/unit options
   units.forEach((u) => {
     const selected = selection.type === "unit" && selection.unitId === u.id;
     html += _unitOptionHTML(
@@ -87,7 +62,6 @@ function renderSellModalBody(item, units, activePricing, selection) {
     );
   });
 
-  // Custom pricing options
   activePricing.forEach((p) => {
     const selected = selection.type === "pricing" && selection.pricingId === p.id;
     html += _unitOptionHTML(
@@ -121,10 +95,6 @@ function renderSellModalBody(item, units, activePricing, selection) {
   document.getElementById("sell-modal-body").innerHTML = html;
 }
 
-/**
- * Returns HTML for a single selectable unit-option button.
- * @private
- */
 function _unitOptionHTML(name, detail, isSelected, onclickHandler) {
   return `
     <div class="unit-option${isSelected ? " selected" : ""}" onclick="${onclickHandler}">
@@ -134,7 +104,6 @@ function _unitOptionHTML(name, detail, isSelected, onclickHandler) {
   `;
 }
 
-/** Updates the sell preview box with total info or a stock warning. */
 function updateSellPreview(result, insufficientStock, stockMsg) {
   const prev = document.getElementById("sell-preview");
   if (!prev) return;
@@ -156,15 +125,11 @@ function updateSellPreview(result, insufficientStock, stockMsg) {
   }
 }
 
-/** Removes the "selected" class from all sell options, then adds it to the clicked element. */
 function activateSellOption(clickedEl) {
   document.querySelectorAll("#sell-modal-body .unit-option").forEach((el) => el.classList.remove("selected"));
   clickedEl.classList.add("selected");
 }
 
-// ─── Cart ─────────────────────────────────────────────────────────────────────
-
-/** Renders the cart item list, subtotal, and total; then refreshes the change display. */
 function renderCart(cartItems, total) {
   const container = document.getElementById("cart-items");
 
@@ -190,7 +155,6 @@ function renderCart(cartItems, total) {
   renderChangeDisplay(total);
 }
 
-/** Recalculates and displays the change amount based on the tendered input. */
 function renderChangeDisplay(total) {
   const tendered = parseFloat(document.getElementById("tendered")?.value) || 0;
   const change = tendered - total;
@@ -200,9 +164,6 @@ function renderChangeDisplay(total) {
   el.className = change < 0 ? "font-bold text-red" : "font-bold text-green";
 }
 
-// ─── Receipt ──────────────────────────────────────────────────────────────────
-
-/** Populates and opens the receipt modal after a successful checkout. */
 function showReceipt(txn) {
   const itemsHTML = txn.items.map((i) => `
     <div class="receipt-item">
@@ -234,9 +195,6 @@ function showReceipt(txn) {
   openModal("receipt-modal");
 }
 
-// ─── Inventory Table ──────────────────────────────────────────────────────────
-
-/** Renders the full inventory table from an item list. */
 function renderInventoryTable(items) {
   const tbody = document.getElementById("inventory-table");
   if (!items.length) {
@@ -270,12 +228,6 @@ function renderInventoryTable(items) {
   }).join("");
 }
 
-// ─── Add/Edit Item Form ───────────────────────────────────────────────────────
-
-/**
- * Populates the add/edit item modal form.
- * Handles custom-unit detection and renders existing unit variant rows.
- */
 function populateItemForm(item, units = []) {
   const isEdit = !!item;
   document.getElementById("add-item-title").textContent = isEdit ? "Edit Item" : "Add Item";
@@ -287,7 +239,6 @@ function populateItemForm(item, units = []) {
   document.getElementById("ai-sell").value = isEdit ? item.selling_price_per_unit : "";
   document.getElementById("ai-override").checked = isEdit ? item.allow_override || false : false;
 
-  // Resolve base unit — fall back to "custom" if the value isn't a preset option
   const unitSel = document.getElementById("ai-unit");
   const unitCustom = document.getElementById("ai-unit-custom");
   if (isEdit && item.base_unit) {
@@ -312,10 +263,6 @@ function populateItemForm(item, units = []) {
   units.forEach((u) => addUnitVariantRow(u));
 }
 
-/**
- * Appends a new unit variant row to the form.
- * Can be pre-populated with an existing unit's data.
- */
 function addUnitVariantRow(data = {}) {
   const row = document.createElement("div");
   row.className = "grid-2 unit-variant-row";
@@ -348,7 +295,6 @@ function addUnitVariantRow(data = {}) {
   document.getElementById("unit-variants-list").appendChild(row);
 }
 
-/** Reads all unit variant rows from the form into an array of objects. */
 function readUnitVariantRows() {
   const rows = [];
   document.querySelectorAll("#unit-variants-list .unit-variant-row").forEach((row) => {
@@ -363,7 +309,6 @@ function readUnitVariantRows() {
   return rows;
 }
 
-/** Collects all item form fields into a plain data object. */
 function readItemForm() {
   const unitSel = document.getElementById("ai-unit");
   const unitCustom = document.getElementById("ai-unit-custom");
@@ -384,7 +329,6 @@ function readItemForm() {
   };
 }
 
-/** Shows/hides the custom unit text input based on the dropdown selection. */
 function handleBaseUnitChange(sel) {
   const customInput = document.getElementById("ai-unit-custom");
   if (sel.value === "custom") {
@@ -396,9 +340,6 @@ function handleBaseUnitChange(sel) {
   }
 }
 
-// ─── Restock ──────────────────────────────────────────────────────────────────
-
-/** Populates the restock item dropdown and hides the unit section. */
 function populateRestockItemSelect(items) {
   const sel = document.getElementById("restock-item");
   sel.innerHTML =
@@ -407,7 +348,6 @@ function populateRestockItemSelect(items) {
   document.getElementById("restock-unit-section").style.display = "none";
 }
 
-/** Renders restock unit/pack options for the selected item. */
 function renderRestockUnits(item, units) {
   let html = `
     <div class="unit-option selected" onclick="Logic.onRestockUnitSelect('base', null, this)">
@@ -429,13 +369,11 @@ function renderRestockUnits(item, units) {
   document.getElementById("restock-preview").style.display = "none";
 }
 
-/** Removes "selected" from all restock options, then adds it to the clicked element. */
 function activateRestockOption(el) {
   document.querySelectorAll("#restock-units .unit-option").forEach((e) => e.classList.remove("selected"));
   el.classList.add("selected");
 }
 
-/** Shows or hides the restock calculation preview panel. */
 function updateRestockPreview(data) {
   const prev = document.getElementById("restock-preview");
   if (!data) {
@@ -448,7 +386,6 @@ function updateRestockPreview(data) {
     Estimated cost: <strong>${fmt(data.cost)}</strong>`;
 }
 
-/** Renders the restock history table. */
 function renderRestockHistoryTable(history) {
   const tbody = document.getElementById("restock-history");
   if (!history.length) {
@@ -466,9 +403,6 @@ function renderRestockHistoryTable(history) {
   `).join("");
 }
 
-// ─── Pricing Table ────────────────────────────────────────────────────────────
-
-/** Renders the custom pricing rules table. */
 function renderPricingTable(rules) {
   const tbody = document.getElementById("pricing-table");
   if (!rules.length) {
@@ -499,14 +433,12 @@ function renderPricingTable(rules) {
   }).join("");
 }
 
-/** Populates the pricing rule form's item dropdown. */
 function populatePricingItemSelect(items) {
   document.getElementById("cp-item").innerHTML = items
     .map((i) => `<option value="${i.id}">${i.item_name}</option>`)
     .join("");
 }
 
-/** Reads all pricing form fields into a plain data object. */
 function readPricingForm() {
   return {
     item_id: parseInt(document.getElementById("cp-item").value),
@@ -520,7 +452,6 @@ function readPricingForm() {
   };
 }
 
-/** Resets the pricing form to blank/default values. */
 function resetPricingForm() {
   ["cp-title", "cp-qty", "cp-price", "cp-start", "cp-end", "cp-note"].forEach((id) => {
     document.getElementById(id).value = "";
@@ -528,9 +459,6 @@ function resetPricingForm() {
   document.getElementById("cp-active").checked = true;
 }
 
-// ─── Dashboard ────────────────────────────────────────────────────────────────
-
-/** Populates all dashboard stat cards and both summary tables. */
 function renderDashboard(stats, recentTxns, inventoryStatus) {
   document.getElementById("d-sales").textContent = fmt(stats.todaySales);
   document.getElementById("d-transactions").textContent = `${stats.todayTransactions} transactions`;

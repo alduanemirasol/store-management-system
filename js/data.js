@@ -1,11 +1,3 @@
-/**
- * data.js
- * In-memory database store and seed data for Market POS.
- * Provides the raw data layer — no business logic here.
- */
-
-// ─── Database Schema ──────────────────────────────────────────────────────────
-
 const db = {
   items: [],
   item_units: [],
@@ -21,25 +13,18 @@ const db = {
   },
 };
 
-// ─── Internal Factories ───────────────────────────────────────────────────────
-
-/** Creates and stores a new item record. */
 function _createItem(data) {
   const item = { id: db.next_id.item++, ...data };
   db.items.push(item);
   return item;
 }
 
-/** Creates and stores a new unit/pack record. */
 function _createUnit(data) {
   const unit = { id: db.next_id.unit++, ...data };
   db.item_units.push(unit);
   return unit;
 }
 
-// ─── Seed Data ────────────────────────────────────────────────────────────────
-
-/** Populates the database with sample products on first load. */
 function seedDatabase() {
   const rice = _createItem({
     item_name: "Rice",
