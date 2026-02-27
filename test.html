@@ -1443,6 +1443,118 @@
         }
 
         /* badge-blue, badge-green, badge-orange already defined above */
+
+        /* Recent Sales Panel */
+        .recent-sales-panel {
+            border-top: 1px solid var(--border);
+            background: var(--surface);
+            flex-shrink: 0;
+            max-height: 220px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .recent-sales-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 9px 16px 7px;
+            flex-shrink: 0;
+        }
+
+        .recent-sales-title {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .recent-sales-list {
+            overflow-y: auto;
+            flex: 1;
+            padding: 0 10px 8px;
+        }
+
+        .recent-sale-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 6px;
+            border-radius: var(--radius);
+            transition: background 0.12s;
+            font-size: 12px;
+        }
+
+        .recent-sale-row:hover {
+            background: var(--surface2);
+        }
+
+        .recent-sale-emoji {
+            font-size: 15px;
+            flex-shrink: 0;
+            width: 20px;
+            text-align: center;
+        }
+
+        .recent-sale-name {
+            font-weight: 600;
+            color: var(--text);
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .recent-sale-qty {
+            color: var(--text3);
+            font-size: 11px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .recent-sale-price {
+            font-weight: 700;
+            color: var(--green);
+            white-space: nowrap;
+            flex-shrink: 0;
+            font-size: 12px;
+        }
+
+        .recent-sale-time {
+            font-size: 10px;
+            color: var(--text3);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .recent-sales-empty {
+            text-align: center;
+            color: var(--text3);
+            font-size: 12px;
+            padding: 14px 0 10px;
+        }
+
+        .recent-sale-divider {
+            font-size: 10px;
+            color: var(--text3);
+            padding: 2px 6px 2px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 2px 0;
+        }
+
+        .recent-sale-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
     </style>
 </head>
 
@@ -1474,6 +1586,9 @@
                 </div>
                 <div class="nav-item" onclick="showPage('transactions')">
                     <span class="icon">📋</span> Transactions
+                </div>
+                <div class="nav-item" onclick="showPage('recentsales')">
+                    <span class="icon">🕒</span> Recent Sales
                 </div>
             </nav>
         </div>
@@ -1530,6 +1645,15 @@
                                 <button class="btn btn-secondary" onclick="clearCart()">Clear</button>
                                 <button class="btn btn-success" onclick="checkout()" id="checkout-btn"
                                     disabled>Checkout</button>
+                            </div>
+                        </div>
+                        <!-- Recent Sales Panel -->
+                        <div class="recent-sales-panel">
+                            <div class="recent-sales-header">
+                                <span class="recent-sales-title">🕒 Recent Sales</span>
+                            </div>
+                            <div class="recent-sales-list" id="recent-sales-list">
+                                <div class="recent-sales-empty">No sales yet.</div>
                             </div>
                         </div>
                     </div>
@@ -1690,6 +1814,44 @@
             </div>
 
         </div>
+
+        <!-- Recent Sales Page -->
+        <div id="page-recentsales" class="page">
+            <div class="topbar" style="padding:0 0 16px;">
+                <h2>🕒 Recent Sales</h2>
+                <div class="topbar-actions">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <input type="text" id="rs-search" placeholder="🔍 Search item..."
+                            oninput="renderRecentSalesPage()" style="width:200px;">
+                        <select id="rs-filter-date" onchange="renderRecentSalesPage()" style="width:150px;">
+                            <option value="all">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="stats-grid" id="rs-stats"></div>
+            <div class="card">
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Date &amp; Time</th>
+                                <th>Order #</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rs-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
     </div>
 
     <!-- Add Item Modal -->
@@ -2044,8 +2206,9 @@
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById('page-' + page).classList.add('active');
-            const pages = ['pos', 'inventory', 'restock', 'pricing', 'categories', 'transactions'];
-            document.querySelectorAll('.nav-item')[pages.indexOf(page)].classList.add('active');
+            const pages = ['pos', 'inventory', 'restock', 'pricing', 'categories', 'transactions', 'recentsales'];
+            const idx = pages.indexOf(page);
+            if (idx >= 0) document.querySelectorAll('.nav-item')[idx].classList.add('active');
 
             if (page === 'pos') renderPOSItems();
             if (page === 'inventory') renderInventory();
@@ -2053,6 +2216,7 @@
             if (page === 'pricing') renderPricingPage();
             if (page === 'categories') renderCategoriesPage();
             if (page === 'transactions') renderTransactions();
+            if (page === 'recentsales') renderRecentSalesPage();
         }
 
         // ===================== POS =====================
@@ -2509,6 +2673,125 @@
             renderCart();
         }
 
+        // ===================== RECENT SALES PAGE =====================
+        function renderRecentSalesPage() {
+            const searchQ = (document.getElementById('rs-search')?.value || '').toLowerCase();
+            const dateFilter = document.getElementById('rs-filter-date')?.value || 'all';
+
+            const now = new Date();
+            const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const startOfWeek = new Date(startOfDay);
+            startOfWeek.setDate(startOfDay.getDate() - startOfDay.getDay());
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+            // Flatten all line items across all transactions
+            let rows = [];
+            db.transactions.forEach(txn => {
+                const txnDate = new Date(txn.date);
+                txn.items.forEach(ci => {
+                    rows.push({ ...ci, txnDate, txnId: txn.id });
+                });
+            });
+
+            // Apply date filter
+            if (dateFilter === 'today') rows = rows.filter(r => r.txnDate >= startOfDay);
+            else if (dateFilter === 'week') rows = rows.filter(r => r.txnDate >= startOfWeek);
+            else if (dateFilter === 'month') rows = rows.filter(r => r.txnDate >= startOfMonth);
+
+            // Apply search
+            if (searchQ) rows = rows.filter(r => r.item_name.toLowerCase().includes(searchQ));
+
+            // Sort newest first
+            rows.sort((a, b) => b.txnDate - a.txnDate);
+
+            // Stats
+            const totalItems = rows.length;
+            const totalRevenue = rows.reduce((s, r) => s + r.price, 0);
+            const uniqueItems = new Set(rows.map(r => r.item_name)).size;
+            const totalQty = rows.reduce((s, r) => s + (r.qty || 0), 0);
+
+            document.getElementById('rs-stats').innerHTML = `
+                <div class="stat-card blue"><div class="stat-label">Line Items Sold</div><div class="stat-value">${totalItems}</div></div>
+                <div class="stat-card green"><div class="stat-label">Total Revenue</div><div class="stat-value">₱${totalRevenue.toFixed(0)}</div></div>
+                <div class="stat-card orange"><div class="stat-label">Unique Items</div><div class="stat-value">${uniqueItems}</div></div>
+                <div class="stat-card blue"><div class="stat-label">Total Units Sold</div><div class="stat-value">${totalQty % 1 === 0 ? totalQty : totalQty.toFixed(2)}</div></div>
+            `;
+
+            const tbody = document.getElementById('rs-tbody');
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px;">No sales found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = rows.map(r => {
+                const d = r.txnDate;
+                const dateStr = d.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+                const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const now2 = new Date();
+                const diffMin = Math.floor((now2 - d) / 60000);
+                let relTime = diffMin < 1 ? 'Just now' : diffMin < 60 ? diffMin + 'm ago' : diffMin < 1440 ? Math.floor(diffMin / 60) + 'h ago' : Math.floor(diffMin / 1440) + 'd ago';
+
+                return `<tr>
+                    <td>
+                        <strong>${r.emoji || '📦'} ${r.item_name}</strong>
+                        ${r.is_manual ? '<span class="manual-badge">✏ manual</span>' : ''}
+                    </td>
+                    <td>${r.qty} <span style="color:var(--text3);font-size:12px;">${r.unit_label || ''}</span></td>
+                    <td><strong style="color:var(--green);">₱${r.price.toFixed(2)}</strong></td>
+                    <td>
+                        <div style="font-size:13px;">${dateStr}</div>
+                        <div style="font-size:11px;color:var(--text3);">${timeStr} &nbsp;·&nbsp; ${relTime}</div>
+                    </td>
+                    <td>
+                        <span class="badge badge-blue">#${String(r.txnId).padStart(4, '0')}</span>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        // ===================== RECENT SALES (POS Panel) =====================
+        function renderRecentSales() {
+            const el = document.getElementById('recent-sales-list');
+            if (!el) return;
+
+            // Flatten all sold line items from latest transactions (up to last 5 txns)
+            const recentTxns = db.transactions.slice(0, 5);
+            if (!recentTxns.length) {
+                el.innerHTML = '<div class="recent-sales-empty">No sales yet.</div>';
+                return;
+            }
+
+            let html = '';
+            recentTxns.forEach((txn, txnIdx) => {
+                const d = new Date(txn.date);
+                const now = new Date();
+                const diffMs = now - d;
+                const diffMin = Math.floor(diffMs / 60000);
+                let timeLabel;
+                if (diffMin < 1) timeLabel = 'Just now';
+                else if (diffMin < 60) timeLabel = diffMin + 'm ago';
+                else if (diffMin < 1440) timeLabel = Math.floor(diffMin / 60) + 'h ago';
+                else timeLabel = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+
+                const dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+                const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                html += `<div class="recent-sale-divider">${dateStr} ${timeStr}</div>`;
+                txn.items.forEach(ci => {
+                    html += `
+                    <div class="recent-sale-row" title="${dateStr} ${timeStr}">
+                        <span class="recent-sale-emoji">${ci.emoji || '📦'}</span>
+                        <span class="recent-sale-name">${ci.item_name}</span>
+                        <span class="recent-sale-qty">${ci.qty} ${ci.unit_label || ''}</span>
+                        <span class="recent-sale-price">₱${ci.price.toFixed(2)}</span>
+                        <span class="recent-sale-time">${timeLabel}</span>
+                    </div>`;
+                });
+            });
+
+            el.innerHTML = html;
+        }
+
         function checkout() {
             if (!cart.length) return;
 
@@ -2536,6 +2819,8 @@
             clearCart();
             renderPOSItems();
             updateLowStockAlerts();
+            renderRecentSales();
+            if (document.getElementById('page-recentsales').classList.contains('active')) renderRecentSalesPage();
         }
 
         // ===================== INVENTORY =====================
@@ -3343,6 +3628,7 @@
         seedData();
         renderPOSItems();
         updateLowStockAlerts();
+        renderRecentSales();
     </script>
 </body>
 
