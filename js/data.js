@@ -14,12 +14,11 @@ function loadFromStorage() {
     db.items = data.items || [];
     db.item_units = data.item_units || [];
     db.custom_pricing = data.custom_pricing || [];
-    db.transactions = data.transactions || [];
-    db.restock_history = data.restock_history || [];
+    db.transactions = (data.transactions || []).map(t => ({ ...t, time: new Date(t.time) }));
+    db.restock_history = (data.restock_history || []).map(r => ({ ...r, time: new Date(r.time) }));
     db.next_id = data.next_id || { item: 1, unit: 1, pricing: 1, txn: 1, restock: 1 };
     return true;
   }
-  // Return false if no stored data exists.
   return false;
 }
 
