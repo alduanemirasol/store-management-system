@@ -1,5 +1,3 @@
-// ===================== NAVIGATION =====================
-
 function showPage(page) {
   document
     .querySelectorAll(".page")
@@ -33,7 +31,6 @@ function showPage(page) {
   if (page === "stocklogs") renderStockLogsPage();
 }
 
-// ===================== TABS =====================
 function switchTab(tab) {
   document.querySelectorAll(".tab").forEach((t, i) => {
     t.classList.toggle("active", ["basic", "units"][i] === tab);

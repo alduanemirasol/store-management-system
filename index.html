@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShopEase POS &amp; Inventory</title>
+    <title>ShopEase POS & Inventory</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="styles/main.css">
@@ -16,11 +16,10 @@
 <body>
     <div class="app">
 
-        <!-- ===================== SIDEBAR ===================== -->
         <div class="sidebar">
             <div class="sidebar-logo">
                 <h1>🛒 ShopEase</h1>
-                <span>POS &amp; Inventory</span>
+                <span>POS & Inventory</span>
             </div>
             <nav class="nav">
                 <div class="nav-item active" onclick="showPage('pos')">
@@ -51,10 +50,8 @@
             </nav>
         </div>
 
-        <!-- ===================== MAIN CONTENT ===================== -->
         <div class="main">
 
-            <!-- Low Stock Alert Banner -->
             <div id="low-stock-banner" class="low-stock-banner" style="display:none;">
                 <div class="low-stock-banner-left">
                     <span class="low-stock-banner-title">⚠️ Low Stock Alert</span>
@@ -63,10 +60,8 @@
                 <button class="low-stock-dismiss" onclick="dismissLowStockBanner()" title="Dismiss">✕</button>
             </div>
 
-            <!-- ===================== POS PAGE ===================== -->
             <div id="page-pos" class="page active" style="padding:0;">
                 <div class="pos-layout">
-                    <!-- Items panel -->
                     <div class="pos-items">
                         <div class="pos-search">
                             <div class="search-box">
@@ -78,7 +73,6 @@
                         <div class="pos-categories" id="pos-categories"></div>
                         <div class="pos-grid" id="pos-grid"></div>
                     </div>
-                    <!-- Cart panel -->
                     <div class="pos-cart">
                         <div class="cart-header">
                             <h3>Current Order</h3>
@@ -105,7 +99,6 @@
                                     disabled>Checkout</button>
                             </div>
                         </div>
-                        <!-- Recent Sales Panel -->
                         <div class="recent-sales-panel">
                             <div class="recent-sales-header">
                                 <span class="recent-sales-title">🕒 Recent Sales</span>
@@ -118,7 +111,6 @@
                 </div>
             </div>
 
-            <!-- ===================== INVENTORY PAGE ===================== -->
             <div id="page-inventory" class="page">
                 <div class="topbar">
                     <h2>📦 Inventory</h2>
@@ -137,7 +129,6 @@
                     </select>
                 </div>
 
-                <!-- Low Stock Panel -->
                 <div id="inv-low-stock-panel" class="low-stock-panel" style="display:none;">
                     <div class="low-stock-panel-header">
                         <span class="low-stock-panel-title">⚠️ Items Needing Attention</span>
@@ -179,7 +170,6 @@
                 </div>
             </div>
 
-            <!-- ===================== RESTOCK PAGE ===================== -->
             <div id="page-restock" class="page">
                 <div class="topbar">
                     <h2>🔄 Restock Items</h2>
@@ -223,7 +213,6 @@
                 </div>
             </div>
 
-            <!-- ===================== CUSTOM PRICING PAGE ===================== -->
             <div id="page-pricing" class="page">
                 <div class="topbar">
                     <h2>🏷️ Custom Pricing</h2>
@@ -234,7 +223,6 @@
                 <div id="pricing-list"></div>
             </div>
 
-            <!-- ===================== CATEGORIES PAGE ===================== -->
             <div id="page-categories" class="page">
                 <div class="topbar">
                     <h2>🗂️ Categories</h2>
@@ -260,7 +248,6 @@
                 </div>
             </div>
 
-            <!-- ===================== TRANSACTIONS PAGE ===================== -->
             <div id="page-transactions" class="page">
                 <div class="topbar">
                     <h2>📋 Transactions</h2>
@@ -272,7 +259,7 @@
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Date &amp; Time</th>
+                                    <th>Date & Time</th>
                                     <th>Items</th>
                                     <th>Total</th>
                                     <th>Details</th>
@@ -284,7 +271,6 @@
                 </div>
             </div>
 
-            <!-- ===================== RECENT SALES PAGE ===================== -->
             <div id="page-recentsales" class="page">
                 <div class="topbar">
                     <h2>🕒 Recent Sales</h2>
@@ -311,7 +297,7 @@
                                     <th>Item</th>
                                     <th>Quantity</th>
                                     <th>Price</th>
-                                    <th>Date &amp; Time</th>
+                                    <th>Date & Time</th>
                                     <th>Order #</th>
                                 </tr>
                             </thead>
@@ -321,7 +307,6 @@
                 </div>
             </div>
 
-            <!-- ===================== STOCK LOGS PAGE ===================== -->
             <div id="page-stocklogs" class="page">
                 <div class="topbar">
                     <h2>📝 Stock Logs</h2>
@@ -353,7 +338,7 @@
                                     <th>Item</th>
                                     <th>Change Type</th>
                                     <th>Qty Change</th>
-                                    <th>Date &amp; Time</th>
+                                    <th>Date & Time</th>
                                     <th>Note</th>
                                 </tr>
                             </thead>
@@ -363,12 +348,9 @@
                 </div>
             </div>
 
-        </div><!-- /.main -->
-    </div><!-- /.app -->
+        </div>
+    </div>
 
-    <!-- ===================== MODALS ===================== -->
-
-    <!-- Add / Edit Item Modal -->
     <div class="modal-backdrop" id="modal-add-item">
         <div class="modal modal-lg">
             <div class="modal-header">
@@ -381,7 +363,6 @@
                     <div class="tab" onclick="switchTab('units')">Unit Variants</div>
                 </div>
 
-                <!-- Basic Info Tab -->
                 <div id="tab-basic" class="tab-panel active">
                     <div class="form-row">
                         <div class="form-group">
@@ -471,7 +452,6 @@
                     </div>
                 </div>
 
-                <!-- Unit Variants Tab -->
                 <div id="tab-units" class="tab-panel">
                     <p class="helper" style="margin-bottom:14px;">Define alternative units for buying and selling (e.g.
                         sack, tray, pack).</p>
@@ -486,7 +466,6 @@
         </div>
     </div>
 
-    <!-- Add to Cart Modal -->
     <div class="modal-backdrop" id="modal-add-cart">
         <div class="modal">
             <div class="modal-header">
@@ -504,7 +483,6 @@
                         oninput="updateCartPreview()">
                 </div>
 
-                <!-- Manual Price Toggle -->
                 <div class="manual-price-toggle" id="manual-price-section">
                     <label class="toggle-row" for="cart-manual-check">
                         <span class="toggle-icon">✏️</span>
@@ -544,7 +522,6 @@
         </div>
     </div>
 
-    <!-- Custom Pricing Modal -->
     <div class="modal-backdrop" id="modal-custom-price">
         <div class="modal">
             <div class="modal-header">
@@ -599,7 +576,6 @@
         </div>
     </div>
 
-    <!-- Add / Edit Category Modal -->
     <div class="modal-backdrop" id="modal-category">
         <div class="modal modal-sm">
             <div class="modal-header">
@@ -640,7 +616,6 @@
         </div>
     </div>
 
-    <!-- Transaction Detail Modal -->
     <div class="modal-backdrop" id="modal-txn-detail">
         <div class="modal">
             <div class="modal-header">
@@ -651,7 +626,6 @@
         </div>
     </div>
 
-    <!-- ===================== SCRIPTS ===================== -->
     <script src="data/store.js"></script>
     <script src="js/helpers.js"></script>
     <script src="js/services.js"></script>

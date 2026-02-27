@@ -1,4 +1,3 @@
-// ===================== DATA STORE =====================
 let db = {
   items: [],
   item_units: [],
@@ -15,9 +14,7 @@ function newId(type) {
   return nextId[type]++;
 }
 
-// ===================== SEED DATA =====================
 function seedData() {
-  // Categories
   db.categories = [
     { id: 1, name: "Grains", emoji: "🌾", color: "yellow" },
     { id: 2, name: "Dairy & Eggs", emoji: "🥚", color: "blue" },
@@ -26,7 +23,6 @@ function seedData() {
     { id: 5, name: "Vegetables", emoji: "🥬", color: "green" },
   ];
 
-  // Items
   db.items = [
     {
       id: 1,
@@ -90,9 +86,7 @@ function seedData() {
     },
   ];
 
-  // Item units (alternative units)
   db.item_units = [
-    // Rice: sack = 50 kg
     {
       id: 1,
       item_id: 1,
@@ -102,7 +96,6 @@ function seedData() {
       selling_price: 2850,
       note: "1 sack = 50 kg",
     },
-    // Egg: tray = 30 pieces
     {
       id: 2,
       item_id: 2,
@@ -112,7 +105,6 @@ function seedData() {
       selling_price: 270,
       note: "1 tray = 30 pieces",
     },
-    // Cooking Oil: 250mL unit, container=20000mL
     {
       id: 3,
       item_id: 3,
@@ -131,7 +123,6 @@ function seedData() {
       selling_price: 2960,
       note: "1 container = 20,000 mL",
     },
-    // Candy: pack = 100 pieces
     {
       id: 5,
       item_id: 4,
@@ -141,7 +132,6 @@ function seedData() {
       selling_price: 130,
       note: "1 pack = 100 pieces",
     },
-    // Cabbage: sack=25kg, piece pricing
     {
       id: 6,
       item_id: 5,
@@ -162,7 +152,6 @@ function seedData() {
     },
   ];
 
-  // Custom pricing
   db.custom_pricing = [
     {
       id: 1,
@@ -177,7 +166,6 @@ function seedData() {
     },
   ];
 
-  // default_selling_unit format: 'base', 'unit-{item_unit_id}', 'custom-{cp_id}'
   nextId = {
     items: 6,
     item_units: 8,

@@ -1,7 +1,5 @@
-// ===================== LOW STOCK ALERTS STATE =====================
 let bannerDismissed = false;
 
-// ===================== LOW STOCK QUERIES =====================
 function getLowStockItems() {
   return db.items.filter(
     (item) =>
@@ -14,11 +12,9 @@ function getOutOfStockItems() {
   return db.items.filter((item) => item.stock_quantity <= 0);
 }
 
-// ===================== UPDATE ALL ALERT UI =====================
 function updateLowStockAlerts() {
   const lowItems = getLowStockItems();
 
-  // Update nav badge
   const badgeEl = document.getElementById("nav-low-stock-badge");
   if (lowItems.length > 0) {
     badgeEl.textContent = lowItems.length;
@@ -27,7 +23,6 @@ function updateLowStockAlerts() {
     badgeEl.style.display = "none";
   }
 
-  // Update global banner
   const bannerEl = document.getElementById("low-stock-banner");
   const chipsEl = document.getElementById("low-stock-chips");
   if (lowItems.length > 0 && !bannerDismissed) {
@@ -44,7 +39,6 @@ function updateLowStockAlerts() {
     bannerEl.style.display = "none";
   }
 
-  // Update inventory panel
   updateInventoryLowStockPanel(lowItems);
 }
 

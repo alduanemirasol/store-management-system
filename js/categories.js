@@ -1,4 +1,3 @@
-// ===================== CATEGORIES STATE =====================
 const CAT_COLORS = [
   { key: "blue", label: "Blue", bg: "#eef2ff", text: "#3b6ef0" },
   { key: "green", label: "Green", bg: "#dcfce7", text: "#16a34a" },
@@ -32,7 +31,6 @@ const CAT_EMOJIS = [
 let editingCatId = null;
 let calledFromItemModal = false;
 
-// ===================== POPULATE CATEGORY SELECT =====================
 function populateCategorySelect(selectId, selectedName) {
   const sel = document.getElementById(selectId);
   sel.innerHTML =
@@ -45,7 +43,6 @@ function populateCategorySelect(selectId, selectedName) {
       .join("");
 }
 
-// ===================== CATEGORIES PAGE =====================
 function renderCategoriesPage() {
   const tbody = document.getElementById("cat-tbody");
   if (!db.categories.length) {
@@ -80,7 +77,6 @@ function renderCategoriesPage() {
     .join("");
 }
 
-// ===================== CATEGORY MODAL =====================
 function openAddCategoryModal(fromItemModal = false) {
   calledFromItemModal = fromItemModal;
   editingCatId = null;
@@ -203,7 +199,6 @@ function deleteCategory(catId) {
   toast(`Category "${cat.name}" deleted`, "info");
 }
 
-// ===================== LIVE PREVIEW LISTENERS =====================
 document.addEventListener("DOMContentLoaded", () => {
   const nameEl = document.getElementById("cat-name");
   if (nameEl) nameEl.addEventListener("input", updateCatPreview);

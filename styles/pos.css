@@ -1,4 +1,3 @@
-/* ===================== POS LAYOUT ===================== */
 .pos-layout {
   display: flex;
   height: calc(100vh - 53px);
@@ -22,7 +21,6 @@
   background: var(--surface);
 }
 
-/* ===================== POS SEARCH & CATEGORIES ===================== */
 .pos-search {
   padding: 14px 16px;
   border-bottom: 1px solid var(--border);
@@ -65,7 +63,6 @@
   border-color: var(--accent);
 }
 
-/* ===================== ITEM GRID ===================== */
 .pos-grid {
   padding: 14px 16px;
   overflow-y: auto;
@@ -134,7 +131,6 @@
   font-weight: 600;
 }
 
-/* ===================== CART ===================== */
 .cart-header {
   padding: 14px 16px;
   border-bottom: 1px solid var(--border);
@@ -208,7 +204,6 @@
   color: var(--red);
 }
 
-/* ===================== QUANTITY STEPPER ===================== */
 .qty-stepper {
   display: flex;
   align-items: center;
@@ -282,7 +277,6 @@
   margin-left: 2px;
 }
 
-/* ===================== CART FOOTER ===================== */
 .cart-footer {
   padding: 14px 16px;
   border-top: 1px solid var(--border);
@@ -329,7 +323,6 @@
   flex: 1;
 }
 
-/* ===================== RECENT SALES PANEL ===================== */
 .recent-sales-panel {
   border-top: 1px solid var(--border);
   background: var(--surface);

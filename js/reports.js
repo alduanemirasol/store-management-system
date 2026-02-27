@@ -1,4 +1,3 @@
-// ===================== SHARED: DATE/TIME HELPERS =====================
 function formatDate(d) {
   return d.toLocaleDateString([], {
     year: "numeric",
@@ -33,7 +32,6 @@ function getDateRangeFilter(filterVal) {
   );
 }
 
-// ===================== TRANSACTIONS =====================
 function renderTransactions() {
   const total = db.transactions.reduce((s, t) => s + t.total, 0);
   const today = new Date().toDateString();
@@ -122,7 +120,6 @@ function viewTxnDetail(txnId) {
   openModal("modal-txn-detail");
 }
 
-// ===================== RECENT SALES PAGE =====================
 function renderRecentSalesPage() {
   const searchQ = (
     document.getElementById("rs-search")?.value || ""
@@ -193,7 +190,6 @@ function renderRecentSalesPage() {
     .join("");
 }
 
-// ===================== STOCK LOGS PAGE =====================
 function renderStockLogsPage() {
   const searchQ = (
     document.getElementById("sl-search")?.value || ""

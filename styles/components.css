@@ -1,4 +1,3 @@
-/* ===================== BUTTONS ===================== */
 .btn {
   padding: 8px 16px;
   border-radius: var(--radius);
@@ -84,12 +83,10 @@
   background: var(--surface2);
 }
 
-/* Full-width button helper */
 .btn-block {
   width: 100%;
 }
 
-/* ===================== FORMS ===================== */
 .form-group {
   margin-bottom: 14px;
 }
@@ -162,7 +159,6 @@ textarea {
   resize: vertical;
 }
 
-/* Search input with icon */
 .search-box {
   position: relative;
 }
@@ -179,7 +175,6 @@ textarea {
   pointer-events: none;
 }
 
-/* Inline checkbox row */
 .check-row {
   display: flex;
   align-items: center;
@@ -189,7 +184,6 @@ textarea {
   margin: 0;
 }
 
-/* ===================== MODAL ===================== */
 .modal-backdrop {
   display: none;
   position: fixed;
@@ -281,7 +275,6 @@ textarea {
   color: var(--text);
 }
 
-/* ===================== TABS ===================== */
 .tabs {
   display: flex;
   gap: 0;
@@ -312,7 +305,6 @@ textarea {
   display: block;
 }
 
-/* ===================== TOAST ===================== */
 .toast {
   position: fixed;
   bottom: 20px;
@@ -349,7 +341,6 @@ textarea {
   }
 }
 
-/* ===================== UNIT OPTIONS ===================== */
 .unit-options {
   display: flex;
   flex-wrap: wrap;
@@ -387,7 +378,6 @@ textarea {
   border-color: var(--orange);
 }
 
-/* ===================== PRICE PREVIEW ===================== */
 .price-preview {
   background: var(--accent-light);
   border-radius: var(--radius);
@@ -408,7 +398,6 @@ textarea {
   color: var(--accent);
 }
 
-/* ===================== TOGGLE SWITCH ===================== */
 .manual-price-toggle {
   border: 1.5px solid var(--border2);
   border-radius: var(--radius);
@@ -497,65 +486,4 @@ textarea {
   display: flex;
   gap: 12px;
   align-items: flex-end;
-}
-
-/* ===================== MANUAL PRICE BADGE & INLINE EDIT ===================== */
-.manual-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 10px;
-  font-weight: 600;
-  background: var(--orange-light);
-  color: var(--orange);
-  padding: 1px 6px;
-  border-radius: 10px;
-  vertical-align: middle;
-  margin-left: 4px;
-}
-
-.cart-inline-price-btn {
-  background: none;
-  border: 1.5px solid var(--border2);
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 12px;
-  padding: 2px 6px;
-  color: var(--text3);
-  transition: all 0.12s;
-  line-height: 1.4;
-  font-family: "Inter", sans-serif;
-}
-.cart-inline-price-btn:hover,
-.cart-inline-price-btn.active {
-  border-color: var(--orange);
-  color: var(--orange);
-  background: var(--orange-light);
-}
-
-.inline-price-form {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  background: var(--orange-light);
-  border-radius: var(--radius);
-  padding: 8px 10px;
-}
-.inline-price-form input {
-  flex: 1;
-  padding: 5px 8px;
-  font-size: 12.5px;
-  border: 1.5px solid var(--orange);
-  border-radius: 6px;
-  background: #fff;
-}
-.inline-price-form .btn {
-  padding: 4px 10px;
-  font-size: 12px;
-}
-
-.inline-price-note {
-  font-size: 10.5px;
-  color: var(--orange);
-  margin-top: 3px;
 }

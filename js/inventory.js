@@ -1,4 +1,3 @@
-// ===================== INVENTORY STATE =====================
 let editingItemId = null;
 let itemModalVariants = [];
 
@@ -25,13 +24,11 @@ const KNOWN_BASE_UNITS = [
   "cm",
 ];
 
-// ===================== INVENTORY PAGE =====================
 function renderInventory() {
   const q = document.getElementById("inv-search").value.toLowerCase();
   const catEl = document.getElementById("inv-cat-filter");
   const cat = catEl.value;
 
-  // Refresh category filter dropdown
   const cur = catEl.value;
   catEl.innerHTML =
     '<option value="">All Categories</option>' +
@@ -106,7 +103,6 @@ function quickRestock(itemId) {
   }, 100);
 }
 
-// ===================== BASE UNIT SELECT =====================
 function onBaseUnitSelectChange() {
   const sel = document.getElementById("item-base-unit-select");
   const customInput = document.getElementById("item-base-unit-custom");
@@ -165,7 +161,6 @@ function setBaseUnitSelector(unitValue) {
   }
 }
 
-// ===================== ITEM MODAL =====================
 function openAddItemModal() {
   editingItemId = null;
   document.getElementById("item-modal-title").textContent = "Add New Item";

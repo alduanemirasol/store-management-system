@@ -1,7 +1,5 @@
-// ===================== RESTOCK STATE =====================
 let selectedRestockUnit = null;
 
-// ===================== RESTOCK PAGE =====================
 function initRestockPage() {
   const sel = document.getElementById("restock-item");
   sel.innerHTML =

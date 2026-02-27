@@ -1,5 +1,3 @@
-// ===================== CUSTOM PRICING =====================
-
 function renderPricingPage() {
   const el = document.getElementById("pricing-list");
   if (!db.custom_pricing.length) {
@@ -7,7 +5,6 @@ function renderPricingPage() {
     return;
   }
 
-  // Group by item
   const grouped = {};
   db.custom_pricing.forEach((cp) => {
     const item = db.items.find((i) => i.id === cp.item_id);

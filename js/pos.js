@@ -1,10 +1,8 @@
-// ===================== POS STATE =====================
 let cartModalItem = null;
-let cartModalUnit = null; // 'base', 'unit-{id}', 'custom-{id}'
+let cartModalUnit = null;
 let cart = [];
 let posFilterCat = "";
 
-// ===================== POS ITEM GRID =====================
 function renderPOSCategories() {
   const usedCats = new Set(db.items.map((i) => i.category));
   const cats = db.categories.filter((c) => usedCats.has(c.name));
@@ -59,7 +57,6 @@ function renderPOSItems() {
     .join("");
 }
 
-// ===================== CART MODAL =====================
 function openCartModal(itemId) {
   const item = db.items.find((i) => i.id === itemId);
   if (!item) return;
@@ -268,7 +265,6 @@ function addToCart() {
   toast(`${item.item_name} added to cart`, "success");
 }
 
-// ===================== CART RENDERING =====================
 function renderCart() {
   const el = document.getElementById("cart-items");
   if (!cart.length) {
@@ -388,7 +384,6 @@ function clearCart() {
   renderCart();
 }
 
-// ===================== INLINE MANUAL PRICE (CART) =====================
 function openInlineManualPrice(cartId) {
   const ci = cart.find((i) => i.cartId == cartId);
   if (!ci) return;
@@ -451,7 +446,6 @@ function clearInlineManualPrice(cartId) {
   toast("Manual price removed", "info");
 }
 
-// ===================== CHECKOUT =====================
 function checkout() {
   if (!cart.length) return;
 
@@ -501,7 +495,6 @@ function checkout() {
     renderStockLogsPage();
 }
 
-// ===================== RECENT SALES (POS SIDEBAR PANEL) =====================
 function renderRecentSales() {
   const el = document.getElementById("recent-sales-list");
   if (!el) return;
