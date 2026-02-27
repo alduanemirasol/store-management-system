@@ -1813,45 +1813,43 @@
                 </div>
             </div>
 
-        </div>
-
-        <!-- Recent Sales Page -->
-        <div id="page-recentsales" class="page">
-            <div class="topbar" style="padding:0 0 16px;">
-                <h2>🕒 Recent Sales</h2>
-                <div class="topbar-actions">
-                    <div style="display:flex;align-items:center;gap:8px;">
-                        <input type="text" id="rs-search" placeholder="🔍 Search item..."
-                            oninput="renderRecentSalesPage()" style="width:200px;">
-                        <select id="rs-filter-date" onchange="renderRecentSalesPage()" style="width:150px;">
-                            <option value="all">All Time</option>
-                            <option value="today">Today</option>
-                            <option value="week">This Week</option>
-                            <option value="month">This Month</option>
-                        </select>
+            <!-- Recent Sales Page -->
+            <div id="page-recentsales" class="page">
+                <div class="topbar" style="padding:0 0 16px;background:transparent;border-bottom:none;">
+                    <h2>🕒 Recent Sales</h2>
+                    <div class="topbar-actions">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <input type="text" id="rs-search" placeholder="🔍 Search item..."
+                                oninput="renderRecentSalesPage()" style="width:200px;">
+                            <select id="rs-filter-date" onchange="renderRecentSalesPage()" style="width:150px;">
+                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-grid" id="rs-stats"></div>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Date &amp; Time</th>
+                                    <th>Order #</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rs-tbody"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-            <div class="stats-grid" id="rs-stats"></div>
-            <div class="card">
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Item</th>
-                                <th>Quantity</th>
-                                <th>Price</th>
-                                <th>Date &amp; Time</th>
-                                <th>Order #</th>
-                            </tr>
-                        </thead>
-                        <tbody id="rs-tbody"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
 
-    </div>
+        </div>
     </div>
 
     <!-- Add Item Modal -->
