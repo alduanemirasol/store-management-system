@@ -3,6 +3,7 @@ const ItemService = (() => {
   function create(data) {
     const item = { id: db.next_id.item++, ...data };
     db.items.push(item);
+    saveToStorage();
     return item;
   }
 
@@ -10,6 +11,7 @@ const ItemService = (() => {
     const item = getItem(id);
     if (!item) return null;
     Object.assign(item, data);
+    saveToStorage();
     return item;
   }
 
@@ -17,6 +19,7 @@ const ItemService = (() => {
     db.items = db.items.filter((i) => i.id !== id);
     db.item_units = db.item_units.filter((u) => u.item_id !== id);
     db.custom_pricing = db.custom_pricing.filter((p) => p.item_id !== id);
+    saveToStorage();
   }
 
   function replaceUnits(item_id, units) {
@@ -26,6 +29,7 @@ const ItemService = (() => {
         db.item_units.push({ id: db.next_id.unit++, item_id, ...u });
       }
     });
+    saveToStorage();
   }
 
   function list(category = "all", search = "") {
@@ -103,6 +107,7 @@ const CartService = (() => {
     };
     db.transactions.push(transaction);
     clear();
+    saveToStorage();
 
     return { ok: true, transaction };
   }
@@ -128,6 +133,7 @@ const RestockService = (() => {
       base_units: baseUnits,
       time: new Date(),
     });
+    saveToStorage();
 
     return { ok: true, baseUnits, label, item };
   }
@@ -148,16 +154,19 @@ const PricingService = (() => {
     }
     const rule = { id: db.next_id.pricing++, ...data };
     db.custom_pricing.push(rule);
+    saveToStorage();
     return { ok: true, rule };
   }
 
   function toggle(id) {
     const rule = db.custom_pricing.find((p) => p.id === id);
     if (rule) rule.active = !rule.active;
+    saveToStorage();
   }
 
   function remove(id) {
     db.custom_pricing = db.custom_pricing.filter((p) => p.id !== id);
+    saveToStorage();
   }
 
   function list() {

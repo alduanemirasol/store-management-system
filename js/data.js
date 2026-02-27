@@ -1,3 +1,25 @@
+// Storage: Persistent storage key and functions.
+const STORAGE_KEY = 'marketpos_data';
+
+function saveToStorage() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+}
+
+function loadFromStorage() {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    const data = JSON.parse(stored);
+    db.items = data.items || [];
+    db.item_units = data.item_units || [];
+    db.custom_pricing = data.custom_pricing || [];
+    db.transactions = data.transactions || [];
+    db.restock_history = data.restock_history || [];
+    db.next_id = data.next_id || { item: 1, unit: 1, pricing: 1, txn: 1, restock: 1 };
+    return true;
+  }
+  return false;
+}
+
 // Database: In-memory store for all application data.
 const db = {
   items: [],
@@ -18,6 +40,7 @@ const db = {
 function _createItem(data) {
   const item = { id: db.next_id.item++, ...data };
   db.items.push(item);
+  saveToStorage();
   return item;
 }
 
@@ -25,11 +48,13 @@ function _createItem(data) {
 function _createUnit(data) {
   const unit = { id: db.next_id.unit++, ...data };
   db.item_units.push(unit);
+  saveToStorage();
   return unit;
 }
 
-// seedDatabase: Populates initial sample inventory data.
+// seedDatabase: Populates initial sample inventory data if storage is empty.
 function seedDatabase() {
+  if (loadFromStorage()) return;
   const rice = _createItem({
     item_name: "Rice",
     category: "Grains",
@@ -87,4 +112,5 @@ function seedDatabase() {
   });
   _createUnit({ item_id: cabbage.id, unit_name: "Sack", pack_quantity: 25, purchase_price: 3000, selling_price: 4512.5, note: "25 kg per sack" });
   db.custom_pricing.push({ id: db.next_id.pricing++, item_id: cabbage.id, title: "Per Piece (Medium)", quantity: 0.5, price: 25, note: "Approx 0.5 kg medium head", active: true, start_date: "", end_date: "" });
+  saveToStorage();
 }
