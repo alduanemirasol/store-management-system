@@ -102,7 +102,7 @@ function seedData() {
     {
       id: 3,
       item_id: 3,
-      unit_name: "250 mL",
+      unit_name: "1/2",
       pack_quantity: 250,
       purchase_price: 33,
       selling_price: 37,
