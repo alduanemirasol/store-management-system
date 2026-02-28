@@ -372,28 +372,18 @@
                             <select id="item-base-unit-select" onchange="onBaseUnitSelectChange()" style="flex:1;">
                                 <option value="">— How is this item counted or measured? —</option>
                                 <optgroup label="📦 Count (individual items)">
-                                    <option value="piece">Piece — e.g. eggs, candles</option>
-                                    <option value="bottle">Bottle — e.g. soy sauce, water</option>
-                                    <option value="pack">Pack — e.g. noodles, biscuits</option>
+                                    <option value="piece">Piece</option>
+                                    <option value="pack">Pack</option>
                                     <option value="box">Box</option>
-                                    <option value="bag">Bag</option>
-                                    <option value="can">Can — e.g. canned goods</option>
-                                    <option value="sachet">Sachet — e.g. coffee, shampoo</option>
-                                    <option value="roll">Roll — e.g. tissue, tape</option>
-                                    <option value="pair">Pair — e.g. gloves, socks</option>
-                                    <option value="set">Set</option>
                                 </optgroup>
                                 <optgroup label="⚖️ Weight">
-                                    <option value="kg">Kilogram (kg) — e.g. rice, sugar, meat</option>
-                                    <option value="g">Gram (g) — e.g. spices</option>
-                                    <option value="lb">Pound (lb)</option>
+                                    <option value="kg">Kilogram (kg)</option>
+                                    <option value="g">Gram (g)</option>
                                     <option value="oz">Ounce (oz)</option>
                                 </optgroup>
                                 <optgroup label="💧 Volume (liquids)">
-                                    <option value="mL">Milliliter (mL) — e.g. 250 mL oil</option>
-                                    <option value="L">Liter (L) — e.g. 1 L juice</option>
-                                    <option value="fl oz">Fluid ounce (fl oz)</option>
-                                    <option value="cup">Cup</option>
+                                    <option value="mL">Milliliter (mL)</option>
+                                    <option value="L">Liter (L)</option>
                                 </optgroup>
                                 <optgroup label="📏 Length">
                                     <option value="m">Meter (m)</option>
@@ -403,7 +393,7 @@
                             </select>
                             <input type="hidden" id="item-base-unit">
                         </div>
-                        <input type="text" id="item-base-unit-custom" placeholder="e.g. bundle, loaf, tray"
+                        <input type="text" id="item-base-unit-custom" placeholder="Type your own unit"
                             oninput="onBaseUnitCustomInput()" style="margin-top:6px;display:none;">
                         <p class="helper" id="item-base-unit-helper" style="margin-top:5px;"></p>
                     </div>
