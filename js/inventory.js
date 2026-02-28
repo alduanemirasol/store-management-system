@@ -80,8 +80,8 @@ function renderInventory() {
           ${units.length ? `<br><span style="font-size:11px;color:var(--text3);">${units.map((u) => `1 ${u.unit_name} = ${u.pack_quantity} ${item.base_unit}`).join(", ")}</span>` : ""}
           ${out ? '<br><span class="badge badge-red">Out of Stock</span>' : low ? '<br><span class="badge badge-orange">Low Stock</span>' : ""}
         </td>
-        <td>₱${item.purchase_price_per_unit.toFixed(2)}<span style="color:var(--text3);font-size:12px;">/${item.base_unit}</span></td>
-        <td>₱${item.selling_price_per_unit.toFixed(2)}<span style="color:var(--text3);font-size:12px;">/${item.base_unit}</span></td>
+        <td>₱${formatPeso(item.purchase_price_per_unit)}<span style="color:var(--text3);font-size:12px;">/${item.base_unit}</span></td>
+        <td>₱${formatPeso(item.selling_price_per_unit)}<span style="color:var(--text3);font-size:12px;">/${item.base_unit}</span></td>
         <td>
           <div style="display:flex;gap:6px;">
             <button class="btn btn-secondary btn-sm" onclick="editItem(${item.id})">Edit</button>

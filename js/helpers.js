@@ -4,6 +4,13 @@ function formatStock(item) {
   });
 }
 
+function formatPeso(amount, decimals = 2) {
+  return Number(amount).toLocaleString(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+}
+
 function toast(msg, type = "") {
   const el = document.createElement("div");
   el.className = "toast " + type;

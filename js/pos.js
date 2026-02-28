@@ -51,7 +51,7 @@ function renderPOSItems() {
       <div class="item-emoji">${item.emoji || "📦"}</div>
       <div class="item-name">${item.item_name}</div>
       <div class="item-stock">${formatStock(item)} ${item.base_unit}${outOfStock ? ' — <b style="color:var(--red)">Out</b>' : low ? ' — <span style="color:var(--orange)">Low</span>' : ""}</div>
-      <div class="item-price">₱${item.selling_price_per_unit.toFixed(2)}/${item.base_unit}</div>
+      <div class="item-price">₱${formatPeso(item.selling_price_per_unit)}/${item.base_unit}</div>
     </div>`;
     })
     .join("");
@@ -160,7 +160,7 @@ function updateCartPreview() {
   if (isManual && !isNaN(manualPricePerUnit) && manualPricePerUnit >= 0) {
     price = manualPricePerUnit * qty;
     const unitLabel = getUnitLabel(cartModalItem, cartModalUnit);
-    label = `${qty} ${unitLabel} × ₱${manualPricePerUnit.toFixed(2)} (manual)`;
+    label = `${qty} ${unitLabel} × ₱${formatPeso(manualPricePerUnit)} (manual)`;
   } else {
     const result = calcPrice(cartModalItem, cartModalUnit, qty);
     price = result.price;
@@ -170,11 +170,11 @@ function updateCartPreview() {
   if (isManual) {
     const { price: normalPrice } = calcPrice(cartModalItem, cartModalUnit, qty);
     document.getElementById("normal-price-display").textContent =
-      `₱${normalPrice.toFixed(2)}`;
+      `₱${formatPeso(normalPrice)}`;
   }
 
   document.getElementById("preview-label").textContent = label;
-  document.getElementById("preview-value").textContent = "₱" + price.toFixed(2);
+  document.getElementById("preview-value").textContent = "₱" + formatPeso(price);
 
   const baseQty = toBaseUnits(cartModalItem, cartModalUnit, qty);
   const warn = document.getElementById("stock-warning");
@@ -315,8 +315,8 @@ function renderCart() {
           <div style="display:flex;align-items:center;gap:6px;">
             <button class="cart-inline-price-btn ${ci.is_manual ? "active" : ""}"
               onclick="openInlineManualPrice('${ci.cartId}')"
-              title="${ci.is_manual ? `Manual: ₱${ci.manual_price_per_unit.toFixed(2)} per ${ci.unit_label} — click to edit` : "Set manual price"}">✏️</button>
-            <div class="cart-item-price" style="${overStock ? "color:var(--red)" : ci.is_manual ? "color:var(--orange)" : ""}">₱${ci.price.toFixed(2)}</div>
+              title="${ci.is_manual ? `Manual: ₱${formatPeso(ci.manual_price_per_unit)} per ${ci.unit_label} — click to edit` : "Set manual price"}">✏️</button>
+            <div class="cart-item-price" style="${overStock ? "color:var(--red)" : ci.is_manual ? "color:var(--orange)" : ""}">₱${formatPeso(ci.price)}</div>
           </div>
         </div>
         ${overStock ? `<div style="font-size:11px;color:var(--red);margin-top:3px;">⚠️ Exceeds available stock</div>` : ""}
@@ -341,8 +341,8 @@ function updateCartTotals() {
   const total = cart.reduce((s, i) => s + i.price, 0);
   document.getElementById("cart-count").textContent =
     `${cart.length} line${cart.length !== 1 ? "s" : ""}`;
-  document.getElementById("cart-subtotal").textContent = "₱" + total.toFixed(2);
-  document.getElementById("cart-total").textContent = "₱" + total.toFixed(2);
+  document.getElementById("cart-subtotal").textContent = "₱" + formatPeso(total);
+  document.getElementById("cart-total").textContent = "₱" + formatPeso(total);
   document.getElementById("checkout-btn").disabled = cart.length === 0;
 }
 
@@ -374,7 +374,7 @@ function applyCartQty(ci, newQty) {
     ci.price = ci.manual_price_per_unit * newQty;
     // Show total in base unit
     const baseQty = toBaseUnits(item, ci.unit_id, newQty);
-    ci.detail = `${newQty} ${ci.unit_label} (${baseQty.toFixed(1)} ${item.base_unit}) × ₱${ci.manual_price_per_unit.toFixed(2)} (manual)`;
+    ci.detail = `${newQty} ${ci.unit_label} (${baseQty.toFixed(1)} ${item.base_unit}) × ₱${formatPeso(ci.manual_price_per_unit)} (manual)`;
   } else {
     const { price, label } = calcPrice(item, ci.unit_id, newQty);
     ci.price = price;
@@ -413,12 +413,12 @@ function openInlineManualPrice(cartId) {
     <div class="inline-price-form">
       <span style="font-size:12px;color:var(--orange);font-weight:600;white-space:nowrap;">₱ per ${ci.unit_label}</span>
       <input type="number" id="inline-price-input-${cartId}" step="0.01" min="0"
-        value="${currentVal}" placeholder="${normalPerUnit.toFixed(2)}"
+        value="${currentVal}" placeholder="${formatPeso(normalPerUnit)}"
         onkeydown="if(event.key==='Enter') applyInlineManualPrice('${cartId}')">
       <button class="btn btn-sm btn-success" onclick="applyInlineManualPrice('${cartId}')">Apply</button>
       ${ci.is_manual ? `<button class="btn btn-sm btn-secondary" onclick="clearInlineManualPrice('${cartId}')">Clear</button>` : ""}
     </div>
-    <div class="inline-price-note">Normal price: ₱${normalPerUnit.toFixed(2)} per ${ci.unit_label}</div>
+    <div class="inline-price-note">Normal price: ₱${formatPeso(normalPerUnit)} per ${ci.unit_label}</div>
   `;
   document.getElementById(`inline-price-input-${cartId}`).focus();
 }
@@ -439,7 +439,7 @@ function applyInlineManualPrice(cartId) {
   // Show total in base unit
   const item = db.items.find((i) => i.id === ci.item_id);
   const baseQty = toBaseUnits(item, ci.unit_id, ci.qty);
-  ci.detail = `${ci.qty} ${ci.unit_label} (${baseQty.toFixed(1)} ${item.base_unit}) × ₱${val.toFixed(2)} (manual)`;
+  ci.detail = `${ci.qty} ${ci.unit_label} (${baseQty.toFixed(1)} ${item.base_unit}) × ₱${formatPeso(val)} (manual)`;
   renderCart();
   toast("Manual price applied", "success");
 }

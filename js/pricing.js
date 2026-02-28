@@ -29,7 +29,7 @@ function renderPricingPage() {
                 ? '<span class="badge badge-green">Active</span>'
                 : '<span class="badge badge-red">Inactive</span>'
               }</h4>
-              <p>${cp.quantity} ${item?.base_unit || "units"} for ₱${cp.price.toFixed(2)} (₱${(cp.price / cp.quantity).toFixed(2)}/unit)</p>
+              <p>${cp.quantity} ${item?.base_unit || "units"} for ₱${formatPeso(cp.price)} (₱${formatPeso(cp.price / cp.quantity)}/unit)</p>
               ${cp.note ? `<p>${cp.note}</p>` : ""}
               ${cp.start_date || cp.end_date ? `<div class="cp-dates">📅 ${cp.start_date || "—"} → ${cp.end_date || "—"}</div>` : ""}
               <div class="cp-actions">
@@ -37,7 +37,7 @@ function renderPricingPage() {
                 <button class="btn btn-sm" style="background:var(--red-light);color:var(--red);" onclick="deleteCustomPricing(${cp.id})">Delete</button>
               </div>
             </div>
-            <div class="cp-price">₱${cp.price.toFixed(2)}</div>
+            <div class="cp-price">₱${formatPeso(cp.price)}</div>
           </div>`;
           })
           .join("")}

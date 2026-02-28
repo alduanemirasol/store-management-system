@@ -47,7 +47,7 @@ function renderTransactions() {
     </div>
     <div class="stat-card green">
       <div class="stat-label">Total Revenue</div>
-      <div class="stat-value">₱${total.toFixed(0)}</div>
+      <div class="stat-value">₱${formatPeso(total, 0)}</div>
     </div>
     <div class="stat-card orange">
       <div class="stat-label">Today's Sales</div>
@@ -55,7 +55,7 @@ function renderTransactions() {
     </div>
     <div class="stat-card blue">
       <div class="stat-label">Today's Revenue</div>
-      <div class="stat-value">₱${todayTotal.toFixed(0)}</div>
+      <div class="stat-value">₱${formatPeso(todayTotal, 0)}</div>
     </div>
   `;
 
@@ -77,7 +77,7 @@ function renderTransactions() {
           <span>${txn.items.length} item${txn.items.length !== 1 ? "s" : ""}</span>
           <span class="txn-items-detail"> — ${txn.items.map((i) => i.item_name).join(", ")}</span>
         </td>
-        <td><strong>₱${txn.total.toFixed(2)}</strong></td>
+        <td><strong>₱${formatPeso(txn.total)}</strong></td>
         <td><button class="btn btn-secondary btn-sm" onclick="viewTxnDetail(${txn.id})">View</button></td>
       </tr>`;
     })
@@ -106,7 +106,7 @@ function viewTxnDetail(txnId) {
         (ci) => `<tr>
               <td>${ci.emoji || "📦"} ${ci.item_name}</td>
               <td class="txn-meta">${ci.detail}</td>
-              <td style="text-align:right;font-weight:600;">₱${ci.price.toFixed(2)}</td>
+              <td style="text-align:right;font-weight:600;">₱${formatPeso(ci.price)}</td>
             </tr>`,
       )
       .join("")}
@@ -114,7 +114,7 @@ function viewTxnDetail(txnId) {
       </table>
     </div>
     <div style="text-align:right;margin-top:14px;padding-top:10px;border-top:2px solid var(--border);">
-      <strong style="font-size:18px;">Total: ₱${txn.total.toFixed(2)}</strong>
+      <strong style="font-size:18px;">Total: ₱${formatPeso(txn.total)}</strong>
     </div>
   `;
   openModal("modal-txn-detail");
@@ -149,7 +149,7 @@ function renderRecentSalesPage() {
     </div>
     <div class="stat-card green">
       <div class="stat-label">Total Revenue</div>
-      <div class="stat-value">₱${totalRevenue.toFixed(0)}</div>
+      <div class="stat-value">₱${formatPeso(totalRevenue, 0)}</div>
     </div>
     <div class="stat-card orange">
       <div class="stat-label">Unique Items</div>
@@ -179,7 +179,7 @@ function renderRecentSalesPage() {
           ${r.qty}
           <span style="color:var(--text3);font-size:12px;">${r.unit_label || ""}</span>
         </td>
-        <td><strong style="color:var(--green);">₱${r.price.toFixed(2)}</strong></td>
+        <td><strong style="color:var(--green);">₱${formatPeso(r.price)}</strong></td>
         <td>
           <div>${formatDate(d)}</div>
           <div style="font-size:11px;color:var(--text3);">${formatTime(d)} · ${relativeTimeFrom(d)}</div>
