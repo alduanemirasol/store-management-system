@@ -375,3 +375,138 @@ tbody tr:hover td {
   color: var(--orange);
   font-weight: 600;
 }
+
+/* Uniform page content wrapper */
+.page-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Uniform control bar for pages with filters */
+.page-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.page-controls .search-box {
+  flex: 1;
+  min-width: 180px;
+  max-width: 300px;
+}
+
+/* Empty state styling */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text3);
+}
+
+.empty-state-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+
+.empty-state-text {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Table enhancements for uniform appearance */
+table thead th:first-child {
+  border-radius: var(--radius) 0 0 0;
+}
+
+table thead th:last-child {
+  border-radius: 0 var(--radius) 0 0;
+}
+
+table tbody tr {
+  transition: background-color 0.15s;
+}
+
+/* Uniform page header styling */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.page-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Action buttons in tables */
+.table-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.table-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: all 0.15s;
+  color: var(--text3);
+}
+
+.table-action-btn:hover {
+  background: var(--surface2);
+  color: var(--text);
+}
+
+.table-action-btn.delete:hover {
+  background: var(--red-light);
+  color: var(--red);
+}
+
+.table-action-btn.edit:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+/* Uniform content area */
+.page-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.page-section+.page-section {
+  margin-top: 16px;
+}
+
+/* Consistent filter row styling */
+.filter-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.filter-row .search-box {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-row select {
+  min-width: 140px;
+}
