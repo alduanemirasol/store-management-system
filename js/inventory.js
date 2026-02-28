@@ -86,6 +86,7 @@ function renderInventory() {
           <div style="display:flex;gap:6px;">
             <button class="btn btn-secondary btn-sm" onclick="editItem(${item.id})">Edit</button>
             <button class="btn btn-sm" style="background:var(--green-light);color:var(--green);" onclick="quickRestock(${item.id})">Restock</button>
+            <button class="btn btn-sm" style="background:var(--red-light);color:var(--red);" onclick="confirmDeleteItem(${item.id})">Delete</button>
           </div>
         </td>
       </tr>`;
@@ -347,4 +348,30 @@ function saveItem() {
   closeModal("modal-add-item");
   renderInventory();
   updateLowStockAlerts();
+}
+
+function confirmDeleteItem(itemId) {
+  const item = db.items.find((i) => i.id === itemId);
+  if (!item) return;
+
+  document.getElementById("delete-item-name").textContent =
+    `${item.emoji || "📦"} ${item.item_name}`;
+  document.getElementById("delete-item-confirm-btn").onclick = () =>
+    deleteItem(itemId);
+  openModal("modal-delete-item");
+}
+
+function deleteItem(itemId) {
+  const item = db.items.find((i) => i.id === itemId);
+  if (!item) return;
+
+  db.items = db.items.filter((i) => i.id !== itemId);
+  db.item_units = db.item_units.filter((u) => u.item_id !== itemId);
+  db.custom_pricing = db.custom_pricing.filter((cp) => cp.item_id !== itemId);
+
+  closeModal("modal-delete-item");
+  renderInventory();
+  updateLowStockAlerts();
+  renderPOSItems();
+  toast(`"${item.item_name}" deleted`, "info");
 }
