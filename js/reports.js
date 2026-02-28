@@ -245,14 +245,16 @@ function renderStockLogsPage() {
         ? '<span class="badge badge-orange">📤 Sale</span>'
         : '<span class="badge badge-green">📦 Restock</span>';
       const qtyColor = isSale ? "var(--red)" : "var(--green)";
-      const qtyStr = `${isSale ? "−" : "+"}${parseFloat(Math.abs(l.qty_change).toFixed(4)).toLocaleString()}`;
+      const qtyValue = parseFloat(Math.abs(l.qty_change).toFixed(4)).toLocaleString();
+      const qtyPrefix = isSale ? "−" : "+";
+      const unitLabel = l.unit_label || "";
 
       return `<tr>
         <td><strong>${l.emoji} ${l.item_name}</strong></td>
         <td>${typeBadge}</td>
         <td>
-          <strong style="color:${qtyColor};font-size:14px;">${qtyStr}</strong>
-          <span style="font-size:11px;color:var(--text3);margin-left:3px;">${l.unit_label}</span>
+          <span style="color:${qtyColor};font-weight:600;">${qtyPrefix}${qtyValue}</span>
+          <span style="font-size:12px;color:var(--text3);margin-left:4px;">${unitLabel}</span>
         </td>
         <td>
           <div>${formatDate(d)}</div>
