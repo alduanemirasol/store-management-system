@@ -153,37 +153,29 @@ function setBaseUnitSelector(unitValue) {
   _applyUnitToForm(unitValue);
 }
 
-/**
- * Central function: updates all unit-dependent labels, suffixes, and hints.
- */
 function _applyUnitToForm(unit) {
   const u = unit || "";
 
-  // Helper text under the "Sold by" selector
   const helper = document.getElementById("item-base-unit-helper");
   if (helper) {
-    helper.textContent = u ? `Prices and stock are tracked per ${u}.` : "";
+    helper.textContent = u ? `Enter prices for 1 ${u}. Stock is counted in ${u}.` : "";
   }
 
-  // Inline suffix chips next to price / stock inputs
   const setSuffix = (id, text) => {
     const el = document.getElementById(id);
     if (el) el.textContent = text;
   };
-  setSuffix("suffix-buy", u ? `per ${u}` : "");
-  setSuffix("suffix-sell", u ? `per ${u}` : "");
+  setSuffix("suffix-buy", u ? `for 1 ${u}` : "");
+  setSuffix("suffix-sell", u ? `for 1 ${u}` : "");
   setSuffix("suffix-stock", u);
   setSuffix("suffix-low", u);
 
-  // Parenthetical hints in labels (e.g. "(in kg)")
-  const setLabelUnit = (id, text) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = text ? `(in ${text})` : "";
-  };
-  setLabelUnit("label-unit-buy", u);
-  setLabelUnit("label-unit-sell", u);
-  setLabelUnit("label-unit-stock", u);
-  setLabelUnit("label-unit-low", u);
+  const setBuyLabel = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text ? `(per 1 ${text})` : ""; };
+  const setStockLabel = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text ? `(in ${text})` : ""; };
+  setBuyLabel("label-unit-buy", u);
+  setBuyLabel("label-unit-sell", u);
+  setStockLabel("label-unit-stock", u);
+  setStockLabel("label-unit-low", u);
 }
 
 function openAddItemModal() {
@@ -239,7 +231,6 @@ function updateDefaultUnitSelect(baseUnit) {
   });
   sel.innerHTML = opts;
 
-  // Only show the default-unit row when there are variants to choose from
   const row = document.getElementById("default-unit-row");
   if (row) row.style.display = itemModalVariants.length ? "block" : "none";
 }
