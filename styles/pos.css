@@ -518,3 +518,34 @@
   color: var(--text3);
   margin-top: 3px;
 }
+
+/* Cart modal stock display */
+.cart-stock-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+}
+
+.cart-stock-label {
+  font-size: 13px;
+  color: var(--text3);
+  font-weight: 500;
+}
+
+.cart-stock-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.cart-stock-value.low-stock {
+  color: var(--orange);
+}
+
+.cart-stock-value.out-of-stock {
+  color: var(--red);
+}

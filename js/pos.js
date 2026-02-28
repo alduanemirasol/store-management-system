@@ -64,6 +64,18 @@ function openCartModal(itemId) {
 
   document.getElementById("cart-modal-title").textContent = item.item_name;
 
+  // Display available stock
+  const stockInfo = document.getElementById("cart-stock-value");
+  const stock = item.stock_quantity || 0;
+  const lowStock = item.low_stock_threshold || 0;
+  stockInfo.textContent = `${stock} ${item.base_unit}`;
+  stockInfo.classList.remove("low-stock", "out-of-stock");
+  if (stock <= 0) {
+    stockInfo.classList.add("out-of-stock");
+  } else if (lowStock && stock <= lowStock) {
+    stockInfo.classList.add("low-stock");
+  }
+
   const opts = [];
   opts.push({ type: "base", label: item.base_unit, id: "base" });
   db.item_units
