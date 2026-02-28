@@ -111,10 +111,7 @@ function deleteItem(itemId) {
   const confirmed = confirm(`Are you sure you want to delete "${item.item_name}"? This action cannot be undone.`);
   if (!confirmed) return;
 
-  // Remove the item from the items array
   db.items = db.items.filter((i) => i.id !== itemId);
-
-  // Also remove associated item units
   db.item_units = db.item_units.filter((u) => u.item_id !== itemId);
 
   toast("Item deleted!", "success");
