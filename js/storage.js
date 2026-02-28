@@ -1,10 +1,10 @@
-const DB_KEY = "shopease_db";
+const DB_KEY = "store_db";
 
 function persistDb() {
     try {
         localStorage.setItem(DB_KEY, JSON.stringify(db));
     } catch (e) {
-        console.warn("ShopEase: could not save to localStorage", e);
+        console.warn("Sari-Sari Store: could not save to localStorage", e);
     }
 }
 
@@ -28,7 +28,7 @@ function loadOrSeedDb() {
             return true;
         }
     } catch (e) {
-        console.warn("ShopEase: could not load from localStorage", e);
+        console.warn("Sari-Sari Store: could not load from localStorage", e);
     }
     seedData();
     persistDb();
