@@ -205,8 +205,14 @@ function calcPrice(item, unitId, qty) {
   if (unitId.startsWith("unit-")) {
     const uid = parseInt(unitId.split("-")[1]);
     const u = db.item_units.find((x) => x.id === uid);
-    if (u)
+    if (u) {
+      const baseQty = toBaseUnits(item, unitId, qty);
+      // Show total in kg when unit is "sack"
+      if (u.unit_name.toLowerCase() === "sack") {
+        return { price: u.selling_price * qty, label: `${qty} sack (${baseQty.toFixed(1)} kg)` };
+      }
       return { price: u.selling_price * qty, label: `${qty} × ${u.unit_name}` };
+    }
   }
   return { price: 0, label: "" };
 }
@@ -234,7 +240,14 @@ function addToCart() {
   let price, label;
   if (isManual && !isNaN(manualPricePerUnit) && manualPricePerUnit >= 0) {
     price = manualPricePerUnit * qty;
-    label = `${qty} ${getUnitLabel(item, unitId)} × ₱${manualPricePerUnit.toFixed(2)} (manual)`;
+    const unitLabel = getUnitLabel(item, unitId);
+    // Show total in kg when unit is "sack"
+    if (unitLabel.toLowerCase() === "sack") {
+      const baseQty = toBaseUnits(item, unitId, qty);
+      label = `${qty} sack (${baseQty.toFixed(1)} kg) × ₱${manualPricePerUnit.toFixed(2)} (manual)`;
+    } else {
+      label = `${qty} ${unitLabel} × ₱${manualPricePerUnit.toFixed(2)} (manual)`;
+    }
   } else {
     const result = calcPrice(item, unitId, qty);
     price = result.price;
@@ -293,7 +306,7 @@ function renderCart() {
           <div class="cart-item-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ci.item_name}${manualBadge}</div>
           <button class="cart-item-remove" onclick="removeFromCart('${ci.cartId}')" title="Remove item">🗑</button>
         </div>
-        <div class="cart-item-detail">${ci.unit_label}${ci.unit_id && ci.unit_id.startsWith("custom-") ? " 🏷️" : ""}</div>
+        <div class="cart-item-detail">${ci.detail || ci.unit_label}${ci.unit_id && ci.unit_id.startsWith("custom-") ? " 🏷️" : ""}</div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
           <div class="qty-stepper">
             <button class="qty-btn minus" onclick="changeCartQty('${ci.cartId}', -1)" ${ci.qty <= getMinStep(ci) ? "disabled" : ""}>−</button>
@@ -366,7 +379,13 @@ function applyCartQty(ci, newQty) {
 
   if (ci.is_manual && ci.manual_price_per_unit !== null) {
     ci.price = ci.manual_price_per_unit * newQty;
-    ci.detail = `${newQty} ${ci.unit_label} × ₱${ci.manual_price_per_unit.toFixed(2)} (manual)`;
+    // Show total in kg when unit is "sack"
+    if (ci.unit_label.toLowerCase() === "sack") {
+      const baseQty = toBaseUnits(item, ci.unit_id, newQty);
+      ci.detail = `${newQty} sack (${baseQty.toFixed(1)} kg) × ₱${ci.manual_price_per_unit.toFixed(2)} (manual)`;
+    } else {
+      ci.detail = `${newQty} ${ci.unit_label} × ₱${ci.manual_price_per_unit.toFixed(2)} (manual)`;
+    }
   } else {
     const { price, label } = calcPrice(item, ci.unit_id, newQty);
     ci.price = price;
@@ -428,7 +447,14 @@ function applyInlineManualPrice(cartId) {
   ci.is_manual = true;
   ci.manual_price_per_unit = val;
   ci.price = val * ci.qty;
-  ci.detail = `${ci.qty} ${ci.unit_label} × ₱${val.toFixed(2)} (manual)`;
+  // Show total in kg when unit is "sack"
+  if (ci.unit_label.toLowerCase() === "sack") {
+    const item = db.items.find((i) => i.id === ci.item_id);
+    const baseQty = toBaseUnits(item, ci.unit_id, ci.qty);
+    ci.detail = `${ci.qty} sack (${baseQty.toFixed(1)} kg) × ₱${val.toFixed(2)} (manual)`;
+  } else {
+    ci.detail = `${ci.qty} ${ci.unit_label} × ₱${val.toFixed(2)} (manual)`;
+  }
   renderCart();
   toast("Manual price applied", "success");
 }
