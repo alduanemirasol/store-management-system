@@ -207,11 +207,8 @@ function calcPrice(item, unitId, qty) {
     const u = db.item_units.find((x) => x.id === uid);
     if (u) {
       const baseQty = toBaseUnits(item, unitId, qty);
-      // Show total in kg when unit is "sack"
-      if (u.unit_name.toLowerCase() === "sack") {
-        return { price: u.selling_price * qty, label: `${qty} sack (${baseQty.toFixed(1)} kg)` };
-      }
-      return { price: u.selling_price * qty, label: `${qty} × ${u.unit_name}` };
+      // Show total in base unit (e.g., kg, pieces, mL)
+      return { price: u.selling_price * qty, label: `${qty} ${u.unit_name} (${baseQty.toFixed(1)} ${item.base_unit})` };
     }
   }
   return { price: 0, label: "" };
@@ -241,13 +238,9 @@ function addToCart() {
   if (isManual && !isNaN(manualPricePerUnit) && manualPricePerUnit >= 0) {
     price = manualPricePerUnit * qty;
     const unitLabel = getUnitLabel(item, unitId);
-    // Show total in kg when unit is "sack"
-    if (unitLabel.toLowerCase() === "sack") {
-      const baseQty = toBaseUnits(item, unitId, qty);
-      label = `${qty} sack (${baseQty.toFixed(1)} kg) × ₱${manualPricePerUnit.toFixed(2)} (manual)`;
-    } else {
-      label = `${qty} ${unitLabel} × ₱${manualPricePerUnit.toFixed(2)} (manual)`;
-    }
+    const baseQty = toBaseUnits(item, unitId, qty);
+    // Show total in base unit
+    label = `${qty} ${unitLabel} (${baseQty.toFixed(1)} ${item.base_unit}) × ₱${manualPricePerUnit.toFixed(2)} (manual)`;
   } else {
     const result = calcPrice(item, unitId, qty);
     price = result.price;
@@ -379,13 +372,9 @@ function applyCartQty(ci, newQty) {
 
   if (ci.is_manual && ci.manual_price_per_unit !== null) {
     ci.price = ci.manual_price_per_unit * newQty;
-    // Show total in kg when unit is "sack"
-    if (ci.unit_label.toLowerCase() === "sack") {
-      const baseQty = toBaseUnits(item, ci.unit_id, newQty);
-      ci.detail = `${newQty} sack (${baseQty.toFixed(1)} kg) × ₱${ci.manual_price_per_unit.toFixed(2)} (manual)`;
-    } else {
-      ci.detail = `${newQty} ${ci.unit_label} × ₱${ci.manual_price_per_unit.toFixed(2)} (manual)`;
-    }
+    // Show total in base unit
+    const baseQty = toBaseUnits(item, ci.unit_id, newQty);
+    ci.detail = `${newQty} ${ci.unit_label} (${baseQty.toFixed(1)} ${item.base_unit}) × ₱${ci.manual_price_per_unit.toFixed(2)} (manual)`;
   } else {
     const { price, label } = calcPrice(item, ci.unit_id, newQty);
     ci.price = price;
@@ -447,14 +436,10 @@ function applyInlineManualPrice(cartId) {
   ci.is_manual = true;
   ci.manual_price_per_unit = val;
   ci.price = val * ci.qty;
-  // Show total in kg when unit is "sack"
-  if (ci.unit_label.toLowerCase() === "sack") {
-    const item = db.items.find((i) => i.id === ci.item_id);
-    const baseQty = toBaseUnits(item, ci.unit_id, ci.qty);
-    ci.detail = `${ci.qty} sack (${baseQty.toFixed(1)} kg) × ₱${val.toFixed(2)} (manual)`;
-  } else {
-    ci.detail = `${ci.qty} ${ci.unit_label} × ₱${val.toFixed(2)} (manual)`;
-  }
+  // Show total in base unit
+  const item = db.items.find((i) => i.id === ci.item_id);
+  const baseQty = toBaseUnits(item, ci.unit_id, ci.qty);
+  ci.detail = `${ci.qty} ${ci.unit_label} (${baseQty.toFixed(1)} ${item.base_unit}) × ₱${val.toFixed(2)} (manual)`;
   renderCart();
   toast("Manual price applied", "success");
 }
