@@ -115,6 +115,7 @@ function doRestock() {
     `Restocked ${baseQty.toLocaleString()} ${item.base_unit} of ${item.item_name}`,
     "success",
   );
+  persistDb();
   document.getElementById("restock-qty").value = "";
   document.getElementById("restock-note").value = "";
   updateRestockPreview();

@@ -21,14 +21,13 @@ function renderPricingPage() {
         <span class="card-title">${g.item?.emoji || "📦"} ${name}</span>
       </div>
       ${g.list
-        .map((cp) => {
-          const item = g.item;
-          return `<div class="cp-item">
+          .map((cp) => {
+            const item = g.item;
+            return `<div class="cp-item">
             <div class="cp-info">
-              <h4>${cp.title} ${
-                cp.active
-                  ? '<span class="badge badge-green">Active</span>'
-                  : '<span class="badge badge-red">Inactive</span>'
+              <h4>${cp.title} ${cp.active
+                ? '<span class="badge badge-green">Active</span>'
+                : '<span class="badge badge-red">Inactive</span>'
               }</h4>
               <p>${cp.quantity} ${item?.base_unit || "units"} for ₱${cp.price.toFixed(2)} (₱${(cp.price / cp.quantity).toFixed(2)}/unit)</p>
               ${cp.note ? `<p>${cp.note}</p>` : ""}
@@ -40,8 +39,8 @@ function renderPricingPage() {
             </div>
             <div class="cp-price">₱${cp.price.toFixed(2)}</div>
           </div>`;
-        })
-        .join("")}
+          })
+          .join("")}
     </div>`,
     )
     .join("");
@@ -90,6 +89,7 @@ function saveCustomPricing() {
     end_date: document.getElementById("cp-end").value,
   });
   toast("Custom pricing saved!", "success");
+  persistDb();
   closeModal("modal-custom-price");
   renderPricingPage();
 }
@@ -98,6 +98,7 @@ function toggleCustomPricing(cpId) {
   const cp = db.custom_pricing.find((c) => c.id === cpId);
   if (cp) {
     cp.active = !cp.active;
+    persistDb();
     renderPricingPage();
     toast(`Pricing ${cp.active ? "activated" : "deactivated"}`, "info");
   }
@@ -105,6 +106,7 @@ function toggleCustomPricing(cpId) {
 
 function deleteCustomPricing(cpId) {
   db.custom_pricing = db.custom_pricing.filter((c) => c.id !== cpId);
+  persistDb();
   renderPricingPage();
   toast("Custom pricing deleted", "info");
 }

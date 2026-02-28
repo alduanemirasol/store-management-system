@@ -176,6 +176,7 @@ function saveCategory() {
   }
 
   closeModal("modal-category");
+  persistDb();
 
   if (calledFromItemModal) {
     populateCategorySelect("item-category", name);
@@ -195,6 +196,7 @@ function deleteCategory(catId) {
     return;
   }
   db.categories = db.categories.filter((c) => c.id !== catId);
+  persistDb();
   renderCategoriesPage();
   toast(`Category "${cat.name}" deleted`, "info");
 }

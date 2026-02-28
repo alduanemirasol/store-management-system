@@ -346,6 +346,7 @@ function saveItem() {
   }
 
   closeModal("modal-add-item");
+  persistDb();
   renderInventory();
   updateLowStockAlerts();
 }
@@ -370,6 +371,7 @@ function deleteItem(itemId) {
   db.custom_pricing = db.custom_pricing.filter((cp) => cp.item_id !== itemId);
 
   closeModal("modal-delete-item");
+  persistDb();
   renderInventory();
   updateLowStockAlerts();
   renderPOSItems();

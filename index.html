@@ -48,6 +48,10 @@
                     <span class="icon">📝</span> Stock Logs
                 </div>
             </nav>
+            <div style="padding:12px 8px;border-top:1px solid var(--border);margin-top:auto;">
+                <button onclick="resetPersistedData()" class="btn btn-secondary btn-sm btn-block"
+                    style="font-size:11px;color:var(--text3);">🗑 Reset Demo Data</button>
+            </div>
         </div>
 
         <div class="main">
@@ -648,6 +652,7 @@
     </div>
 
     <script src="data/store.js"></script>
+    <script src="js/storage.js"></script>
     <script src="js/helpers.js"></script>
     <script src="js/services.js"></script>
     <script src="js/navigation.js"></script>
@@ -659,7 +664,7 @@
     <script src="js/reports.js"></script>
     <script src="js/alerts.js"></script>
     <script>
-        seedData();
+        loadOrSeedDb();
         renderPOSItems();
         updateLowStockAlerts();
         renderRecentSales();

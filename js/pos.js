@@ -485,6 +485,7 @@ function checkout() {
   }
 
   toast(`✅ Checkout complete! Total: ₱${txn.total.toFixed(2)}`, "success");
+  persistDb();
   clearCart();
   renderPOSItems();
   updateLowStockAlerts();
@@ -530,13 +531,13 @@ function renderRecentSales() {
     html += `<div class="recent-sale-divider">${dateStr} ${timeStr}</div>`;
     txn.items.forEach((ci) => {
       html += `
-                    <div class="recent-sale-row" title="${dateStr} ${timeStr}">
-                        <span class="recent-sale-emoji">${ci.emoji || "📦"}</span>
-                        <span class="recent-sale-name">${ci.item_name}</span>
-                        <span class="recent-sale-qty">${ci.qty} ${ci.unit_label || ""}</span>
-                        <span class="recent-sale-price">₱${ci.price.toFixed(2)}</span>
-                        <span class="recent-sale-time">${timeLabel}</span>
-                    </div>`;
+        <div class="recent-sale-row" title="${dateStr} ${timeStr}">
+            <span class="recent-sale-emoji">${ci.emoji || "📦"}</span>
+            <span class="recent-sale-name">${ci.item_name}</span>
+            <span class="recent-sale-qty">${ci.qty} ${ci.unit_label || ""}</span>
+            <span class="recent-sale-price">₱${ci.price.toFixed(2)}</span>
+            <span class="recent-sale-time">${timeLabel}</span>
+        </div>`;
     });
   });
 
