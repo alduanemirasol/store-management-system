@@ -4,6 +4,7 @@
   align-items: center;
   margin-bottom: 16px;
 }
+
 .inv-controls .search-box {
   flex: 1;
 }
@@ -18,6 +19,20 @@
   font-weight: 500;
 }
 
+.restock-modal-details {
+  margin-bottom: 16px;
+}
+
+.restock-item-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: var(--surface2);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+}
+
 .cp-item {
   background: var(--surface2);
   border-radius: var(--radius);
@@ -28,6 +43,7 @@
   justify-content: space-between;
   gap: 12px;
 }
+
 .cp-info h4 {
   font-size: 13px;
   font-weight: 600;
@@ -35,22 +51,26 @@
   align-items: center;
   gap: 6px;
 }
+
 .cp-info p {
   font-size: 12px;
   color: var(--text3);
   margin-top: 2px;
 }
+
 .cp-price {
   font-size: 16px;
   font-weight: 800;
   color: var(--green);
   white-space: nowrap;
 }
+
 .cp-dates {
   font-size: 11px;
   color: var(--text3);
   margin-top: 3px;
 }
+
 .cp-actions {
   display: flex;
   gap: 4px;
@@ -61,6 +81,7 @@
   font-size: 11px;
   color: var(--text3);
 }
+
 .txn-items-detail {
   font-size: 12px;
   color: var(--text2);
@@ -88,6 +109,7 @@
     transform: translateY(-100%);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -128,14 +150,17 @@
   cursor: pointer;
   transition: all 0.12s;
 }
+
 .low-stock-chip:hover {
   background: var(--orange);
   color: #fff;
 }
+
 .low-stock-chip.out {
   border-color: var(--red);
   color: var(--red);
 }
+
 .low-stock-chip.out:hover {
   background: var(--red);
   color: #fff;
@@ -154,6 +179,7 @@
   line-height: 1;
   transition: background 0.12s;
 }
+
 .low-stock-dismiss:hover {
   background: rgba(234, 88, 12, 0.15);
 }
@@ -191,23 +217,28 @@
   padding: 10px 0;
   border-bottom: 1px solid var(--border);
 }
+
 .restock-entry:last-child {
   border-bottom: none;
 }
+
 .restock-entry-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
+
 .restock-entry-title {
   font-size: 13px;
   font-weight: 600;
 }
+
 .restock-entry-meta {
   font-size: 11px;
   color: var(--text3);
   margin-top: 2px;
 }
+
 .restock-entry-note {
   font-size: 11px;
   color: var(--text2);
