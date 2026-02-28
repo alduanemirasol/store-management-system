@@ -97,11 +97,7 @@ function renderInventory() {
 }
 
 function quickRestock(itemId) {
-  showPage("restock");
-  setTimeout(() => {
-    document.getElementById("restock-item").value = itemId;
-    updateRestockOptions();
-  }, 100);
+  openRestockModal(itemId);
 }
 
 function deleteItem(itemId) {
