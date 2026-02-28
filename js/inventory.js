@@ -86,7 +86,6 @@ function renderInventory() {
           <div style="display:flex;gap:6px;">
             <button class="btn btn-secondary btn-sm" onclick="editItem(${item.id})">Edit</button>
             <button class="btn btn-sm" style="background:var(--green-light);color:var(--green);" onclick="quickRestock(${item.id})">Restock</button>
-            <button class="btn btn-sm" style="background:var(--red-light);color:var(--red);" onclick="confirmDeleteItem(${item.id})">Delete</button>
           </div>
         </td>
       </tr>`;
@@ -114,14 +113,15 @@ function onBaseUnitSelectChange() {
     customInput.style.display = "block";
     customInput.focus();
     hidden.value = customInput.value.trim();
-    helper.textContent = "Enter your custom unit name below";
+    helper.textContent = "Type the unit name in the box below.";
   } else {
     customInput.style.display = "none";
     hidden.value = sel.value;
     helper.textContent = sel.value
-      ? `Stock and prices are tracked per ${sel.value}`
-      : "Smallest standard unit";
+      ? `All stock and prices are tracked per ${sel.value}.`
+      : "All stock counts and prices will use this unit.";
   }
+  updateDynamicUnitLabels(hidden.value);
   updateDefaultUnitSelect(hidden.value);
 }
 
@@ -129,9 +129,76 @@ function onBaseUnitCustomInput() {
   const val = document.getElementById("item-base-unit-custom").value.trim();
   document.getElementById("item-base-unit").value = val;
   document.getElementById("item-base-unit-helper").textContent = val
-    ? `Stock and prices are tracked per ${val}`
-    : "Type your unit name above";
+    ? `All stock and prices are tracked per ${val}.`
+    : "Type the unit name in the box above.";
+  updateDynamicUnitLabels(val);
   updateDefaultUnitSelect(val);
+}
+
+/**
+ * Updates all labels and helper text that depend on the chosen unit,
+ * and shows/updates the unit context callout box.
+ */
+function updateDynamicUnitLabels(unit) {
+  const u = unit || "unit";
+
+  // Price labels
+  const buyLabel = document.getElementById("label-buy-price");
+  const sellLabel = document.getElementById("label-sell-price");
+  const buyHelper = document.getElementById("helper-buy-price");
+  const sellHelper = document.getElementById("helper-sell-price");
+  if (buyLabel) buyLabel.textContent = `Cost price per ${u} (what you pay)`;
+  if (sellLabel) sellLabel.textContent = `Selling price per ${u} (what you charge)`;
+  if (buyHelper) buyHelper.textContent = `How much you paid for 1 ${u}`;
+  if (sellHelper) sellHelper.textContent = `Price customers pay for 1 ${u}`;
+
+  // Stock label
+  const stockLabel = document.getElementById("label-stock");
+  const stockHelper = document.getElementById("helper-stock");
+  if (stockLabel) stockLabel.textContent = `How many ${u} do you have right now?`;
+  if (stockHelper) stockHelper.textContent = `Enter the total number of ${u} currently in stock.`;
+
+  // Low stock label
+  const lowLabel = document.getElementById("label-low-stock");
+  const lowHelper = document.getElementById("helper-low-stock");
+  if (lowLabel) lowLabel.textContent = `⚠️ Warn me when stock drops below (in ${u})`;
+  if (lowHelper) lowHelper.textContent = `You'll get an alert when your stock falls to this many ${u}. Leave blank to disable.`;
+
+  // Context callout box
+  const box = document.getElementById("unit-context-box");
+  const title = document.getElementById("unit-context-title");
+  const body = document.getElementById("unit-context-body");
+  if (!box) return;
+
+  if (!unit) {
+    box.style.display = "none";
+    return;
+  }
+
+  box.style.display = "block";
+  const examples = {
+    mL: { t: "Tracking by milliliter (mL)", b: "Use this for cooking oil, liquid soap, or drinks sold in specific ml amounts (e.g. 250 mL, 500 mL). Enter prices per 1 mL — or add bottle sizes in the Unit Variants tab." },
+    L: { t: "Tracking by liter (L)", b: "Good for beverages, water, or cleaning liquids sold per liter. Enter the price for 1 L." },
+    kg: { t: "Tracking by kilogram (kg)", b: "Use for rice, sugar, flour, or meat weighed and sold per kilo." },
+    g: { t: "Tracking by gram (g)", b: "Good for spices or small items sold in grams. Enter the price for 1 g." },
+    lb: { t: "Tracking by pound (lb)", b: "Enter the price for 1 lb. Common for imported goods." },
+    piece: { t: "Tracking by piece", b: "Use for individual items like eggs, candles, or tools. Each 'piece' is counted and priced separately." },
+    pack: { t: "Tracking by pack", b: "Each pack is counted as one unit. If packs come in different sizes, add them in Unit Variants." },
+    bottle: { t: "Tracking by bottle", b: "Each bottle counts as one unit. If you also sell by mL, consider using mL as the base and adding 'bottle' as a variant." },
+    bag: { t: "Tracking by bag", b: "Each bag is one unit. Good for snacks, fertilizer, or bundled goods." },
+    box: { t: "Tracking by box", b: "Each box counts as one unit. Add box sizes in Unit Variants if needed." },
+    can: { t: "Tracking by can", b: "Each can is one unit. Good for canned goods, beverages, or paint." },
+    sachet: { t: "Tracking by sachet", b: "Each sachet is one unit. Good for coffee, shampoo, or condiment packets." },
+    roll: { t: "Tracking by roll", b: "Each roll is one unit. Good for tissue paper, wrapping, or tape." },
+  };
+  const info = examples[unit];
+  if (info) {
+    title.textContent = info.t;
+    body.textContent = info.b;
+  } else {
+    title.textContent = `Tracking by ${unit}`;
+    body.textContent = `Stock counts and prices will be recorded per ${unit}. Make sure all entries below use the same unit.`;
+  }
 }
 
 function setBaseUnitSelector(unitValue) {
@@ -145,7 +212,8 @@ function setBaseUnitSelector(unitValue) {
   if (!unitValue) {
     sel.value = "";
     customInput.style.display = "none";
-    helper.textContent = "Smallest standard unit";
+    helper.textContent = "All stock counts and prices will use this unit.";
+    updateDynamicUnitLabels("");
     return;
   }
 
@@ -153,13 +221,14 @@ function setBaseUnitSelector(unitValue) {
   if (isKnown) {
     sel.value = unitValue;
     customInput.style.display = "none";
-    helper.textContent = `Stock and prices are tracked per ${unitValue}`;
+    helper.textContent = `All stock and prices are tracked per ${unitValue}.`;
   } else {
     sel.value = "__custom__";
     customInput.style.display = "block";
     customInput.value = unitValue;
-    helper.textContent = `Stock and prices are tracked per ${unitValue}`;
+    helper.textContent = `All stock and prices are tracked per ${unitValue}.`;
   }
+  updateDynamicUnitLabels(unitValue);
 }
 
 function openAddItemModal() {
@@ -346,34 +415,6 @@ function saveItem() {
   }
 
   closeModal("modal-add-item");
-  persistDb();
   renderInventory();
   updateLowStockAlerts();
-}
-
-function confirmDeleteItem(itemId) {
-  const item = db.items.find((i) => i.id === itemId);
-  if (!item) return;
-
-  document.getElementById("delete-item-name").textContent =
-    `${item.emoji || "📦"} ${item.item_name}`;
-  document.getElementById("delete-item-confirm-btn").onclick = () =>
-    deleteItem(itemId);
-  openModal("modal-delete-item");
-}
-
-function deleteItem(itemId) {
-  const item = db.items.find((i) => i.id === itemId);
-  if (!item) return;
-
-  db.items = db.items.filter((i) => i.id !== itemId);
-  db.item_units = db.item_units.filter((u) => u.item_id !== itemId);
-  db.custom_pricing = db.custom_pricing.filter((cp) => cp.item_id !== itemId);
-
-  closeModal("modal-delete-item");
-  persistDb();
-  renderInventory();
-  updateLowStockAlerts();
-  renderPOSItems();
-  toast(`"${item.item_name}" deleted`, "info");
 }

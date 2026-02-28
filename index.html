@@ -18,7 +18,7 @@
 
         <div class="sidebar">
             <div class="sidebar-logo">
-                <h1>🛒 Sari-Sari Store</h1>
+                <h1>🛒 ShopEase</h1>
                 <span>POS & Inventory System</span>
             </div>
             <nav class="nav">
@@ -48,10 +48,6 @@
                     <span class="icon">📝</span> Stock Logs
                 </div>
             </nav>
-            <div style="padding:12px 8px;border-top:1px solid var(--border);margin-top:auto;">
-                <button onclick="resetPersistedData()" class="btn btn-secondary btn-sm btn-block"
-                    style="font-size:11px;color:var(--text3);">🗑 Reset Demo Data</button>
-            </div>
         </div>
 
         <div class="main">
@@ -371,7 +367,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Item Name *</label>
-                            <input type="text" id="item-name" placeholder="e.g. Rice">
+                            <input type="text" id="item-name" placeholder="e.g. Cooking Oil">
                         </div>
                         <div class="form-group">
                             <label>Category *</label>
@@ -386,81 +382,112 @@
                             <p class="helper">Can't find it? Click "＋ New" to create one.</p>
                         </div>
                     </div>
+
+                    <!-- Unit callout box — shown after a unit is selected -->
+                    <div id="unit-context-box"
+                        style="display:none;background:var(--accent-light);border:1.5px solid var(--accent);border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;font-size:12.5px;color:var(--accent);line-height:1.6;">
+                        <strong id="unit-context-title"></strong><br>
+                        <span id="unit-context-body"></span>
+                    </div>
+
                     <div class="form-row-3">
                         <div class="form-group">
-                            <label>Base Unit *</label>
+                            <label>How is this item measured? *
+                                <span style="font-weight:400;color:var(--text3);font-size:11px;"> (unit of
+                                    measurement)</span>
+                            </label>
                             <select id="item-base-unit-select" onchange="onBaseUnitSelectChange()">
-                                <option value="">— Select base unit —</option>
-                                <optgroup label="Weight">
-                                    <option value="kg">kg — kilogram</option>
-                                    <option value="g">g — gram</option>
+                                <option value="">— Choose a unit —</option>
+                                <optgroup label="Weight (sold by weight)">
+                                    <option value="kg">kg — kilogram &nbsp;e.g. rice, sugar, meat</option>
+                                    <option value="g">g — gram &nbsp;e.g. spices, small items</option>
                                     <option value="lb">lb — pound</option>
                                     <option value="oz">oz — ounce</option>
                                 </optgroup>
-                                <optgroup label="Volume">
-                                    <option value="mL">mL — milliliter</option>
-                                    <option value="L">L — liter</option>
+                                <optgroup label="Volume (sold by liquid amount)">
+                                    <option value="mL">mL — milliliter &nbsp;e.g. 250 mL cooking oil</option>
+                                    <option value="L">L — liter &nbsp;e.g. 1 L water, juice</option>
                                     <option value="fl oz">fl oz — fluid ounce</option>
                                     <option value="cup">cup</option>
                                 </optgroup>
-                                <optgroup label="Count">
-                                    <option value="piece">piece</option>
-                                    <option value="pack">pack</option>
+                                <optgroup label="Count (sold by piece / container)">
+                                    <option value="piece">piece — e.g. eggs, individual items</option>
+                                    <option value="pack">pack — e.g. noodles, biscuits</option>
                                     <option value="box">box</option>
-                                    <option value="bottle">bottle</option>
+                                    <option value="bottle">bottle — e.g. soy sauce, vinegar</option>
                                     <option value="bag">bag</option>
-                                    <option value="can">can</option>
-                                    <option value="sachet">sachet</option>
-                                    <option value="roll">roll</option>
-                                    <option value="pair">pair</option>
+                                    <option value="can">can — e.g. canned goods</option>
+                                    <option value="sachet">sachet — e.g. shampoo, coffee</option>
+                                    <option value="roll">roll — e.g. tissue, tape</option>
+                                    <option value="pair">pair — e.g. gloves, socks</option>
                                     <option value="set">set</option>
                                 </optgroup>
                                 <optgroup label="Length">
                                     <option value="m">m — meter</option>
                                     <option value="cm">cm — centimeter</option>
                                 </optgroup>
-                                <option value="__custom__">✏️ Custom unit…</option>
+                                <option value="__custom__">✏️ Type my own unit…</option>
                             </select>
                             <input type="hidden" id="item-base-unit">
-                            <input type="text" id="item-base-unit-custom" placeholder="Type custom unit (e.g. bundle)"
-                                oninput="onBaseUnitCustomInput()">
-                            <p class="helper" id="item-base-unit-helper">Smallest standard unit</p>
+                            <input type="text" id="item-base-unit-custom" placeholder="e.g. bundle, loaf, tray"
+                                oninput="onBaseUnitCustomInput()" style="margin-top:6px;">
+                            <p class="helper" id="item-base-unit-helper">All stock counts and prices will use this unit.
+                            </p>
                         </div>
                         <div class="form-group">
-                            <label>Purchase Price / Base Unit</label>
-                            <input type="number" id="item-buy-price" step="0.01" min="0" placeholder="0.00">
+                            <label id="label-buy-price">Cost price (what you pay) *</label>
+                            <div style="position:relative;">
+                                <span
+                                    style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none;">₱</span>
+                                <input type="number" id="item-buy-price" step="0.01" min="0" placeholder="0.00"
+                                    style="padding-left:26px;">
+                            </div>
+                            <p class="helper" id="helper-buy-price">How much you paid per unit</p>
                         </div>
                         <div class="form-group">
-                            <label>Selling Price / Base Unit</label>
-                            <input type="number" id="item-sell-price" step="0.01" min="0" placeholder="0.00">
+                            <label id="label-sell-price">Selling price (what you charge) *</label>
+                            <div style="position:relative;">
+                                <span
+                                    style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none;">₱</span>
+                                <input type="number" id="item-sell-price" step="0.01" min="0" placeholder="0.00"
+                                    style="padding-left:26px;">
+                            </div>
+                            <p class="helper" id="helper-sell-price">Price shown to customers at checkout</p>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Initial Stock <span style="font-weight:400;color:var(--text3);">(in base
-                                    units)</span></label>
+                            <label id="label-stock">How many do you have right now?</label>
                             <input type="number" id="item-stock" step="any" min="0" placeholder="0">
+                            <p class="helper" id="helper-stock">Enter your current stock on hand.</p>
                         </div>
                         <div class="form-group">
-                            <label>Default Selling Unit</label>
+                            <label>How do you usually sell this?</label>
                             <select id="item-default-unit">
-                                <option value="base">Base unit</option>
+                                <option value="base">Same as measurement unit above</option>
                             </select>
-                            <p class="helper">Auto-selected in POS</p>
+                            <p class="helper">This is pre-selected when you ring up a sale. You can change it at any
+                                time.</p>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Low Stock Threshold <span style="font-weight:400;color:var(--text3);">(in base
-                                units)</span></label>
+                        <label id="label-low-stock">⚠️ Warn me when stock drops below</label>
                         <input type="number" id="item-low-stock" step="any" min="0" placeholder="e.g. 10">
+                        <p class="helper" id="helper-low-stock">You'll get a low-stock alert when quantity falls to or
+                            below this number. Leave blank to disable.</p>
                     </div>
                 </div>
 
                 <div id="tab-units" class="tab-panel">
-                    <p class="helper" style="margin-bottom:14px;">Define alternative units for buying and selling (e.g.
-                        sack, tray, pack).</p>
+                    <p style="font-size:13px;color:var(--text2);margin-bottom:4px;"><strong>Do you sell this item in
+                            larger bundles or containers?</strong></p>
+                    <p class="helper" style="margin-bottom:16px;">
+                        For example: if your base unit is <strong>mL</strong>, you might also sell a <strong>250 mL
+                            bottle</strong> or a <strong>1 L bottle</strong>. Add those here so the POS can handle them
+                        automatically.
+                    </p>
                     <div id="unit-variants-list"></div>
-                    <button class="btn btn-secondary btn-sm" onclick="addUnitVariant()">+ Add Unit Variant</button>
+                    <button class="btn btn-secondary btn-sm" onclick="addUnitVariant()">+ Add a selling size</button>
                 </div>
             </div>
             <div class="modal-footer">
@@ -630,28 +657,7 @@
         </div>
     </div>
 
-    <div class="modal-backdrop" id="modal-delete-item">
-        <div class="modal modal-sm">
-            <div class="modal-header">
-                <h3>Delete Item</h3>
-                <button class="close-btn" onclick="closeModal('modal-delete-item')">✕</button>
-            </div>
-            <div class="modal-body">
-                <p style="margin-bottom:10px;">Are you sure you want to delete:</p>
-                <p style="font-size:15px;font-weight:700;" id="delete-item-name"></p>
-                <p style="margin-top:12px;font-size:12px;color:var(--text3);">
-                    This will also remove all associated unit variants, custom pricing, and cannot be undone.
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('modal-delete-item')">Cancel</button>
-                <button class="btn btn-danger" id="delete-item-confirm-btn">Delete</button>
-            </div>
-        </div>
-    </div>
-
     <script src="data/store.js"></script>
-    <script src="js/storage.js"></script>
     <script src="js/helpers.js"></script>
     <script src="js/services.js"></script>
     <script src="js/navigation.js"></script>
@@ -663,7 +669,7 @@
     <script src="js/reports.js"></script>
     <script src="js/alerts.js"></script>
     <script>
-        loadOrSeedDb();
+        seedData();
         renderPOSItems();
         updateLowStockAlerts();
         renderRecentSales();
