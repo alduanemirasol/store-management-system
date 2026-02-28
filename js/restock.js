@@ -3,17 +3,7 @@ let selectedRestockItemId = null;
 let selectedModalRestockUnit = null;
 
 function initRestockPage() {
-  const sel = document.getElementById("restock-item");
-  sel.innerHTML =
-    '<option value="">— Select item —</option>' +
-    db.items
-      .map(
-        (i) =>
-          `<option value="${i.id}">${i.emoji || ""} ${i.item_name}</option>`,
-      )
-      .join("");
-  updateRestockOptions();
-  renderRestockHistory();
+  // The dropdown was removed - just render the items table
   renderRestockItemsTable();
 }
 

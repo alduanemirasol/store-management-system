@@ -195,43 +195,6 @@
                         </table>
                     </div>
                 </div>
-                <div class="two-col" style="margin-top:20px;">
-                    <div class="card">
-                        <div class="card-header">
-                            <span class="card-title">Quick Restock (Select from dropdown)</span>
-                        </div>
-                        <div class="form-group">
-                            <label>Item</label>
-                            <select id="restock-item" onchange="updateRestockOptions()">
-                                <option value="">— Select item —</option>
-                            </select>
-                        </div>
-                        <div id="restock-form" style="display:none;">
-                            <div class="form-group">
-                                <label>Restock Unit</label>
-                                <div class="unit-options" id="restock-units"></div>
-                            </div>
-                            <div class="form-group">
-                                <label>Quantity</label>
-                                <input type="number" id="restock-qty" min="0.01" step="any" placeholder="Enter quantity"
-                                    oninput="updateRestockPreview()">
-                            </div>
-                            <div id="restock-preview" class="restock-info" style="display:none;"></div>
-                            <div class="form-group" style="margin-top:14px;">
-                                <label>Note <span style="font-weight:400;color:var(--text3);">(optional)</span></label>
-                                <input type="text" id="restock-note" placeholder="e.g. New delivery">
-                            </div>
-                            <button class="btn btn-success btn-block" style="margin-top:8px;" onclick="doRestock()">✅
-                                Confirm Restock</button>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header">
-                            <span class="card-title">Recent Restocks</span>
-                        </div>
-                        <div id="restock-history"></div>
-                    </div>
-                </div>
             </div>
 
             <div id="page-pricing" class="page">

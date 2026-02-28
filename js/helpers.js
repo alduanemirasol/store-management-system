@@ -49,12 +49,5 @@ function newId(table) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".modal-backdrop").forEach((m) => {
-    m.addEventListener("click", (e) => {
-      if (e.target === m) {
-        m.classList.remove("open");
-        m.style.display = "none";
-      }
-    });
-  });
+  // Modal click-outside-to-close disabled per user request
 });
