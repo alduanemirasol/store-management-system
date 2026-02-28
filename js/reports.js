@@ -102,14 +102,14 @@ function viewTxnDetail(txnId) {
         </tr></thead>
         <tbody>
           ${txn.items
-            .map(
-              (ci) => `<tr>
+      .map(
+        (ci) => `<tr>
               <td>${ci.emoji || "📦"} ${ci.item_name}</td>
               <td class="txn-meta">${ci.detail}</td>
               <td style="text-align:right;font-weight:600;">₱${ci.price.toFixed(2)}</td>
             </tr>`,
-            )
-            .join("")}
+      )
+      .join("")}
         </tbody>
       </table>
     </div>

@@ -123,7 +123,9 @@ function doRestock() {
   document.getElementById("restock-note").value = "";
   updateRestockPreview();
   renderRestockHistory();
+  renderRestockItemsTable();
   renderPOSItems();
+  renderInventory();
   bannerDismissed = false;
   updateLowStockAlerts();
   if (document.getElementById("page-stocklogs").classList.contains("active"))
@@ -328,6 +330,7 @@ function doRestockFromModal() {
   renderRestockItemsTable();
   renderRestockHistory();
   renderPOSItems();
+  renderInventory();
   bannerDismissed = false;
   updateLowStockAlerts();
   if (document.getElementById("page-stocklogs").classList.contains("active"))

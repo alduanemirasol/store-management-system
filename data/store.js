@@ -8,12 +8,6 @@ let db = {
   stock_logs: [],
 };
 
-let nextId = {};
-
-function newId(type) {
-  return nextId[type]++;
-}
-
 function seedData() {
   db.categories = [
     { id: 1, name: "Grains", emoji: "🌾", color: "yellow" },
@@ -166,13 +160,4 @@ function seedData() {
     },
   ];
 
-  nextId = {
-    items: 6,
-    item_units: 8,
-    custom_pricing: 2,
-    transactions: 1,
-    restock_history: 1,
-    categories: 6,
-    stock_logs: 1,
-  };
 }

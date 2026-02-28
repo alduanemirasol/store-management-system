@@ -110,6 +110,7 @@ function deleteItem(itemId) {
   db.items = db.items.filter((i) => i.id !== itemId);
   db.item_units = db.item_units.filter((u) => u.item_id !== itemId);
 
+  persistDb();
   toast("Item deleted!", "success");
   renderInventory();
   updateLowStockAlerts();
@@ -374,6 +375,8 @@ function saveItem() {
   }
 
   closeModal("modal-add-item");
+  persistDb();
   renderInventory();
+  renderPOSItems();
   updateLowStockAlerts();
 }

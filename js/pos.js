@@ -103,7 +103,7 @@ function openCartModal(itemId) {
 function selectCartUnit(unitId, el) {
   cartModalUnit = unitId;
   document
-    .querySelectorAll(".unit-option")
+    .querySelectorAll("#cart-unit-options .unit-option")
     .forEach((o) => o.classList.remove("active"));
   el.classList.add("active");
   document.getElementById("cart-qty").value = "1";
@@ -449,6 +449,7 @@ function clearInlineManualPrice(cartId) {
 function checkout() {
   if (!cart.length) return;
 
+  // First pass: validate all stock levels before deducting anything
   for (const ci of cart) {
     const item = db.items.find((i) => i.id === ci.item_id);
     if (!item) continue;
@@ -456,6 +457,12 @@ function checkout() {
       toast(`Not enough stock for ${item.item_name}!`, "error");
       return;
     }
+  }
+
+  // Second pass: deduct stock only after all checks pass
+  for (const ci of cart) {
+    const item = db.items.find((i) => i.id === ci.item_id);
+    if (!item) continue;
     item.stock_quantity -= ci.base_qty;
   }
 

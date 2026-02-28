@@ -55,6 +55,14 @@ function getActiveCustomPricing(itemId) {
 }
 
 function getRestockUnitLabel(itemId, unitId) {
-  if (!unitId || unitId === "base") return "";
+  if (!unitId || unitId === "base") {
+    const item = db.items.find((i) => i.id === itemId);
+    return item ? item.base_unit : "";
+  }
+  if (unitId.startsWith("unit-")) {
+    const uid = parseInt(unitId.split("-")[1]);
+    const u = db.item_units.find((x) => x.id === uid);
+    return u ? u.unit_name : "";
+  }
   return "";
 }

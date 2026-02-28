@@ -59,11 +59,11 @@ function updateInventoryLowStockPanel(lowItems) {
       const pct =
         item.low_stock_threshold > 0
           ? Math.min(
-              100,
-              Math.round(
-                (item.stock_quantity / item.low_stock_threshold) * 100,
-              ),
-            )
+            100,
+            Math.round(
+              (item.stock_quantity / item.low_stock_threshold) * 100,
+            ),
+          )
           : 100;
       const barColor = isOut ? "var(--red)" : "var(--orange)";
       const stockColor = isOut ? "var(--red)" : "var(--orange)";
@@ -76,10 +76,9 @@ function updateInventoryLowStockPanel(lowItems) {
           </div>
         </td>
         <td style="color:var(--text2);">${item.low_stock_threshold} ${item.base_unit}</td>
-        <td>${
-          isOut
-            ? '<span class="badge badge-red">Out of Stock</span>'
-            : '<span class="badge badge-orange">Low Stock</span>'
+        <td>${isOut
+          ? '<span class="badge badge-red">Out of Stock</span>'
+          : '<span class="badge badge-orange">Low Stock</span>'
         }</td>
         <td>
           <div style="display:flex;gap:6px;">

@@ -460,3 +460,61 @@
   font-size: 13px;
   padding: 14px 0 10px;
 }
+
+.cart-inline-price-btn {
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 3px 6px;
+  color: var(--text3);
+  line-height: 1;
+  transition: all 0.12s;
+  display: inline-flex;
+  align-items: center;
+}
+
+.cart-inline-price-btn:hover {
+  background: var(--orange-light);
+  border-color: var(--orange);
+  color: var(--orange);
+}
+
+.cart-inline-price-btn.active {
+  background: var(--orange-light);
+  border-color: var(--orange);
+  color: var(--orange);
+}
+
+.manual-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  color: var(--orange);
+  font-weight: 600;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+
+.inline-price-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.inline-price-form input {
+  width: 90px;
+  height: 28px;
+  font-size: 13px;
+  padding: 0 8px;
+  border: 1.5px solid var(--orange);
+  border-radius: 6px;
+}
+
+.inline-price-note {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 3px;
+}
