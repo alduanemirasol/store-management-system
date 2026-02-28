@@ -13,11 +13,19 @@ function toast(msg, type = "") {
 }
 
 function openModal(id) {
-  document.getElementById(id).classList.add("open");
+  const modal = document.getElementById(id);
+  if (modal) {
+    modal.classList.add("open");
+    modal.style.display = "flex";
+  }
 }
 
 function closeModal(id) {
-  document.getElementById(id).classList.remove("open");
+  const modal = document.getElementById(id);
+  if (modal) {
+    modal.classList.remove("open");
+    modal.style.display = "none";
+  }
 }
 
 function relativeTime(date) {

@@ -320,7 +320,11 @@ function doRestockFromModal() {
     "success",
   );
   persistDb();
-  closeModal("modal-restock");
+  try {
+    closeModal("modal-restock");
+  } catch (e) {
+    console.error("Error closing modal:", e);
+  }
   renderRestockItemsTable();
   renderRestockHistory();
   renderPOSItems();
