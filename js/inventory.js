@@ -86,6 +86,7 @@ function renderInventory() {
           <div style="display:flex;gap:6px;">
             <button class="btn btn-secondary btn-sm" onclick="editItem(${item.id})">Edit</button>
             <button class="btn btn-sm" style="background:var(--green-light);color:var(--green);" onclick="quickRestock(${item.id})">Restock</button>
+            <button class="btn btn-sm" style="background:var(--red-light);color:var(--red);" onclick="deleteItem(${item.id})">Delete</button>
           </div>
         </td>
       </tr>`;
@@ -101,6 +102,24 @@ function quickRestock(itemId) {
     document.getElementById("restock-item").value = itemId;
     updateRestockOptions();
   }, 100);
+}
+
+function deleteItem(itemId) {
+  const item = db.items.find((i) => i.id === itemId);
+  if (!item) return;
+
+  const confirmed = confirm(`Are you sure you want to delete "${item.item_name}"? This action cannot be undone.`);
+  if (!confirmed) return;
+
+  // Remove the item from the items array
+  db.items = db.items.filter((i) => i.id !== itemId);
+
+  // Also remove associated item units
+  db.item_units = db.item_units.filter((u) => u.item_id !== itemId);
+
+  toast("Item deleted!", "success");
+  renderInventory();
+  updateLowStockAlerts();
 }
 
 function onBaseUnitSelectChange() {
