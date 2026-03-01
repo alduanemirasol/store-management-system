@@ -1,0 +1,688 @@
+================================================================================
+DATABASE SCHEMA - DEVELOPER DOCUMENTATION v2
+================================================================================
+Purpose : Guide developers on schema structure, relationships, and usage.
+Fixes   : Removed duplicate override columns, merged promotions into pricing
+          tiers, removed derived columns, added missing fields, clarified
+          unit naming, and added constraint notes throughout.
+================================================================================
+
+
+// ============================================================================
+// AUTHENTICATION & USER MANAGEMENT
+// ============================================================================
+
+// Users: System accounts with login credentials
+users
+- id                        PK, AUTO INCREMENT
+- mobile_number             VARCHAR(20), UNIQUE, NOT NULL   -- Login credential
+- pin_hash                  VARCHAR(64), NOT NULL           -- SHA-256 hashed PIN
+- first_name                VARCHAR(50), NOT NULL
+- middle_name               VARCHAR(50), NULL
+- last_name                 VARCHAR(50), NOT NULL
+- role                      ENUM('admin','manager','cashier'), NOT NULL DEFAULT 'cashier'
+- is_deleted                BOOLEAN, NOT NULL DEFAULT FALSE -- Soft delete
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+// Use Case: User login
+// SELECT * FROM users
+//   WHERE mobile_number = '09123456789'
+//     AND pin_hash = SHA2('1234', 256)
+//     AND is_deleted = FALSE;
+
+
+// Security Questions: Predefined recovery questions
+security_questions
+- id                        PK, AUTO INCREMENT
+- question_text             VARCHAR(255), NOT NULL
+
+// Example records: "What is your mother's maiden name?", "What was your first pet's name?"
+
+
+// User Security Answers: Maps answers to questions per user
+user_security_questions
+- id                        PK, AUTO INCREMENT
+- user_id                   FK → users.id, NOT NULL
+- question_id               FK → security_questions.id, NOT NULL
+- answer_hash               VARCHAR(64), NOT NULL           -- SHA-256 hashed answer
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+UNIQUE (user_id, question_id)
+
+// Use Case: Get recovery questions for a user
+// SELECT sq.question_text
+// FROM security_questions sq
+// JOIN user_security_questions usq ON sq.id = usq.question_id
+// WHERE usq.user_id = 5;
+
+
+// ============================================================================
+// PRODUCT CATALOG
+// ============================================================================
+
+// Categories: Logical groupings for products
+categories
+- id                        PK, AUTO INCREMENT
+- name                      VARCHAR(100), NOT NULL UNIQUE   -- e.g. "Grains", "Vegetables"
+- description               TEXT, NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+// Example records: "Grains", "Vegetables", "Beverages", "Snacks", "Condiments"
+
+
+// Units: Standard measurement units
+units
+- id                        PK, AUTO INCREMENT
+- name                      VARCHAR(50), NOT NULL UNIQUE    -- e.g. "kg", "mL", "piece"
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+
+// Example records: kg, mL, piece, tray, sack, pack, container
+
+
+// Products: Master product catalog
+products
+- id                        PK, AUTO INCREMENT
+- name                      VARCHAR(150), NOT NULL
+- category_id               FK → categories.id, NOT NULL
+- base_unit_id              FK → units.id, NOT NULL         -- Canonical unit for stock tracking
+- description               TEXT, NULL
+- is_deleted                BOOLEAN, NOT NULL DEFAULT FALSE
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+// Use Case: List active products in a category
+// SELECT p.*, c.name AS category, u.name AS base_unit
+// FROM products p
+// JOIN categories c ON p.category_id = c.id
+// JOIN units u ON p.base_unit_id = u.id
+// WHERE p.category_id = 1 AND p.is_deleted = FALSE;
+
+
+// ============================================================================
+// PRODUCT UNITS
+// ============================================================================
+
+// Product Units: All valid packaging/measurement options per product
+// Each row = one way to sell or restock a product (e.g. Rice by "kg" or "sack")
+product_units
+- id                        PK, AUTO INCREMENT
+- product_id                FK → products.id, NOT NULL
+- unit_id                   FK → units.id, NOT NULL         -- Underlying unit type
+- display_name              VARCHAR(50), NOT NULL            -- Label shown in UI (e.g. "sack", "250mL")
+- pack_quantity             DECIMAL(10,4), NOT NULL          -- How many base units this packaging contains
+- is_default_selling        BOOLEAN, NOT NULL DEFAULT FALSE  -- Pre-selected unit on sales screen
+- can_restock               BOOLEAN, NOT NULL DEFAULT FALSE  -- Appears on restock/purchase screen
+- can_sell                  BOOLEAN, NOT NULL DEFAULT FALSE  -- Appears on sales screen
+- notes                     TEXT, NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+CONSTRAINT: Only one row per product_id can have is_default_selling = TRUE
+
+// EXAMPLES:
+// Rice - kg         : product_id=1, unit_id=kg,    display_name='kg',        pack_quantity=1,     can_restock=T, can_sell=T, is_default_selling=F
+// Rice - sack       : product_id=1, unit_id=kg,    display_name='sack',      pack_quantity=50,    can_restock=T, can_sell=T, is_default_selling=T
+// Egg - piece       : product_id=2, unit_id=piece, display_name='piece',     pack_quantity=1,     can_restock=T, can_sell=T, is_default_selling=T
+// Egg - tray        : product_id=2, unit_id=piece, display_name='tray',      pack_quantity=30,    can_restock=T, can_sell=T, is_default_selling=F
+// Oil - mL          : product_id=3, unit_id=mL,    display_name='mL',        pack_quantity=1,     can_restock=T, can_sell=T, is_default_selling=F
+// Oil - 250mL       : product_id=3, unit_id=mL,    display_name='250mL',     pack_quantity=250,   can_restock=F, can_sell=T, is_default_selling=T
+// Oil - container   : product_id=3, unit_id=mL,    display_name='container', pack_quantity=20000, can_restock=T, can_sell=T, is_default_selling=F
+// Candy - piece     : product_id=4, unit_id=piece, display_name='piece',     pack_quantity=1,     can_restock=T, can_sell=T, is_default_selling=T
+// Candy - pack      : product_id=4, unit_id=piece, display_name='pack',      pack_quantity=100,   can_restock=T, can_sell=T, is_default_selling=F
+// Cabbage - kg      : product_id=5, unit_id=kg,    display_name='kg',        pack_quantity=1,     can_restock=T, can_sell=T, is_default_selling=F
+// Cabbage - sack    : product_id=5, unit_id=kg,    display_name='sack',      pack_quantity=25,    can_restock=T, can_sell=F, is_default_selling=F
+// Cabbage - piece   : product_id=5, unit_id=piece, display_name='piece',     pack_quantity=1,     can_restock=F, can_sell=T, is_default_selling=T
+
+// NOTE on Cabbage piece:
+// Cabbage pieces have no reliable kg conversion (variable weight).
+// Stock is tracked in kg only. When selling by piece, stock deduction uses
+// an approximate weight stored in product_units.approx_base_qty_per_piece (see below).
+// Add this optional column for variable-weight items:
+- approx_base_qty_per_piece DECIMAL(10,4), NULL  -- e.g. 0.5 kg per cabbage piece (estimate only)
+
+// Use Case: Get all selling units for Cooking Oil
+// SELECT * FROM product_units
+// WHERE product_id = 3 AND can_sell = TRUE;
+
+// Use Case: Get default selling unit for Rice
+// SELECT * FROM product_units
+// WHERE product_id = 1 AND is_default_selling = TRUE;
+
+
+// ============================================================================
+// PRICING
+// ============================================================================
+
+// Product Unit Prices: Base purchase and selling price per product unit
+// This is the standard price used when no pricing tier applies.
+product_unit_prices
+- id                        PK, AUTO INCREMENT
+- product_unit_id           FK → product_units.id, NOT NULL
+- purchase_price            DECIMAL(10,2), NOT NULL DEFAULT 0.00  -- Cost from supplier
+- selling_price             DECIMAL(10,2), NOT NULL               -- Default retail price
+- effective_date            DATE, NOT NULL
+- expiry_date               DATE, NULL                            -- NULL = currently active
+- created_by                FK → users.id, NOT NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_by                FK → users.id, NULL
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+CONSTRAINT: No two active rows (expiry_date IS NULL or >= today) for the same product_unit_id
+
+// EXAMPLES:
+// Rice kg    : purchase_price=55.00, selling_price=57.00
+// Rice sack  : purchase_price=2750.00, selling_price=2850.00   (55*50 / 57*50)
+// Egg piece  : purchase_price=9.00,  selling_price=9.00
+// Oil 250mL  : purchase_price=22.50, selling_price=37.00
+// Candy piece: purchase_price=1.50,  selling_price=2.00
+// Cabbage kg : purchase_price=180.50, selling_price=200.00
+// Cabbage pcs: purchase_price=0.00,  selling_price=25.00  (standard piece price)
+
+// Use Case: Get current selling price for a product unit
+// SELECT selling_price FROM product_unit_prices
+// WHERE product_unit_id = ?
+//   AND effective_date <= CURDATE()
+//   AND (expiry_date IS NULL OR expiry_date >= CURDATE())
+// ORDER BY effective_date DESC LIMIT 1;
+
+
+// Pricing Tiers: Bulk, bundle, volume, and promotional pricing rules
+// Replaces both the old product_unit_pricing_tiers AND promotions tables.
+// tier_type controls how the price is applied:
+//   BUNDLE_PRICE    = total_price is the fixed cost for exactly (qty_min = qty_max) units
+//   VOLUME_DISCOUNT = price_per_unit replaces standard price for qty_min to qty_max units
+//   FLAT_RATE       = price_per_unit is fixed regardless of standard price
+pricing_tiers
+- id                        PK, AUTO INCREMENT
+- product_unit_id           FK → product_units.id, NOT NULL
+- label                     VARCHAR(100), NULL               -- Optional promo name e.g. "New Year Sale"
+- tier_type                 ENUM('BUNDLE_PRICE','VOLUME_DISCOUNT','FLAT_RATE'), NOT NULL
+- quantity_min              INT UNSIGNED, NOT NULL           -- Min quantity to qualify
+- quantity_max              INT UNSIGNED, NOT NULL           -- Max quantity (use 999999 for open-ended)
+- price_per_unit            DECIMAL(10,2), NULL              -- Used for VOLUME_DISCOUNT, FLAT_RATE
+- total_price               DECIMAL(10,2), NULL              -- Used for BUNDLE_PRICE
+- effective_from            DATE, NOT NULL
+- effective_to              DATE, NULL                       -- NULL = currently active
+- created_by                FK → users.id, NOT NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_by                FK → users.id, NULL
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+CONSTRAINT: quantity_min <= quantity_max
+CONSTRAINT: No overlapping (quantity_min, quantity_max) ranges for the same
+            product_unit_id within the same active date window
+CONSTRAINT: price_per_unit NOT NULL when tier_type IN ('VOLUME_DISCOUNT','FLAT_RATE')
+CONSTRAINT: total_price NOT NULL when tier_type = 'BUNDLE_PRICE'
+
+// EXAMPLES:
+// Candy - 3 pcs = 5 PHP (bundle):
+//   product_unit_id=candy_piece, tier_type='BUNDLE_PRICE',
+//   quantity_min=3, quantity_max=3, total_price=5.00
+//
+// Candy - 10+ pcs = 1.50 PHP each (volume discount):
+//   product_unit_id=candy_piece, tier_type='VOLUME_DISCOUNT',
+//   quantity_min=10, quantity_max=999999, price_per_unit=1.50
+//
+// Rice - January promo, 54 PHP/kg:
+//   product_unit_id=rice_kg, tier_type='FLAT_RATE', label='January Sale',
+//   quantity_min=1, quantity_max=999999, price_per_unit=54.00,
+//   effective_from='2024-01-01', effective_to='2024-01-31'
+
+// Use Case: Check if a pricing tier applies for a given quantity
+// SELECT * FROM pricing_tiers
+// WHERE product_unit_id = ?
+//   AND quantity_min <= ?          -- ? = qty being sold
+//   AND quantity_max >= ?
+//   AND effective_from <= CURDATE()
+//   AND (effective_to IS NULL OR effective_to >= CURDATE())
+// ORDER BY quantity_min DESC LIMIT 1;
+
+// Pricing Resolution Logic (apply in this order):
+// 1. Check pricing_tiers for a matching active tier → use tier price
+// 2. If no tier → use product_unit_prices.selling_price
+// 3. If cashier applies manual override → use sale_items.manual_price_per_unit
+
+
+// ============================================================================
+// INVENTORY
+// ============================================================================
+
+// Product Stock: Current quantity on hand per product (always in base unit)
+product_stock
+- product_id                PK, FK → products.id            -- One row per product
+- quantity                  DECIMAL(12,4), NOT NULL DEFAULT 0.00  -- Always in base_unit
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+- updated_by                FK → users.id, NULL
+
+// WARNING: Always store and read quantity in the product's base_unit (products.base_unit_id).
+// Convert to display units only in the application layer.
+
+// Use Case: Check stock level for Rice
+// SELECT ps.quantity, u.name AS unit
+// FROM product_stock ps
+// JOIN products p ON ps.product_id = p.id
+// JOIN units u ON p.base_unit_id = u.id
+// WHERE ps.product_id = 1;
+
+
+// Stock Log Reasons: Categories for why stock changed
+stock_log_reasons
+- id                        PK, AUTO INCREMENT
+- name                      VARCHAR(100), NOT NULL UNIQUE
+
+// Standard records: "Purchase", "Sale", "Return", "Damage", "Recount", "Sample", "Adjustment"
+
+
+// Stock Movements: Full audit trail of every inventory change
+stock_movements
+- id                        PK, AUTO INCREMENT
+- product_id                FK → products.id, NOT NULL
+- stock_log_reason_id       FK → stock_log_reasons.id, NOT NULL
+- quantity_changed          DECIMAL(12,4), NOT NULL          -- Positive = added, Negative = removed
+- reference_type            VARCHAR(50), NULL                -- e.g. 'SALE', 'PURCHASE', 'RETURN'
+- reference_id              INT UNSIGNED, NULL               -- ID of the related record
+- notes                     TEXT, NULL
+- created_by                FK → users.id, NOT NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+
+// EXAMPLES:
+// Sold 10 kg Rice (sale ID 42):
+//   product_id=1, reason='Sale', quantity_changed=-10, reference_type='SALE', reference_id=42
+//
+// Restocked 5 sacks = 250 kg Rice (purchase ID 15):
+//   product_id=1, reason='Purchase', quantity_changed=250, reference_type='PURCHASE', reference_id=15
+//
+// Damaged goods written off:
+//   product_id=1, reason='Damage', quantity_changed=-5, notes='Wet storage damage'
+
+// Use Case: Get full stock history for a product
+// SELECT sm.*, slr.name AS reason, u.first_name AS done_by
+// FROM stock_movements sm
+// JOIN stock_log_reasons slr ON sm.stock_log_reason_id = slr.id
+// JOIN users u ON sm.created_by = u.id
+// WHERE sm.product_id = 1
+// ORDER BY sm.created_at DESC;
+
+
+// ============================================================================
+// CUSTOMER MANAGEMENT
+// ============================================================================
+
+// Customers: Registered buyer profiles
+customers
+- id                        PK, AUTO INCREMENT
+- first_name                VARCHAR(50), NOT NULL
+- middle_name               VARCHAR(50), NULL
+- last_name                 VARCHAR(50), NOT NULL
+- contact_number            VARCHAR(20), NULL
+- credit_limit              DECIMAL(10,2), NOT NULL DEFAULT 0.00  -- 0 = no credit allowed
+- is_deleted                BOOLEAN, NOT NULL DEFAULT FALSE
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+// Use Case: Register new customer
+// INSERT INTO customers (first_name, last_name, contact_number, credit_limit)
+// VALUES ('Juan', 'Dela Cruz', '09123456789', 50000.00);
+
+
+// Customer Addresses: One or more delivery addresses per customer
+customer_addresses
+- id                        PK, AUTO INCREMENT
+- customer_id               FK → customers.id, NOT NULL
+- municipality              VARCHAR(100), NULL
+- barangay                  VARCHAR(100), NULL
+- street                    VARCHAR(255), NULL
+- is_primary                BOOLEAN, NOT NULL DEFAULT FALSE
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+CONSTRAINT: Only one row per customer_id can have is_primary = TRUE
+
+// Use Case: Get primary address for a customer
+// SELECT * FROM customer_addresses
+// WHERE customer_id = 5 AND is_primary = TRUE;
+
+
+// ============================================================================
+// SALES & TRANSACTIONS
+// ============================================================================
+
+// Payment Types: Accepted payment methods
+payment_types
+- id                        PK, AUTO INCREMENT
+- name                      VARCHAR(50), NOT NULL UNIQUE
+
+// Standard records: "Cash", "Credit", "GCash", "PayMaya", "Bank Transfer", "Check"
+
+
+// Sales: Header record for each transaction
+sales
+- id                        PK, AUTO INCREMENT
+- customer_id               FK → customers.id, NULL         -- NULL = walk-in customer
+- payment_type_id           FK → payment_types.id, NOT NULL
+- sale_date                 TIMESTAMP, NOT NULL DEFAULT CURRENT_TIMESTAMP
+- notes                     TEXT, NULL
+- created_by                FK → users.id, NOT NULL          -- Cashier who processed the sale
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+// NOTE: total_amount is intentionally removed. Compute it dynamically:
+// SELECT SUM(quantity * unit_price) FROM sale_items WHERE sale_id = ?
+// This avoids stale totals after returns or manual price corrections.
+
+// Use Case: Record a new sale
+// INSERT INTO sales (customer_id, payment_type_id, created_by)
+// VALUES (5, 1, 2);
+
+
+// Sale Items: Line items belonging to a sale
+sale_items
+- id                        PK, AUTO INCREMENT
+- sale_id                   FK → sales.id, NOT NULL
+- product_unit_id           FK → product_units.id, NOT NULL  -- Which packaging unit was sold
+- quantity                  DECIMAL(10,4), NOT NULL
+- unit_price                DECIMAL(10,2), NOT NULL           -- Actual price used (after any tier/override)
+- is_manual_priced          BOOLEAN, NOT NULL DEFAULT FALSE   -- TRUE if cashier overrode the price
+- manual_price_reason       VARCHAR(255), NULL               -- Required when is_manual_priced = TRUE
+- approved_by               FK → users.id, NULL              -- Manager who approved override (if required)
+- weight_per_piece_kg       DECIMAL(10,4), NULL              -- For variable-weight items (e.g. cabbage pieces)
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+
+// NOTE: line_total (quantity * unit_price) is a derived value and is NOT stored.
+// Compute it in queries: quantity * unit_price AS line_total
+
+// EXAMPLES:
+// Sold 1 sack of Rice at standard price:
+//   product_unit_id=rice_sack, quantity=1, unit_price=2850.00, is_manual_priced=FALSE
+//
+// Sold 3 candy pieces at bundle price (5 PHP total → 1.67 per piece):
+//   product_unit_id=candy_piece, quantity=3, unit_price=1.67, is_manual_priced=FALSE
+//
+// Sold 5 cabbage pieces at manager-approved custom price:
+//   product_unit_id=cabbage_piece, quantity=5, unit_price=20.00,
+//   is_manual_priced=TRUE, manual_price_reason='Small size discount',
+//   approved_by=2, weight_per_piece_kg=0.45
+
+// NOTE: Override audit is handled by this table alone.
+// The separate sale_item_price_overrides table has been removed (was a duplicate).
+
+// Use Case: Get full sale details
+// SELECT si.quantity, si.unit_price, (si.quantity * si.unit_price) AS line_total,
+//         pu.display_name, p.name AS product
+// FROM sale_items si
+// JOIN product_units pu ON si.product_unit_id = pu.id
+// JOIN products p ON pu.product_id = p.id
+// WHERE si.sale_id = 42;
+
+
+// Sales Returns: Product returns and refunds against a sale
+sales_returns
+- id                        PK, AUTO INCREMENT
+- sale_id                   FK → sales.id, NOT NULL
+- sale_item_id              FK → sale_items.id, NULL         -- NULL = entire sale returned
+- quantity_returned         DECIMAL(10,4), NOT NULL
+- reason                    VARCHAR(255), NOT NULL
+- refund_amount             DECIMAL(10,2), NOT NULL
+- processed_by              FK → users.id, NOT NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+
+// Use Case: Return 2 sacks of Rice from sale 42
+// INSERT INTO sales_returns (sale_id, sale_item_id, quantity_returned, reason, refund_amount, processed_by)
+// VALUES (42, 100, 2, 'Damaged in transit', 5700.00, 3);
+
+// NOTE: After inserting a return, also insert a positive stock_movements record
+// to restore the inventory quantity.
+
+
+// ============================================================================
+// CREDIT MANAGEMENT
+// ============================================================================
+
+// Credit: Outstanding balance owed by a customer from a credit sale
+credit
+- id                        PK, AUTO INCREMENT
+- sale_id                   FK → sales.id, NOT NULL UNIQUE   -- One credit record per credit sale
+- customer_id               FK → customers.id, NOT NULL      -- Denormalized for direct credit queries
+- amount_owed               DECIMAL(10,2), NOT NULL           -- Original credit amount
+- amount_paid               DECIMAL(10,2), NOT NULL DEFAULT 0.00  -- Running total paid so far
+- due_date                  DATE, NOT NULL
+- status                    ENUM('PENDING','PARTIALLY_PAID','PAID','OVERDUE'), NOT NULL DEFAULT 'PENDING'
+- notes                     TEXT, NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+// NOTE: customer_id is stored directly for efficient credit lookups without needing
+// to join through sales. Must match sales.customer_id on insert.
+
+// Use Case: Get all unpaid credit for a customer
+// SELECT * FROM credit
+// WHERE customer_id = 5 AND status != 'PAID'
+// ORDER BY due_date ASC;
+
+// Use Case: Check if customer is within credit limit before a new credit sale
+// SELECT c.credit_limit,
+//        COALESCE(SUM(cr.amount_owed - cr.amount_paid), 0) AS outstanding
+// FROM customers c
+// LEFT JOIN credit cr ON c.id = cr.customer_id AND cr.status != 'PAID'
+// WHERE c.id = 5
+// GROUP BY c.id;
+
+
+// Credit Payments: Payments received against a credit balance
+credit_payments
+- id                        PK, AUTO INCREMENT
+- credit_id                 FK → credit.id, NOT NULL
+- amount_paid               DECIMAL(10,2), NOT NULL
+- payment_method            VARCHAR(50), NOT NULL             -- e.g. "Cash", "GCash"
+- paid_at                   TIMESTAMP, NOT NULL DEFAULT CURRENT_TIMESTAMP
+- notes                     TEXT, NULL
+- received_by               FK → users.id, NOT NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+
+// After each credit_payments insert, update credit.amount_paid and credit.status accordingly.
+
+// Use Case: Record a partial payment of 1500 PHP
+// INSERT INTO credit_payments (credit_id, amount_paid, payment_method, received_by)
+// VALUES (1, 1500.00, 'Cash', 2);
+
+
+// ============================================================================
+// EXPENSES
+// ============================================================================
+
+// Expense Categories: Classification for business costs
+expense_categories
+- id                        PK, AUTO INCREMENT
+- name                      VARCHAR(100), NOT NULL UNIQUE
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+
+// Standard records: "Rent", "Utilities", "Salaries", "Transportation", "Marketing", "Supplies"
+
+
+// Expenses: Record of all business expenditures
+expenses
+- id                        PK, AUTO INCREMENT
+- expense_category_id       FK → expense_categories.id, NOT NULL
+- amount                    DECIMAL(10,2), NOT NULL
+- description               VARCHAR(255), NOT NULL
+- expense_date              DATE, NOT NULL DEFAULT (CURDATE())
+- image_url                 VARCHAR(500), NULL               -- Receipt photo URL
+- created_by                FK → users.id, NOT NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+// Use Case: Record electricity bill
+// INSERT INTO expenses (expense_category_id, amount, description, created_by)
+// VALUES (2, 2500.00, 'Monthly electricity - January 2024', 1);
+
+
+// ============================================================================
+// CASH MANAGEMENT
+// ============================================================================
+
+// Cash Fund: Cash drawer/box assigned to a cashier per shift
+cash_fund
+- id                        PK, AUTO INCREMENT
+- user_id                   FK → users.id, NOT NULL          -- Cashier responsible
+- opening_balance           DECIMAL(10,2), NOT NULL DEFAULT 0.00
+- closed_at                 TIMESTAMP, NULL                  -- NULL = shift still open
+- closing_balance           DECIMAL(10,2), NULL              -- Recorded on shift close
+- notes                     TEXT, NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+// NOTE: current_balance is removed. Compute it dynamically to avoid stale data:
+// SELECT opening_balance + COALESCE(SUM(
+//   CASE WHEN transaction_type = 'IN' THEN amount
+//        WHEN transaction_type = 'OUT' THEN -amount
+//        ELSE amount END), 0) AS current_balance
+// FROM cash_fund
+// LEFT JOIN cash_fund_transactions ON cash_fund.id = cash_fund_transactions.cash_fund_id
+// WHERE cash_fund.id = ?;
+
+
+// Cash Fund Transactions: Audit trail of every cash movement
+cash_fund_transactions
+- id                        PK, AUTO INCREMENT
+- cash_fund_id              FK → cash_fund.id, NOT NULL
+- transaction_type          ENUM('IN','OUT','ADJUSTMENT'), NOT NULL
+- amount                    DECIMAL(10,2), NOT NULL           -- Always positive; direction = transaction_type
+- reference_type            VARCHAR(50), NULL                 -- e.g. 'SALE', 'EXPENSE', 'RETURN'
+- reference_id              INT UNSIGNED, NULL                -- ID of the related record
+- description               VARCHAR(255), NOT NULL
+- created_by                FK → users.id, NOT NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+
+// NOTE: balance_after is removed. Compute running balance via window function:
+// SELECT id, description, amount, transaction_type,
+//        SUM(CASE WHEN transaction_type='IN' THEN amount
+//                 WHEN transaction_type='OUT' THEN -amount
+//                 ELSE amount END)
+//        OVER (PARTITION BY cash_fund_id ORDER BY created_at) AS running_balance
+// FROM cash_fund_transactions
+// WHERE cash_fund_id = ?;
+
+// EXAMPLES:
+// Customer paid cash for sale 42:
+//   transaction_type='IN', amount=2850.00, reference_type='SALE', reference_id=42
+//
+// Paid electricity bill:
+//   transaction_type='OUT', amount=2500.00, reference_type='EXPENSE', reference_id=7
+//
+// Cash count correction:
+//   transaction_type='ADJUSTMENT', amount=500.00, description='Overcount correction'
+
+
+// ============================================================================
+// KEY CONCEPTS FOR DEVELOPERS
+// ============================================================================
+
+// STOCK TRACKING
+// Always store and update product_stock.quantity in the product's base unit.
+// Convert to display units only in the application layer using product_units.pack_quantity.
+// Example: 5 sacks of Rice = 5 * 50 = 250 kg stored in product_stock.
+
+// UNIT CONVERSIONS
+// No separate product_unit_conversions table needed.
+// Conversion factor is product_units.pack_quantity (base units per pack).
+// Example: Rice sack → pack_quantity=50 means 1 sack = 50 kg (base unit).
+
+// PRICING RESOLUTION ORDER
+// 1. Check pricing_tiers for an active tier matching product_unit_id + quantity + today's date.
+// 2. If tier found and tier_type = BUNDLE_PRICE  → total_price / quantity = unit_price
+// 3. If tier found and tier_type = VOLUME_DISCOUNT or FLAT_RATE → price_per_unit = unit_price
+// 4. If no tier → use product_unit_prices.selling_price
+// 5. If cashier applies override → use sale_items.unit_price (manual) and set is_manual_priced = TRUE
+
+// SOFT DELETES
+// Tables with is_deleted: users, products, customers
+// Always filter WHERE is_deleted = FALSE in application queries.
+// Never physically delete these rows to preserve historical records.
+
+// DERIVED VALUES (do not store, compute at query time)
+// sale total          → SUM(si.quantity * si.unit_price) WHERE sale_id = ?
+// sale line_total     → si.quantity * si.unit_price
+// cash balance        → opening_balance + SUM of cash_fund_transactions
+// credit outstanding  → credit.amount_owed - credit.amount_paid
+
+// AUDIT TRAIL
+// All transactional tables include created_by (FK → users.id).
+// Pricing and product tables include created_by + updated_by.
+// Stock changes are fully logged in stock_movements.
+// Price overrides are captured directly in sale_items (is_manual_priced + approved_by).
+// Cash movements are logged in cash_fund_transactions.
+
+// VARIABLE-WEIGHT ITEMS (e.g. Cabbage sold by piece)
+// Use sale_items.weight_per_piece_kg to record actual weight at time of sale.
+// Use product_units.approx_base_qty_per_piece for estimated stock deduction when
+// exact weight is not entered by the cashier.
+
+
+// ============================================================================
+// TABLES REFERENCE (alphabetical)
+// ============================================================================
+
+// cash_fund
+// cash_fund_transactions
+// categories
+// credit
+// credit_payments
+// customer_addresses
+// customers
+// expense_categories
+// expenses
+// payment_types
+// pricing_tiers
+// product_stock
+// product_unit_prices
+// product_units
+// products
+// sale_items
+// sales
+// sales_returns
+// security_questions
+// stock_log_reasons
+// stock_movements
+// units
+// user_security_questions
+// users
+
+// Total: 23 tables
+
+
+// ============================================================================
+// CHANGES FROM v1
+// ============================================================================
+
+// REMOVED TABLES (consolidated or eliminated):
+// - product_unit_conversions  → replaced by product_units.pack_quantity
+// - promotions                → merged into pricing_tiers (added label column)
+// - sale_item_price_overrides → duplicate of sale_items override columns; removed
+
+// REMOVED COLUMNS (derived values):
+// - sales.total_amount              → compute via SUM(sale_items)
+// - sale_items.line_total           → compute as quantity * unit_price
+// - cash_fund.current_balance       → compute via SUM(cash_fund_transactions)
+// - cash_fund_transactions.balance_after → compute via running SUM window function
+
+// FIXED COLUMNS:
+// - product_units.unit_name         → renamed to display_name (clearer intent)
+// - sale_items override columns     → simplified to is_manual_priced + manual_price_reason + approved_by
+// - credit                          → added customer_id FK for direct lookups
+// - credit                          → added amount_paid to track running balance
+
+// ADDED COLUMNS:
+// - users.role                      → ENUM for access control
+// - product_units.approx_base_qty_per_piece → supports variable-weight items
+// - sale_items.weight_per_piece_kg  → captures actual weight for variable-weight sales
+// - cash_fund.closed_at             → tracks shift end
+// - cash_fund.closing_balance       → records physical count at shift close
+// - expenses.expense_date           → separates expense date from created_at
+// - stock_movements.created_by      → audit trail for who made the change
+
+// ADDED CONSTRAINTS (noted inline):
+// - product_units: only one is_default_selling = TRUE per product
+// - customer_addresses: only one is_primary = TRUE per customer
+// - pricing_tiers: no overlapping quantity ranges for same unit + date window
+// - product_unit_prices: no overlapping active rows for same product_unit_id
+
+================================================================================
+END OF DOCUMENTATION
+================================================================================
