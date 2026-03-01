@@ -1,0 +1,644 @@
+================================================================================
+SCHEMA AI CONTEXT
+Retail POS & Inventory System (PHP currency, Filipino market)
+23 tables | MySQL
+================================================================================
+Use this file to understand the database when writing queries, logic, or code.
+Each section covers: what the table is for, its columns, relationships, and
+any rules that must be respected.
+================================================================================
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 1 — SYSTEM OVERVIEW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This system manages a retail store with:
+  - Staff login and roles (admin, manager, cashier)
+  - A product catalog with flexible units (kg, mL, piece, sack, tray, etc.)
+  - Inventory tracking (always stored in base unit per product)
+  - Flexible pricing (standard price, bulk tiers, bundle deals, promos)
+  - Sales transactions (walk-in and registered customers)
+  - Customer credit management
+  - Expense recording
+  - Per-shift cash drawer management
+
+GLOBAL RULES:
+  1. Soft deletes: users, products, customers use is_deleted=TRUE instead of DELETE.
+     Always filter WHERE is_deleted = FALSE unless querying history.
+  2. Derived values are NOT stored. Compute at query time:
+       sale total        = SUM(sale_items.quantity * sale_items.unit_price)
+       line total        = sale_items.quantity * sale_items.unit_price
+       cash balance      = cash_fund.opening_balance + SUM(cash_fund_transactions)
+       credit balance    = credit.amount_owed - credit.amount_paid
+  3. Stock is always stored in the product's base unit (products.base_unit_id).
+     Convert to display units in the app using product_units.pack_quantity.
+  4. All write operations by users are tracked via created_by / updated_by FKs.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 2 — TABLE MAP (grouped by domain)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+AUTH              users, security_questions, user_security_questions
+CATALOG           categories, units, products
+PRODUCT UNITS     product_units
+PRICING           product_unit_prices, pricing_tiers
+INVENTORY         product_stock, stock_log_reasons, stock_movements
+CUSTOMERS         customers, customer_addresses
+SALES             payment_types, sales, sale_items, sales_returns
+CREDIT            credit, credit_payments
+EXPENSES          expense_categories, expenses
+CASH              cash_fund, cash_fund_transactions
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 3 — TABLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+────────────────────────────────────────────────────────────────────────────────
+AUTH
+────────────────────────────────────────────────────────────────────────────────
+
+TABLE: users
+PURPOSE: Staff accounts. Login via mobile_number + PIN. Role controls access.
+COLUMNS:
+  id                 PK
+  mobile_number      UNIQUE — login username
+  pin_hash           SHA-256 hashed PIN
+  first_name
+  middle_name        nullable
+  last_name
+  role               ENUM: admin | manager | cashier
+  is_deleted         soft delete flag
+  created_at
+  updated_at
+NOTES:
+  - Filter is_deleted = FALSE in all active-user queries.
+  - Role 'manager' can approve manual price overrides in sale_items.
+
+---
+
+TABLE: security_questions
+PURPOSE: Predefined list of account recovery questions.
+COLUMNS:
+  id
+  question_text
+SAMPLE VALUES: "What is your mother's maiden name?", "What was your first pet's name?"
+
+---
+
+TABLE: user_security_questions
+PURPOSE: Links a user to their chosen security questions and hashed answers.
+COLUMNS:
+  id
+  user_id            FK → users.id
+  question_id        FK → security_questions.id
+  answer_hash        SHA-256 hashed answer
+  created_at
+CONSTRAINT: UNIQUE (user_id, question_id) — one answer per question per user.
+
+────────────────────────────────────────────────────────────────────────────────
+CATALOG
+────────────────────────────────────────────────────────────────────────────────
+
+TABLE: categories
+PURPOSE: Product groupings (e.g. Grains, Vegetables, Snacks).
+COLUMNS:
+  id
+  name               UNIQUE (e.g. "Grains", "Vegetables", "Beverages")
+  description        nullable
+  created_at
+  updated_at
+
+---
+
+TABLE: units
+PURPOSE: Master list of measurement units used across all products.
+COLUMNS:
+  id
+  name               UNIQUE (e.g. "kg", "mL", "piece", "tray", "sack", "pack", "container")
+  created_at
+NOTES:
+  - These are unit types, not packaging labels.
+  - Packaging labels (e.g. "sack", "250mL") live in product_units.display_name.
+
+---
+
+TABLE: products
+PURPOSE: Master product catalog. Each product has one base unit for stock tracking.
+COLUMNS:
+  id
+  name
+  category_id        FK → categories.id
+  base_unit_id       FK → units.id — canonical unit for inventory (e.g. kg, mL, piece)
+  description        nullable
+  is_deleted         soft delete
+  created_at
+  updated_at
+SAMPLE DATA:
+  id=1  name="Rice"         base_unit=kg
+  id=2  name="Egg"          base_unit=piece
+  id=3  name="Cooking Oil"  base_unit=mL
+  id=4  name="Candy"        base_unit=piece
+  id=5  name="Cabbage"      base_unit=kg
+
+────────────────────────────────────────────────────────────────────────────────
+PRODUCT UNITS
+────────────────────────────────────────────────────────────────────────────────
+
+TABLE: product_units
+PURPOSE: Every way a product can be sold or restocked. Each row = one packaging option.
+         The pack_quantity column is the unit conversion factor (base units per pack).
+COLUMNS:
+  id
+  product_id                  FK → products.id
+  unit_id                     FK → units.id — underlying unit type
+  display_name                label shown in UI (e.g. "sack", "250mL", "tray")
+  pack_quantity               how many base units this packaging contains
+                              (conversion factor: 1 [display_name] = pack_quantity [base units])
+  is_default_selling          TRUE = pre-selected on POS screen (only 1 per product)
+  can_restock                 TRUE = appears on purchase/restock screen
+  can_sell                    TRUE = appears on sales screen
+  approx_base_qty_per_piece   nullable — kg per piece for variable-weight items (e.g. cabbage)
+  notes                       nullable
+  created_at
+  updated_at
+CONSTRAINT: Exactly one row per product may have is_default_selling = TRUE.
+
+FULL SAMPLE DATA:
+  product   display_name  pack_qty  default  restock  sell   notes
+  ───────────────────────────────────────────────────────────────────────────
+  Rice      kg            1         FALSE    TRUE     TRUE
+  Rice      sack          50        TRUE     TRUE     TRUE   1 sack = 50 kg
+  Egg       piece         1         TRUE     TRUE     TRUE
+  Egg       tray          30        FALSE    TRUE     TRUE   1 tray = 30 pcs
+  Oil       mL            1         FALSE    TRUE     TRUE
+  Oil       250mL         250       TRUE     FALSE    TRUE   sell only, no restock
+  Oil       container     20000     FALSE    TRUE     TRUE   1 container = 20L
+  Candy     piece         1         TRUE     TRUE     TRUE
+  Candy     pack          100       FALSE    TRUE     TRUE   1 pack = 100 pcs
+  Cabbage   kg            1         FALSE    TRUE     TRUE
+  Cabbage   sack          25        FALSE    TRUE     FALSE  restock only, 1 sack = 25 kg
+  Cabbage   piece         1 (approx ~0.5kg)  TRUE  FALSE  TRUE  variable weight
+
+UNIT CONVERSION FORMULA:
+  quantity_in_base_units = quantity_sold * product_units.pack_quantity
+  Example: 3 sacks of Rice = 3 * 50 = 150 kg deducted from product_stock.
+
+────────────────────────────────────────────────────────────────────────────────
+PRICING
+────────────────────────────────────────────────────────────────────────────────
+
+TABLE: product_unit_prices
+PURPOSE: Standard purchase cost and selling price per product unit.
+         Used when no pricing_tier applies.
+COLUMNS:
+  id
+  product_unit_id    FK → product_units.id
+  purchase_price     cost from supplier (DECIMAL 10,2)
+  selling_price      default retail price (DECIMAL 10,2)
+  effective_date     DATE — when this price becomes active
+  expiry_date        DATE, nullable — NULL means currently active
+  created_by         FK → users.id
+  updated_by         FK → users.id, nullable
+  created_at
+  updated_at
+CONSTRAINT: Only one active row per product_unit_id at any time
+            (where expiry_date IS NULL or >= today).
+
+SAMPLE DATA:
+  product unit      purchase   selling
+  ──────────────────────────────────────
+  Rice kg           55.00      57.00
+  Rice sack         2750.00    2850.00
+  Egg piece         9.00       9.00
+  Oil 250mL         22.50      37.00
+  Candy piece       1.50       2.00
+  Cabbage kg        180.50     200.00
+  Cabbage piece     0.00       25.00
+
+---
+
+TABLE: pricing_tiers
+PURPOSE: Overrides the standard price for specific quantities, date ranges, or promotions.
+         Replaces both the old pricing_tiers AND promotions tables.
+COLUMNS:
+  id
+  product_unit_id    FK → product_units.id
+  label              nullable — promo name e.g. "New Year Sale"
+  tier_type          ENUM: BUNDLE_PRICE | VOLUME_DISCOUNT | FLAT_RATE
+  quantity_min       minimum qty to qualify
+  quantity_max       maximum qty (use 999999 for open-ended)
+  price_per_unit     DECIMAL 10,2 — used for VOLUME_DISCOUNT and FLAT_RATE
+  total_price        DECIMAL 10,2 — used for BUNDLE_PRICE (fixed total for the bundle)
+  effective_from     DATE
+  effective_to       DATE, nullable — NULL means currently active
+  created_by         FK → users.id
+  updated_by         FK → users.id, nullable
+  created_at
+  updated_at
+CONSTRAINTS:
+  - quantity_min <= quantity_max
+  - No overlapping qty ranges for the same product_unit_id in the same date window
+  - price_per_unit required when tier_type = VOLUME_DISCOUNT or FLAT_RATE
+  - total_price required when tier_type = BUNDLE_PRICE
+
+TIER TYPE GUIDE:
+  BUNDLE_PRICE    → fixed total for an exact qty. e.g. "3 pieces = 5 PHP"
+                    unit_price = total_price / quantity
+  VOLUME_DISCOUNT → per-unit price for a qty range. e.g. "10+ pieces = 1.50 PHP each"
+                    unit_price = price_per_unit
+  FLAT_RATE       → per-unit fixed price regardless of standard. e.g. "January sale 54 PHP/kg"
+                    unit_price = price_per_unit
+
+SAMPLE DATA:
+  Candy 3 pcs = 5 PHP:   tier_type=BUNDLE_PRICE,    qty 3–3,       total_price=5.00
+  Candy 10+ = 1.50 each: tier_type=VOLUME_DISCOUNT, qty 10–999999, price_per_unit=1.50
+  Rice January promo:    tier_type=FLAT_RATE,        qty 1–999999,  price_per_unit=54.00,
+                         label="January Sale", effective_from=2024-01-01, effective_to=2024-01-31
+
+PRICING RESOLUTION ORDER (always follow this sequence):
+  1. Query pricing_tiers WHERE product_unit_id=? AND qty_min<=qty AND qty_max>=qty
+     AND effective_from<=today AND (effective_to IS NULL OR effective_to>=today)
+  2. If tier found → apply tier price (see TIER TYPE GUIDE above)
+  3. If no tier → use product_unit_prices.selling_price
+  4. If cashier manually overrides → use sale_items.unit_price with is_manual_priced=TRUE
+
+────────────────────────────────────────────────────────────────────────────────
+INVENTORY
+────────────────────────────────────────────────────────────────────────────────
+
+TABLE: product_stock
+PURPOSE: Current on-hand quantity per product. Always in base unit. One row per product.
+COLUMNS:
+  product_id         PK, FK → products.id
+  quantity           DECIMAL 12,4 — always in products.base_unit
+  updated_at
+  updated_by         FK → users.id, nullable
+RULE: Never store quantity in a display unit. Always convert on insert/update.
+      Example: receiving 5 sacks of Rice → store quantity += 5 * 50 = 250 (kg)
+
+---
+
+TABLE: stock_log_reasons
+PURPOSE: Lookup table for why stock changed.
+COLUMNS:
+  id
+  name               UNIQUE
+STANDARD VALUES: Purchase, Sale, Return, Damage, Recount, Sample, Adjustment
+
+---
+
+TABLE: stock_movements
+PURPOSE: Immutable audit trail. Every stock change must have a record here.
+COLUMNS:
+  id
+  product_id         FK → products.id
+  stock_log_reason_id FK → stock_log_reasons.id
+  quantity_changed   DECIMAL 12,4 — positive = stock added, negative = stock removed
+  reference_type     nullable VARCHAR — e.g. 'SALE', 'PURCHASE', 'RETURN'
+  reference_id       nullable INT — ID of the related sale, purchase, return, etc.
+  notes              nullable
+  created_by         FK → users.id
+  created_at
+RULE: Always insert a stock_movements record whenever product_stock.quantity changes.
+
+────────────────────────────────────────────────────────────────────────────────
+CUSTOMERS
+────────────────────────────────────────────────────────────────────────────────
+
+TABLE: customers
+PURPOSE: Registered buyer profiles. Walk-in customers have no record (sales.customer_id = NULL).
+COLUMNS:
+  id
+  first_name
+  middle_name        nullable
+  last_name
+  contact_number     nullable
+  credit_limit       DECIMAL 10,2 — 0 means no credit allowed
+  is_deleted         soft delete
+  created_at
+  updated_at
+
+---
+
+TABLE: customer_addresses
+PURPOSE: One or more addresses per customer. One must be marked primary.
+COLUMNS:
+  id
+  customer_id        FK → customers.id
+  municipality
+  barangay
+  street
+  is_primary         TRUE = default delivery address
+  created_at
+  updated_at
+CONSTRAINT: Only one row per customer may have is_primary = TRUE.
+
+────────────────────────────────────────────────────────────────────────────────
+SALES
+────────────────────────────────────────────────────────────────────────────────
+
+TABLE: payment_types
+PURPOSE: Accepted payment methods.
+COLUMNS:
+  id
+  name               UNIQUE
+STANDARD VALUES: Cash, Credit, GCash, PayMaya, Bank Transfer, Check
+
+---
+
+TABLE: sales
+PURPOSE: Header record for each sales transaction.
+COLUMNS:
+  id
+  customer_id        FK → customers.id, nullable — NULL for walk-in
+  payment_type_id    FK → payment_types.id
+  sale_date          TIMESTAMP
+  notes              nullable
+  created_by         FK → users.id — the cashier
+  created_at
+  updated_at
+NOTE: No total_amount column. Compute as:
+      SELECT SUM(quantity * unit_price) FROM sale_items WHERE sale_id = ?
+
+---
+
+TABLE: sale_items
+PURPOSE: Individual line items within a sale.
+COLUMNS:
+  id
+  sale_id            FK → sales.id
+  product_unit_id    FK → product_units.id — which unit was sold (e.g. rice sack, not just rice)
+  quantity           DECIMAL 10,4
+  unit_price         DECIMAL 10,2 — final price actually charged (post tier / post override)
+  is_manual_priced   BOOLEAN — TRUE if cashier overrode the system price
+  manual_price_reason VARCHAR 255, nullable — required when is_manual_priced = TRUE
+  approved_by        FK → users.id, nullable — manager who approved the override
+  weight_per_piece_kg DECIMAL 10,4, nullable — actual weight for variable-weight items (e.g. cabbage)
+  created_at
+NOTE: No line_total column. Compute as quantity * unit_price.
+NOTE: All price override auditing is captured in this table. No separate override table.
+
+STOCK DEDUCTION RULE on sale:
+  base_qty_to_deduct = quantity * product_units.pack_quantity
+  Special case (variable-weight): if weight_per_piece_kg is filled, use that instead.
+  Always insert a stock_movements record with quantity_changed = -base_qty_to_deduct.
+
+---
+
+TABLE: sales_returns
+PURPOSE: Records product returns and refunds against a specific sale.
+COLUMNS:
+  id
+  sale_id            FK → sales.id
+  sale_item_id       FK → sale_items.id, nullable — NULL means entire sale returned
+  quantity_returned  DECIMAL 10,4
+  reason             VARCHAR 255
+  refund_amount      DECIMAL 10,2
+  processed_by       FK → users.id
+  created_at
+RULE: After inserting a return, insert a positive stock_movements record to restore inventory.
+
+────────────────────────────────────────────────────────────────────────────────
+CREDIT
+────────────────────────────────────────────────────────────────────────────────
+
+TABLE: credit
+PURPOSE: Tracks the outstanding balance when a customer buys on credit.
+         One record per credit sale.
+COLUMNS:
+  id
+  sale_id            FK → sales.id, UNIQUE — one credit record per sale
+  customer_id        FK → customers.id — stored directly for fast lookups
+  amount_owed        DECIMAL 10,2 — original credit amount
+  amount_paid        DECIMAL 10,2 DEFAULT 0 — running total of payments received
+  due_date           DATE
+  status             ENUM: PENDING | PARTIALLY_PAID | PAID | OVERDUE
+  notes              nullable
+  created_at
+  updated_at
+NOTE: customer_id is intentionally redundant with sales.customer_id for query efficiency.
+      Ensure they match on insert.
+COMPUTE outstanding balance: amount_owed - amount_paid
+
+CREDIT LIMIT CHECK before approving a new credit sale:
+  SELECT c.credit_limit,
+         COALESCE(SUM(cr.amount_owed - cr.amount_paid), 0) AS outstanding
+  FROM customers c
+  LEFT JOIN credit cr ON c.id = cr.customer_id AND cr.status != 'PAID'
+  WHERE c.id = ?
+  GROUP BY c.id;
+  -- Approve only if (outstanding + new_sale_amount) <= credit_limit
+
+---
+
+TABLE: credit_payments
+PURPOSE: Records each payment made against a credit balance.
+COLUMNS:
+  id
+  credit_id          FK → credit.id
+  amount_paid        DECIMAL 10,2
+  payment_method     VARCHAR 50 (e.g. Cash, GCash)
+  paid_at            TIMESTAMP
+  notes              nullable
+  received_by        FK → users.id
+  created_at
+RULE: After insert, update credit.amount_paid += amount_paid and recalculate credit.status.
+
+────────────────────────────────────────────────────────────────────────────────
+EXPENSES
+────────────────────────────────────────────────────────────────────────────────
+
+TABLE: expense_categories
+PURPOSE: Classification for business expenditures.
+COLUMNS:
+  id
+  name               UNIQUE
+  created_at
+STANDARD VALUES: Rent, Utilities, Salaries, Transportation, Marketing, Supplies
+
+---
+
+TABLE: expenses
+PURPOSE: Records individual business costs with optional receipt image.
+COLUMNS:
+  id
+  expense_category_id FK → expense_categories.id
+  amount             DECIMAL 10,2
+  description        VARCHAR 255
+  expense_date       DATE — actual date of expense (may differ from created_at)
+  image_url          VARCHAR 500, nullable — receipt photo
+  created_by         FK → users.id
+  created_at
+  updated_at
+
+────────────────────────────────────────────────────────────────────────────────
+CASH MANAGEMENT
+────────────────────────────────────────────────────────────────────────────────
+
+TABLE: cash_fund
+PURPOSE: Cash drawer assigned to a cashier for one shift.
+COLUMNS:
+  id
+  user_id            FK → users.id — cashier responsible
+  opening_balance    DECIMAL 10,2 — cash counted at shift start
+  closed_at          TIMESTAMP, nullable — NULL = shift still open
+  closing_balance    DECIMAL 10,2, nullable — physical cash count at shift close
+  notes              nullable
+  created_at
+  updated_at
+COMPUTE current balance (do not store):
+  opening_balance + SUM(
+    CASE WHEN transaction_type='IN'  THEN amount
+         WHEN transaction_type='OUT' THEN -amount
+         ELSE amount END
+  ) FROM cash_fund_transactions WHERE cash_fund_id = ?
+
+---
+
+TABLE: cash_fund_transactions
+PURPOSE: Immutable log of every cash movement during a shift.
+COLUMNS:
+  id
+  cash_fund_id       FK → cash_fund.id
+  transaction_type   ENUM: IN | OUT | ADJUSTMENT
+  amount             DECIMAL 10,2 — always positive; direction from transaction_type
+  reference_type     nullable VARCHAR — e.g. 'SALE', 'EXPENSE', 'RETURN'
+  reference_id       nullable INT — ID of the related record
+  description        VARCHAR 255
+  created_by         FK → users.id
+  created_at
+NOTE: No balance_after column. Compute running balance via window SUM ordered by created_at.
+
+TRANSACTION TYPE GUIDE:
+  IN         → cash received (e.g. customer payment for a sale)
+  OUT        → cash paid out (e.g. expense, supplier payment)
+  ADJUSTMENT → correction after cash count (can be positive or negative amount)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 4 — KEY RELATIONSHIPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+products ──< product_units ──< product_unit_prices
+                          ──< pricing_tiers
+                          ──< sale_items >── sales >── customers
+                                                  >── payment_types
+products ──  product_stock
+         ──< stock_movements
+
+customers ──< credit ──< credit_payments
+          ──< customer_addresses
+
+users ──< cash_fund ──< cash_fund_transactions
+      ──< sales
+      ──< expenses
+
+categories ──< products
+units      ──< products (base_unit_id)
+           ──< product_units (unit_id)
+
+sales ──< sale_items ──< sales_returns
+      ──  credit
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 5 — COMMON QUERY PATTERNS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+GET CURRENT PRICE FOR A PRODUCT UNIT:
+  -- Step 1: Check for active pricing tier
+  SELECT tier_type, price_per_unit, total_price
+  FROM pricing_tiers
+  WHERE product_unit_id = :unit_id
+    AND quantity_min <= :qty AND quantity_max >= :qty
+    AND effective_from <= CURDATE()
+    AND (effective_to IS NULL OR effective_to >= CURDATE())
+  ORDER BY quantity_min DESC LIMIT 1;
+  -- Step 2: If no tier, fall back to standard price
+  SELECT selling_price FROM product_unit_prices
+  WHERE product_unit_id = :unit_id
+    AND effective_date <= CURDATE()
+    AND (expiry_date IS NULL OR expiry_date >= CURDATE())
+  ORDER BY effective_date DESC LIMIT 1;
+
+GET SALE TOTAL WITH LINE ITEMS:
+  SELECT s.id, s.sale_date,
+         si.quantity, si.unit_price, (si.quantity * si.unit_price) AS line_total,
+         pu.display_name, p.name AS product,
+         SUM(si.quantity * si.unit_price) OVER (PARTITION BY s.id) AS sale_total
+  FROM sales s
+  JOIN sale_items si ON s.id = si.sale_id
+  JOIN product_units pu ON si.product_unit_id = pu.id
+  JOIN products p ON pu.product_id = p.id
+  WHERE s.id = :sale_id;
+
+GET STOCK LEVEL FOR A PRODUCT (in base unit):
+  SELECT ps.quantity, u.name AS unit
+  FROM product_stock ps
+  JOIN products p ON ps.product_id = p.id
+  JOIN units u ON p.base_unit_id = u.id
+  WHERE ps.product_id = :product_id;
+
+GET CUSTOMER OUTSTANDING CREDIT:
+  SELECT cr.id, cr.amount_owed, cr.amount_paid,
+         (cr.amount_owed - cr.amount_paid) AS balance, cr.due_date, cr.status
+  FROM credit cr
+  WHERE cr.customer_id = :customer_id AND cr.status != 'PAID'
+  ORDER BY cr.due_date ASC;
+
+GET CASHIER CURRENT CASH BALANCE:
+  SELECT cf.opening_balance,
+         cf.opening_balance + COALESCE(SUM(
+           CASE WHEN cft.transaction_type = 'IN'  THEN cft.amount
+                WHEN cft.transaction_type = 'OUT' THEN -cft.amount
+                ELSE cft.amount END), 0) AS current_balance
+  FROM cash_fund cf
+  LEFT JOIN cash_fund_transactions cft ON cf.id = cft.cash_fund_id
+  WHERE cf.id = :cash_fund_id
+  GROUP BY cf.id;
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 6 — BUSINESS RULES SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+RULE 1 — STOCK IS ALWAYS IN BASE UNIT
+  product_stock.quantity stores kg, mL, or piece — never sacks, trays, containers.
+  Multiply by product_units.pack_quantity when receiving or selling in a pack unit.
+
+RULE 2 — EVERY STOCK CHANGE NEEDS A stock_movements RECORD
+  Applies to: sales, returns, restocking, damage, recounts, and adjustments.
+
+RULE 3 — PRICING HIERARCHY
+  pricing_tiers (if active and qty matches) → product_unit_prices → manual override
+
+RULE 4 — MANUAL PRICE OVERRIDES
+  Only a manager (role=manager or admin) may be set in sale_items.approved_by.
+  is_manual_priced must be TRUE and manual_price_reason must be filled.
+
+RULE 5 — CREDIT SALES
+  Before approving: sum (amount_owed - amount_paid) for all non-PAID credits.
+  Total outstanding + new sale amount must not exceed customers.credit_limit.
+  After approving: insert credit row with customer_id matching sales.customer_id.
+
+RULE 6 — RETURNS RESTORE STOCK
+  Every sales_returns insert must be accompanied by a positive stock_movements record.
+
+RULE 7 — VARIABLE-WEIGHT ITEMS (e.g. Cabbage sold by piece)
+  Use sale_items.weight_per_piece_kg if cashier weighs the item.
+  Fall back to product_units.approx_base_qty_per_piece for estimated deduction.
+
+RULE 8 — CASH FUND TRANSACTIONS ARE IMMUTABLE
+  Never update or delete cash_fund_transactions rows.
+  Use ADJUSTMENT type to correct errors.
+
+RULE 9 — SOFT DELETES
+  Set is_deleted = TRUE instead of DELETE on users, products, customers.
+  Historical records (sales, stock_movements, etc.) remain intact and queryable.
+
+================================================================================
+END OF AI CONTEXT
+================================================================================
