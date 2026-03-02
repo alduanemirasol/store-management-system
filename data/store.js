@@ -92,11 +92,19 @@ function seedData() {
 
   // CATALOG
   db.categories = [
-    { id: 1, name: "Grains", description: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 2, name: "Dairy & Eggs", description: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 3, name: "Condiments", description: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 4, name: "Sweets", description: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 5, name: "Vegetables", description: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 1, name: "Canned Goods", description: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 2, name: "Candies", description: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 3, name: "Biscuits", description: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 4, name: "Vegetables", description: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 5, name: "Tobacco", description: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 6, name: "Eggs", description: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 7, name: "Beverages", description: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 8, name: "Snacks", description: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 9, name: "Rice & Grains", description: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 10, name: "Cooking Essentials", description: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 11, name: "Household Supplies", description: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 12, name: "Personal Care", description: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 13, name: "Others", description: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
   ];
 
   // Master unit types
@@ -256,8 +264,6 @@ function seedData() {
     { id: 1, name: "Cash" },
     { id: 2, name: "Credit" },
     { id: 3, name: "GCash" },
-    { id: 4, name: "PayMaya" },
-    { id: 5, name: "Bank Transfer" },
   ];
 
   db.sales = [];

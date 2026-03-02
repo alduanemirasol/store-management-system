@@ -285,7 +285,7 @@ function renderStockLogsPage() {
   if (!logs.length) {
     tbody.innerHTML = `<tr><td colspan="5" class="page-empty">No stock logs found.</td></tr>`;
     return;
-  }
+  } 
 
   tbody.innerHTML = logs.map((l) => {
     const d = new Date(l.created_at);
