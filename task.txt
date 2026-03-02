@@ -1,0 +1,16 @@
+Add a new page named **Customers**.  
+This page should display a table with the following columns for all customers:  
+- Name  
+- Contact Number  
+- Address  
+- Credit Limit  
+- Utang Amount  
+- Actions (edit/delete or other relevant operations)  
+
+Include a **“Add New Customer”** button that opens a **modal form** to input:  
+- Name  
+- Contact Number  
+- Address  
+- Credit Limit  
+
+Ensure the table updates automatically when a new customer is added and all data is displayed accurately.
