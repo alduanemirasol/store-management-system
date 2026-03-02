@@ -301,15 +301,16 @@ function renderStockLogsPage() {
         ? '<span class="badge badge-green">📦 Restock</span>'
         : `<span class="badge badge-blue">${reasonName}</span>`;
 
-    const qtyColor = l.quantity_changed < 0 ? "var(--red)" : "var(--green)";
-    const qtyPrefix = l.quantity_changed >= 0 ? "+" : "";
+    const isPositive = l.quantity_changed >= 0;
+    const qtyColor = isPositive ? "var(--green)" : "var(--red)";
+    const qtySign = isPositive ? "+" : "−";
     const baseUnitName = product ? getProductBaseUnitName(product) : "";
 
     return `<tr>
       <td><strong>${productEmoji} ${productName}</strong></td>
       <td>${typeBadge}</td>
       <td>
-        <span style="color:${qtyColor};font-weight:600;">${qtyPrefix}${formatQty(Math.abs(l.quantity_changed))}</span>
+        <span style="color:${qtyColor};font-weight:600;">${qtySign}${formatQty(Math.abs(l.quantity_changed))}</span>
         <span style="font-size:12px;color:var(--text3);margin-left:4px;">${baseUnitName}</span>
       </td>
       <td>
