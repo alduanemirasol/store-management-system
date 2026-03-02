@@ -549,3 +549,141 @@
 .cart-stock-value.out-of-stock {
   color: var(--red);
 }
+/* ─── Checkout / Payment Modal ────────────────────────────────────────────── */
+
+/* checkout-total-box: Shows order total prominently at top of modal. */
+.checkout-total-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--accent-light);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+}
+
+.checkout-total-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.checkout-total-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+}
+
+/* checkout-pay-btns: Side-by-side Cash / Credit selector buttons. */
+.checkout-pay-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.checkout-pay-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 14px 10px;
+  border-radius: var(--radius);
+  border: 2px solid var(--border2);
+  background: var(--surface);
+  cursor: pointer;
+  font-family: "Inter", sans-serif;
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.checkout-pay-btn:hover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+/* checkout-pay-btn.active: Highlighted state for selected payment method. */
+.checkout-pay-btn.active {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  box-shadow: 0 0 0 3px rgba(59, 110, 240, 0.12);
+}
+
+.checkout-pay-icon {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.checkout-pay-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.checkout-pay-sub {
+  font-size: 11px;
+  color: var(--text3);
+  line-height: 1.3;
+}
+
+/* checkout-credit-info: Panel showing credit limit, outstanding, and approval status. */
+.checkout-credit-info {
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-top: 4px;
+  background: var(--surface2);
+  border: 1.5px solid var(--border2);
+}
+
+.checkout-credit-info.ok {
+  background: var(--green-light);
+  border-color: var(--green);
+}
+
+.checkout-credit-info.over {
+  background: var(--red-light);
+  border-color: var(--red);
+}
+
+/* credit-info-row: Label/value pair row within the credit panel. */
+.credit-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding: 3px 0;
+  color: var(--text2);
+}
+
+.credit-info-row strong {
+  font-size: 14px;
+}
+
+/* credit-info-divider: Separator line above the projected total row. */
+.credit-info-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 8px 0;
+}
+
+/* credit-info-status: Approval or rejection banner at bottom of credit panel. */
+.credit-info-status {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.credit-info-status.ok {
+  background: rgba(22, 163, 74, 0.12);
+  color: var(--green);
+}
+
+.credit-info-status.over {
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--red);
+}

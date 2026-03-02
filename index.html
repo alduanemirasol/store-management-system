@@ -101,7 +101,7 @@
                             </div>
                             <div class="cart-actions">
                                 <button class="btn btn-secondary" onclick="clearCart()">Clear</button>
-                                <button class="btn btn-success" onclick="checkout()" id="checkout-btn"
+                                <button class="btn btn-success" onclick="openCheckoutModal()" id="checkout-btn"
                                     disabled>Checkout</button>
                             </div>
                         </div>
@@ -697,6 +697,60 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('modal-restock')">Cancel</button>
                 <button class="btn btn-success" onclick="doRestockFromModal()">✅ Confirm Restock</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Checkout / Payment Modal ─────────────────────────────────────── -->
+    <div class="modal-backdrop" id="modal-checkout">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3>💳 Payment</h3>
+                <button class="close-btn" onclick="closeModal('modal-checkout')">✕</button>
+            </div>
+            <div class="modal-body">
+
+                <!-- Order total summary -->
+                <div class="checkout-total-box">
+                    <span class="checkout-total-label">Order Total</span>
+                    <span class="checkout-total-value" id="checkout-total-display">₱0.00</span>
+                </div>
+
+                <!-- Payment method selector -->
+                <div class="form-group">
+                    <label>Payment Method</label>
+                    <div class="checkout-pay-btns">
+                        <button class="checkout-pay-btn active" id="pay-btn-cash"
+                            onclick="selectCheckoutPayment('cash')">
+                            <span class="checkout-pay-icon">💵</span>
+                            <span class="checkout-pay-label">Cash</span>
+                            <span class="checkout-pay-sub">Walk-in / no account</span>
+                        </button>
+                        <button class="checkout-pay-btn" id="pay-btn-credit" onclick="selectCheckoutPayment('credit')">
+                            <span class="checkout-pay-icon">📒</span>
+                            <span class="checkout-pay-label">Credit</span>
+                            <span class="checkout-pay-sub">Charge to customer tab</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Customer selector — shown only for Credit -->
+                <div class="form-group" id="checkout-customer-section" style="display:none;">
+                    <label>Customer *</label>
+                    <select id="checkout-customer-select" onchange="onCheckoutCustomerChange()" style="width:100%;">
+                        <option value="">— Select customer —</option>
+                    </select>
+                    <p class="helper" style="margin-top:5px;">Only customers with a credit limit are shown.</p>
+                </div>
+
+                <!-- Credit limit info panel — shown after customer is selected -->
+                <div id="checkout-credit-info" class="checkout-credit-info" style="display:none;"></div>
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modal-checkout')">Cancel</button>
+                <button class="btn btn-success" id="confirm-checkout-btn" onclick="confirmCheckout()">✅ Confirm
+                    Sale</button>
             </div>
         </div>
     </div>

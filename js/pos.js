@@ -510,12 +510,161 @@ function clearInlineManualPrice(cartId) {
   toast("Manual price removed", "info");
 }
 
-// ─── Checkout ─────────────────────────────────────────────────────────────────
+// ─── Checkout modal ───────────────────────────────────────────────────────────
 
-function checkout() {
+// openCheckoutModal: Validates stock then shows payment method selection.
+function openCheckoutModal() {
   if (!cart.length) return;
 
-  // Validate all stock before writing anything
+  // Pre-validate all stock before opening modal
+  for (const ci of cart) {
+    const stockRow = getProductStock(ci.product_id);
+    const stockQty = stockRow ? stockRow.quantity : 0;
+    if (ci.base_qty > stockQty) {
+      toast(`Not enough stock for ${ci.item_name}!`, "error");
+      return;
+    }
+  }
+
+  const total = cart.reduce((s, i) => s + i.price, 0);
+
+  // Populate checkout modal total
+  document.getElementById("checkout-total-display").textContent =
+    `₱${formatPeso(total)}`;
+
+  // Reset modal state to Cash / walk-in defaults
+  selectCheckoutPayment("cash");
+  document.getElementById("checkout-customer-section").style.display = "none";
+  document.getElementById("checkout-credit-info").style.display = "none";
+  document.getElementById("checkout-customer-select").value = "";
+
+  // Build customer dropdown from non-deleted customers with credit_limit > 0
+  const creditCustomers = db.customers.filter(
+    (c) => !c.is_deleted && c.credit_limit > 0,
+  );
+  const sel = document.getElementById("checkout-customer-select");
+  sel.innerHTML =
+    '<option value="">— Select customer —</option>' +
+    creditCustomers
+      .map(
+        (c) =>
+          `<option value="${c.id}">${c.first_name} ${c.last_name}${c.contact_number ? " · " + c.contact_number : ""}</option>`,
+      )
+      .join("");
+
+  openModal("modal-checkout");
+}
+
+// selectCheckoutPayment: Switches UI between Cash and Credit payment modes.
+function selectCheckoutPayment(method) {
+  const cashBtn = document.getElementById("pay-btn-cash");
+  const creditBtn = document.getElementById("pay-btn-credit");
+  const customerSection = document.getElementById("checkout-customer-section");
+  const creditInfo = document.getElementById("checkout-credit-info");
+
+  if (method === "cash") {
+    cashBtn.classList.add("active");
+    creditBtn.classList.remove("active");
+    customerSection.style.display = "none";
+    creditInfo.style.display = "none";
+    document.getElementById("checkout-customer-select").value = "";
+  } else {
+    creditBtn.classList.add("active");
+    cashBtn.classList.remove("active");
+    customerSection.style.display = "block";
+    creditInfo.style.display = "none";
+  }
+}
+
+// onCheckoutCustomerChange: Runs credit limit check when customer is selected.
+function onCheckoutCustomerChange() {
+  const customerId = parseInt(
+    document.getElementById("checkout-customer-select").value,
+  );
+  const infoEl = document.getElementById("checkout-credit-info");
+
+  if (!customerId) {
+    infoEl.style.display = "none";
+    return;
+  }
+
+  const customer = db.customers.find(
+    (c) => c.id === customerId && !c.is_deleted,
+  );
+  if (!customer) return;
+
+  const saleTotal = cart.reduce((s, i) => s + i.price, 0);
+
+  // Schema Rule 5: SUM(amount_owed - amount_paid) for all non-PAID credits
+  const outstanding = db.credit
+    .filter((cr) => cr.customer_id === customerId && cr.status !== "PAID")
+    .reduce((sum, cr) => sum + (cr.amount_owed - cr.amount_paid), 0);
+
+  const projectedTotal = outstanding + saleTotal;
+  const canApprove = projectedTotal <= customer.credit_limit;
+  const remaining = customer.credit_limit - outstanding;
+
+  infoEl.style.display = "block";
+  infoEl.className = `checkout-credit-info ${canApprove ? "ok" : "over"}`;
+  infoEl.innerHTML = `
+    <div class="credit-info-row">
+      <span>Credit Limit</span>
+      <strong>₱${formatPeso(customer.credit_limit)}</strong>
+    </div>
+    <div class="credit-info-row">
+      <span>Current Outstanding</span>
+      <strong style="color:var(--orange);">₱${formatPeso(outstanding)}</strong>
+    </div>
+    <div class="credit-info-row">
+      <span>This Sale</span>
+      <strong>₱${formatPeso(saleTotal)}</strong>
+    </div>
+    <div class="credit-info-divider"></div>
+    <div class="credit-info-row">
+      <span>After This Sale</span>
+      <strong style="color:${canApprove ? "var(--green)" : "var(--red)"};">₱${formatPeso(projectedTotal)}</strong>
+    </div>
+    ${
+      canApprove
+        ? `<div class="credit-info-status ok">✅ Approved — ₱${formatPeso(remaining - saleTotal)} remaining after this sale</div>`
+        : `<div class="credit-info-status over">🚫 Exceeds credit limit by ₱${formatPeso(projectedTotal - customer.credit_limit)}</div>`
+    }
+  `;
+
+  // Disable confirm button if over limit
+  document.getElementById("confirm-checkout-btn").disabled = !canApprove;
+}
+
+// confirmCheckout: Reads modal state and calls the write function.
+function confirmCheckout() {
+  const isCash = document
+    .getElementById("pay-btn-cash")
+    .classList.contains("active");
+  const paymentTypeId = isCash
+    ? db.payment_types.find((p) => p.name === "Cash")?.id || 1
+    : db.payment_types.find((p) => p.name === "Credit")?.id || 2;
+
+  const customerId = isCash
+    ? null
+    : parseInt(document.getElementById("checkout-customer-select").value) ||
+      null;
+
+  if (!isCash && !customerId) {
+    toast("Select a customer for credit sale", "error");
+    return;
+  }
+
+  closeModal("modal-checkout");
+  processCheckout(paymentTypeId, customerId);
+}
+
+// ─── Checkout write logic ─────────────────────────────────────────────────────
+
+// processCheckout: Commits sale to db, handles cash/credit branches per schema.
+function processCheckout(paymentTypeId, customerId) {
+  if (!cart.length) return;
+
+  // Final stock guard (re-check after modal was open)
   for (const ci of cart) {
     const stockRow = getProductStock(ci.product_id);
     const stockQty = stockRow ? stockRow.quantity : 0;
@@ -527,12 +676,39 @@ function checkout() {
 
   const saleDate = new Date().toISOString();
   const userId = currentUser ? currentUser.id : null;
+  const saleTotal = cart.reduce((s, i) => s + i.price, 0);
+  const isCreditSale =
+    paymentTypeId ===
+    (db.payment_types.find((p) => p.name === "Credit")?.id || 2);
 
-  // Insert sales header
+  // Credit re-validation at write time (schema Rule 5)
+  if (isCreditSale && customerId) {
+    const customer = db.customers.find(
+      (c) => c.id === customerId && !c.is_deleted,
+    );
+    if (!customer) {
+      toast("Customer not found", "error");
+      return;
+    }
+
+    const outstanding = db.credit
+      .filter((cr) => cr.customer_id === customerId && cr.status !== "PAID")
+      .reduce((sum, cr) => sum + (cr.amount_owed - cr.amount_paid), 0);
+
+    if (outstanding + saleTotal > customer.credit_limit) {
+      toast(
+        `Credit limit exceeded for ${customer.first_name} ${customer.last_name}`,
+        "error",
+      );
+      return;
+    }
+  }
+
+  // ── 1. Insert sales header ──────────────────────────────────────────────────
   const sale = {
     id: newId("sales"),
-    customer_id: null, // walk-in
-    payment_type_id: 1, // Cash (default)
+    customer_id: customerId,
+    payment_type_id: paymentTypeId,
     sale_date: saleDate,
     notes: null,
     created_by: userId,
@@ -541,13 +717,12 @@ function checkout() {
   };
   db.sales.unshift(sale);
 
-  // Insert sale_items + stock_movements
+  // ── 2. Insert sale_items + stock_movements ──────────────────────────────────
   const saleReasonId =
     db.stock_log_reasons.find((r) => r.name === "Sale")?.id || 2;
 
   for (const ci of cart) {
-    // sale_items row
-    const saleItem = {
+    db.sale_items.unshift({
       id: newId("sale_items"),
       sale_id: sale.id,
       product_unit_id: ci.product_unit_id,
@@ -555,18 +730,17 @@ function checkout() {
       unit_price: ci.unit_price,
       is_manual_priced: ci.is_manual_priced || false,
       manual_price_reason: ci.manual_price_reason || null,
-      approved_by: null, // manager approval flow — placeholder
+      approved_by: null,
       weight_per_piece_kg: null,
       created_at: saleDate,
-      // UI display fields (not in schema — kept for renderRecentSales)
+      // UI-only display cache fields (not in schema)
       _product_name: ci.item_name,
       _emoji: ci.emoji,
       _unit_label: ci.unit_label,
       _base_qty: ci.base_qty,
-    };
-    db.sale_items.unshift(saleItem);
+    });
 
-    // stock_movements — negative = stock removed
+    // recordStockMovement: Deducts base quantity and writes audit record.
     recordStockMovement({
       product_id: ci.product_id,
       stock_log_reason_id: saleReasonId,
@@ -577,24 +751,45 @@ function checkout() {
     });
   }
 
-  // Cash fund transaction (cash in)
-  if (currentCashFund) {
-    const total = cart.reduce((s, i) => s + i.price, 0);
+  // ── 3a. Cash sale: log cash fund IN transaction ─────────────────────────────
+  if (!isCreditSale && currentCashFund) {
     db.cash_fund_transactions.push({
       id: newId("cash_fund_transactions"),
       cash_fund_id: currentCashFund.id,
       transaction_type: "IN",
-      amount: total,
+      amount: saleTotal,
       reference_type: "SALE",
       reference_id: sale.id,
-      description: `Sale #${String(sale.id).padStart(4, "0")}`,
+      description: `Cash sale #${String(sale.id).padStart(4, "0")}`,
       created_by: userId,
       created_at: saleDate,
     });
   }
 
-  const total = cart.reduce((s, i) => s + i.price, 0);
-  toast(`✅ Checkout complete! Total: ₱${formatPeso(total)}`, "success");
+  // ── 3b. Credit sale: insert credit row (schema Rule 5) ──────────────────────
+  if (isCreditSale && customerId) {
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 30); // 30-day default due date
+    db.credit.push({
+      id: newId("credit"),
+      sale_id: sale.id,
+      customer_id: customerId, // intentionally redundant per schema note
+      amount_owed: saleTotal,
+      amount_paid: 0,
+      due_date: dueDate.toISOString().split("T")[0],
+      status: "PENDING",
+      notes: null,
+      created_at: saleDate,
+      updated_at: saleDate,
+    });
+  }
+
+  // ── 4. Finish ───────────────────────────────────────────────────────────────
+  const payLabel = isCreditSale ? "Credit" : "Cash";
+  toast(
+    `✅ ${payLabel} sale complete! Total: ₱${formatPeso(saleTotal)}`,
+    "success",
+  );
 
   persistDb();
   clearCart();
@@ -606,6 +801,8 @@ function checkout() {
     renderRecentSalesPage();
   if (document.getElementById("page-stocklogs").classList.contains("active"))
     renderStockLogsPage();
+  if (document.getElementById("page-transactions").classList.contains("active"))
+    renderTransactions();
 }
 
 // ─── Recent sales panel (bottom of cart) ─────────────────────────────────────
