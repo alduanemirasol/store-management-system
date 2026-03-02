@@ -1,183 +1,55 @@
-let selectedRestockUnit = null;
-let selectedRestockItemId = null;
-let selectedModalRestockUnit = null;
+/**
+ * restock.js
+ * Restock page — rewritten for new schema.
+ *
+ * Schema mappings:
+ *   Old: db.restock_history[]           → New: db.stock_movements[] with reason=Purchase
+ *   Old: toBaseUnits(item, unitId, qty) → New: toBaseUnits(productUnit, qty)
+ *   Old: db.item_units[]                → New: db.product_units[].can_restock
+ *   Old: item.stock_quantity            → New: db.product_stock[product_id].quantity
+ */
+
+let selectedRestockProductUnitId = null; // product_units.id selected in modal
+let selectedRestockProductId = null;
 
 function initRestockPage() {
-  // The dropdown was removed - just render the items table
   renderRestockItemsTable();
 }
 
-function updateRestockOptions() {
-  const itemId = parseInt(document.getElementById("restock-item").value);
-  const formEl = document.getElementById("restock-form");
-  if (!itemId) {
-    formEl.style.display = "none";
-    return;
-  }
-  formEl.style.display = "block";
-
-  const item = db.items.find((i) => i.id === itemId);
-  const units = db.item_units.filter((u) => u.item_id === itemId);
-
-  const optEl = document.getElementById("restock-units");
-  const opts = [
-    { id: "base", label: item.base_unit },
-    ...units.map((u) => ({
-      id: "unit-" + u.id,
-      label: u.unit_name + ` (${u.pack_quantity} ${item.base_unit})`,
-    })),
-  ];
-
-  selectedRestockUnit = "base";
-  optEl.innerHTML = opts
-    .map(
-      (o) =>
-        `<div class="unit-option ${o.id === "base" ? "active" : ""}" onclick="selectRestockUnit('${o.id}', this)">${o.label}</div>`,
-    )
-    .join("");
-
-  document.getElementById("restock-qty").value = "";
-  document.getElementById("restock-preview").style.display = "none";
-}
-
-function selectRestockUnit(unitId, el) {
-  selectedRestockUnit = unitId;
-  document
-    .querySelectorAll("#restock-units .unit-option")
-    .forEach((o) => o.classList.remove("active"));
-  el.classList.add("active");
-  updateRestockPreview();
-}
-
-function updateRestockPreview() {
-  const itemId = parseInt(document.getElementById("restock-item").value);
-  const qty = parseFloat(document.getElementById("restock-qty").value) || 0;
-  if (!itemId || !qty) {
-    document.getElementById("restock-preview").style.display = "none";
-    return;
-  }
-  const item = db.items.find((i) => i.id === itemId);
-  const baseQty = toBaseUnits(item, selectedRestockUnit, qty);
-  const prev = document.getElementById("restock-preview");
-  prev.style.display = "block";
-  prev.textContent = `✅ +${baseQty.toLocaleString()} ${item.base_unit} will be added. New stock: ${(item.stock_quantity + baseQty).toLocaleString()} ${item.base_unit}`;
-}
-
-function doRestock() {
-  const itemId = parseInt(document.getElementById("restock-item").value);
-  const qty = parseFloat(document.getElementById("restock-qty").value) || 0;
-  if (!itemId || qty <= 0) {
-    toast("Enter a valid quantity", "error");
-    return;
-  }
-
-  const item = db.items.find((i) => i.id === itemId);
-  const baseQty = toBaseUnits(item, selectedRestockUnit, qty);
-  item.stock_quantity += baseQty;
-
-  const restockEntry = {
-    id: newId("restock_history"),
-    date: new Date().toISOString(),
-    item_id: item.id,
-    item_name: item.item_name,
-    unit: selectedRestockUnit,
-    qty,
-    base_qty: baseQty,
-    base_unit: item.base_unit,
-    note: document.getElementById("restock-note").value,
-  };
-  db.restock_history.unshift(restockEntry);
-
-  const restockUnitLabel =
-    getRestockUnitLabel(item.id, selectedRestockUnit) || item.base_unit;
-  db.stock_logs.unshift({
-    id: newId("stock_logs"),
-    date: restockEntry.date,
-    item_id: item.id,
-    item_name: item.item_name,
-    emoji: item.emoji || "📦",
-    change_type: "restock",
-    qty_change: baseQty,
-    unit_label: restockUnitLabel,
-    qty_display: qty,
-    ref_id: restockEntry.id,
-    note: restockEntry.note || "",
-  });
-
-  toast(
-    `Restocked ${baseQty.toLocaleString()} ${item.base_unit} of ${item.item_name}`,
-    "success",
-  );
-  persistDb();
-  document.getElementById("restock-qty").value = "";
-  document.getElementById("restock-note").value = "";
-  updateRestockPreview();
-  renderRestockHistory();
-  renderRestockItemsTable();
-  renderPOSItems();
-  renderInventory();
-  bannerDismissed = false;
-  updateLowStockAlerts();
-  if (document.getElementById("page-stocklogs").classList.contains("active"))
-    renderStockLogsPage();
-}
-
-function renderRestockHistory() {
-  const el = document.getElementById("restock-history");
-  if (!db.restock_history.length) {
-    el.innerHTML =
-      '<p class="helper" style="padding:8px 0;">No restocks yet.</p>';
-    return;
-  }
-  el.innerHTML = db.restock_history
-    .slice(0, 10)
-    .map((r) => {
-      const unitLabel =
-        r.unit === "base"
-          ? r.base_unit
-          : getRestockUnitLabel(r.item_id, r.unit);
-      return `<div class="restock-entry">
-        <div class="restock-entry-header">
-          <span class="restock-entry-title">${r.item_name}</span>
-          <span class="badge badge-green">+${r.base_qty.toLocaleString()} ${r.base_unit}</span>
-        </div>
-        <div class="restock-entry-meta">${r.qty} ${unitLabel} · ${new Date(r.date).toLocaleString()}</div>
-        ${r.note ? `<div class="restock-entry-note">${r.note}</div>` : ""}
-      </div>`;
-    })
-    .join("");
-}
-
-function renderRestockItemsTable(itemsToRender) {
+function renderRestockItemsTable(productsToRender) {
   const tbody = document.getElementById("restock-items-tbody");
   if (!tbody) return;
 
-  const items = itemsToRender || db.items;
+  const products = (productsToRender || db.products).filter((p) => !p.is_deleted);
 
-  if (!items.length) {
+  if (!products.length) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No items available</td></tr>';
     return;
   }
 
-  tbody.innerHTML = items.map((item) => {
-    const isLowStock = item.stock_quantity <= item.low_stock_threshold;
-    const statusBadge = isLowStock
+  tbody.innerHTML = products.map((product) => {
+    const stockRow = getProductStock(product.id);
+    const qty = stockRow ? stockRow.quantity : 0;
+    const baseUnitName = getProductBaseUnitName(product);
+    const threshold = getLowStockThreshold(product);
+    const isLow = threshold > 0 && qty <= threshold;
+    const statusBadge = isLow
       ? '<span class="badge badge-red">Low Stock</span>'
       : '<span class="badge badge-green">In Stock</span>';
 
     return `<tr>
       <td>
         <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:20px;">${item.emoji || "📦"}</span>
-          <span>${item.item_name}</span>
+          <span style="font-size:20px;">${product.emoji || "📦"}</span>
+          <span>${product.name}</span>
         </div>
       </td>
-      <td>${item.category || "-"}</td>
-      <td>${item.stock_quantity.toLocaleString()} ${item.base_unit}</td>
-      <td>${item.low_stock_threshold.toLocaleString()} ${item.base_unit}</td>
+      <td>${getProductCategoryName(product) || "-"}</td>
+      <td>${formatQty(qty)} ${baseUnitName}</td>
+      <td>${threshold > 0 ? threshold + " " + baseUnitName : "—"}</td>
       <td>${statusBadge}</td>
       <td>
-        <button class="btn btn-sm btn-success" onclick="openRestockModal(${item.id})">🔄 Restock</button>
+        <button class="btn btn-sm btn-success" onclick="openRestockModal(${product.id})">🔄 Restock</button>
       </td>
     </tr>`;
   }).join("");
@@ -185,59 +57,50 @@ function renderRestockItemsTable(itemsToRender) {
 
 function filterRestockItems() {
   const searchTerm = document.getElementById("restock-search").value.toLowerCase();
-
-  if (!searchTerm) {
-    renderRestockItemsTable();
-    return;
-  }
-
-  const filteredItems = db.items.filter((item) => {
-    return (
-      item.item_name.toLowerCase().includes(searchTerm) ||
-      (item.category && item.category.toLowerCase().includes(searchTerm)) ||
-      item.base_unit.toLowerCase().includes(searchTerm)
-    );
-  });
-
-  renderRestockItemsTable(filteredItems);
+  if (!searchTerm) { renderRestockItemsTable(); return; }
+  const filtered = db.products.filter((p) =>
+    !p.is_deleted &&
+    (p.name.toLowerCase().includes(searchTerm) ||
+      getProductCategoryName(p).toLowerCase().includes(searchTerm) ||
+      getProductBaseUnitName(p).toLowerCase().includes(searchTerm)),
+  );
+  renderRestockItemsTable(filtered);
 }
 
-function openRestockModal(itemId) {
-  selectedRestockItemId = itemId;
-  const item = db.items.find((i) => i.id === itemId);
-  if (!item) return;
+// ─── Restock modal ────────────────────────────────────────────────────────────
 
-  const units = db.item_units.filter((u) => u.item_id === itemId);
+function openRestockModal(productId) {
+  selectedRestockProductId = productId;
+  const product = db.products.find((p) => p.id === productId && !p.is_deleted);
+  if (!product) return;
 
-  // Show item details
-  const detailsEl = document.getElementById("restock-item-details");
-  detailsEl.innerHTML = `<div class="restock-item-header">
-    <span style="font-size:28px;">${item.emoji || "📦"}</span>
-    <div>
-      <div style="font-size:16px;font-weight:600;">${item.item_name}</div>
-      <div style="font-size:13px;color:var(--text3);">Current stock: ${item.stock_quantity.toLocaleString()} ${item.base_unit}</div>
-    </div>
-  </div>`;
+  const stockRow = getProductStock(productId);
+  const qty = stockRow ? stockRow.quantity : 0;
+  const baseUnitName = getProductBaseUnitName(product);
 
-  // Setup unit options
-  const optEl = document.getElementById("restock-modal-units");
-  const opts = [
-    { id: "base", label: item.base_unit },
-    ...units.map((u) => ({
-      id: "unit-" + u.id,
-      label: u.unit_name + ` (${u.pack_quantity} ${item.base_unit})`,
-    })),
-  ];
+  // Item header
+  document.getElementById("restock-item-details").innerHTML = `
+    <div class="restock-item-header">
+      <span style="font-size:28px;">${product.emoji || "📦"}</span>
+      <div>
+        <div style="font-size:16px;font-weight:600;">${product.name}</div>
+        <div style="font-size:13px;color:var(--text3);">Current stock: ${formatQty(qty)} ${baseUnitName}</div>
+      </div>
+    </div>`;
 
-  selectedModalRestockUnit = "base";
-  optEl.innerHTML = opts
-    .map(
-      (o) =>
-        `<div class="unit-option ${o.id === "base" ? "active" : ""}" onclick="selectRestockModalUnit('${o.id}', this)">${o.label}</div>`,
-    )
-    .join("");
+  // Unit options — only can_restock units
+  const restockableUnits = getRestockableUnits(productId);
+  const firstUnit = restockableUnits[0];
+  selectedRestockProductUnitId = firstUnit ? firstUnit.id : null;
 
-  // Reset inputs
+  document.getElementById("restock-modal-units").innerHTML = restockableUnits.map((pu) => {
+    const isDefault = pu.id === selectedRestockProductUnitId;
+    const label = pu.pack_quantity === 1
+      ? pu.display_name
+      : `${pu.display_name} (${pu.pack_quantity} ${baseUnitName})`;
+    return `<div class="unit-option ${isDefault ? "active" : ""}" onclick="selectRestockModalUnit(${pu.id}, this)">${label}</div>`;
+  }).join("");
+
   document.getElementById("restock-modal-qty").value = "";
   document.getElementById("restock-modal-note").value = "";
   document.getElementById("restock-modal-preview").style.display = "none";
@@ -245,10 +108,9 @@ function openRestockModal(itemId) {
   openModal("modal-restock");
 }
 
-function selectRestockModalUnit(unitId, el) {
-  selectedModalRestockUnit = unitId;
-  document
-    .querySelectorAll("#restock-modal-units .unit-option")
+function selectRestockModalUnit(productUnitId, el) {
+  selectedRestockProductUnitId = productUnitId;
+  document.querySelectorAll("#restock-modal-units .unit-option")
     .forEach((o) => o.classList.remove("active"));
   el.classList.add("active");
   updateRestockModalPreview();
@@ -256,73 +118,58 @@ function selectRestockModalUnit(unitId, el) {
 
 function updateRestockModalPreview() {
   const qty = parseFloat(document.getElementById("restock-modal-qty").value) || 0;
-  if (!selectedRestockItemId || !qty) {
-    document.getElementById("restock-modal-preview").style.display = "none";
+  const prev = document.getElementById("restock-modal-preview");
+
+  if (!selectedRestockProductId || !qty || !selectedRestockProductUnitId) {
+    prev.style.display = "none";
     return;
   }
-  const item = db.items.find((i) => i.id === selectedRestockItemId);
-  const baseQty = toBaseUnits(item, selectedModalRestockUnit, qty);
-  const prev = document.getElementById("restock-modal-preview");
+
+  const product = db.products.find((p) => p.id === selectedRestockProductId);
+  const pu = getProductUnit(selectedRestockProductUnitId);
+  const baseQty = toBaseUnits(pu, qty);
+  const baseUnitName = getProductBaseUnitName(product);
+  const stockRow = getProductStock(selectedRestockProductId);
+  const currentQty = stockRow ? stockRow.quantity : 0;
+
   prev.style.display = "block";
-  prev.textContent = `✅ +${baseQty.toLocaleString()} ${item.base_unit} will be added. New stock: ${(item.stock_quantity + baseQty).toLocaleString()} ${item.base_unit}`;
+  prev.textContent = `✅ +${formatQty(baseQty)} ${baseUnitName} will be added. New stock: ${formatQty(currentQty + baseQty)} ${baseUnitName}`;
 }
 
 function doRestockFromModal() {
   const qty = parseFloat(document.getElementById("restock-modal-qty").value) || 0;
-  if (!selectedRestockItemId || qty <= 0) {
+  if (!selectedRestockProductId || qty <= 0 || !selectedRestockProductUnitId) {
     toast("Enter a valid quantity", "error");
     return;
   }
 
-  const item = db.items.find((i) => i.id === selectedRestockItemId);
-  const baseQty = toBaseUnits(item, selectedModalRestockUnit, qty);
-  item.stock_quantity += baseQty;
+  const product = db.products.find((p) => p.id === selectedRestockProductId);
+  const pu = getProductUnit(selectedRestockProductUnitId);
+  const baseQty = toBaseUnits(pu, qty);
+  const baseUnitName = getProductBaseUnitName(product);
+  const note = document.getElementById("restock-modal-note").value;
+  const purchaseReasonId = db.stock_log_reasons.find((r) => r.name === "Purchase")?.id || 1;
 
-  const restockEntry = {
-    id: newId("restock_history"),
-    date: new Date().toISOString(),
-    item_id: item.id,
-    item_name: item.item_name,
-    unit: selectedModalRestockUnit,
-    qty,
-    base_qty: baseQty,
-    base_unit: item.base_unit,
-    note: document.getElementById("restock-modal-note").value,
-  };
-  db.restock_history.unshift(restockEntry);
-
-  const restockUnitLabel =
-    getRestockUnitLabel(item.id, selectedModalRestockUnit) || item.base_unit;
-  db.stock_logs.unshift({
-    id: newId("stock_logs"),
-    date: restockEntry.date,
-    item_id: item.id,
-    item_name: item.item_name,
-    emoji: item.emoji || "📦",
-    change_type: "restock",
-    qty_change: baseQty,
-    unit_label: restockUnitLabel,
-    qty_display: qty,
-    ref_id: restockEntry.id,
-    note: restockEntry.note || "",
+  // Insert stock_movements record and update product_stock
+  recordStockMovement({
+    product_id: selectedRestockProductId,
+    stock_log_reason_id: purchaseReasonId,
+    quantity_changed: baseQty,
+    reference_type: "PURCHASE",
+    reference_id: null,
+    notes: note || `Restocked ${qty} ${pu.display_name}`,
   });
 
-  toast(
-    `Restocked ${baseQty.toLocaleString()} ${item.base_unit} of ${item.item_name}`,
-    "success",
-  );
+  toast(`Restocked ${formatQty(baseQty)} ${baseUnitName} of ${product.name}`, "success");
   persistDb();
-  try {
-    closeModal("modal-restock");
-  } catch (e) {
-    console.error("Error closing modal:", e);
-  }
+
+  closeModal("modal-restock");
   renderRestockItemsTable();
-  renderRestockHistory();
   renderPOSItems();
   renderInventory();
   bannerDismissed = false;
   updateLowStockAlerts();
+
   if (document.getElementById("page-stocklogs").classList.contains("active"))
     renderStockLogsPage();
 }

@@ -1,25 +1,24 @@
+/**
+ * navigation.js
+ * Page switching and tab switching.
+ */
+
 function showPage(page) {
-  document
-    .querySelectorAll(".page")
-    .forEach((p) => p.classList.remove("active"));
-  document
-    .querySelectorAll(".nav-item")
-    .forEach((n) => n.classList.remove("active"));
-  document.getElementById("page-" + page).classList.add("active");
+  document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach((n) => n.classList.remove("active"));
+
+  const pageEl = document.getElementById("page-" + page);
+  if (pageEl) pageEl.classList.add("active");
 
   const pages = [
-    "pos",
-    "inventory",
-    "restock",
-    "pricing",
-    "categories",
-    "transactions",
-    "recentsales",
-    "stocklogs",
+    "pos", "inventory", "restock", "pricing",
+    "categories", "transactions", "recentsales", "stocklogs",
   ];
   const idx = pages.indexOf(page);
-  if (idx >= 0)
-    document.querySelectorAll(".nav-item")[idx].classList.add("active");
+  if (idx >= 0) {
+    const navItems = document.querySelectorAll(".nav-item");
+    if (navItems[idx]) navItems[idx].classList.add("active");
+  }
 
   if (page === "pos") renderPOSItems();
   if (page === "inventory") renderInventory();
@@ -35,8 +34,7 @@ function switchTab(tab) {
   document.querySelectorAll(".tab").forEach((t, i) => {
     t.classList.toggle("active", ["basic", "units"][i] === tab);
   });
-  document
-    .querySelectorAll(".tab-panel")
-    .forEach((p) => p.classList.remove("active"));
-  document.getElementById("tab-" + tab).classList.add("active");
+  document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
+  const panel = document.getElementById("tab-" + tab);
+  if (panel) panel.classList.add("active");
 }

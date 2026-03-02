@@ -208,9 +208,9 @@
 
             <div id="page-pricing" class="page">
                 <div class="topbar">
-                    <h2>🏷️ Custom Pricing</h2>
+                    <h2>🏷️ Pricing Tiers</h2>
                     <div class="topbar-actions">
-                        <button class="btn btn-primary" onclick="openAddPricingModal()">+ Add Custom Price</button>
+                        <button class="btn btn-primary" onclick="openAddPricingModal()">+ Add Pricing Tier</button>
                     </div>
                 </div>
                 <div id="pricing-list"></div>
@@ -533,55 +533,90 @@
     </div>
 
     <div class="modal-backdrop" id="modal-custom-price">
-        <div class="modal">
+        <div class="modal modal-lg">
             <div class="modal-header">
-                <h3 id="cp-modal-title">Add Custom Pricing</h3>
+                <h3 id="cp-modal-title">Add Pricing Tier</h3>
                 <button class="close-btn" onclick="closeModal('modal-custom-price')">✕</button>
             </div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label>Item *</label>
-                    <select id="cp-item">
-                        <option value="">— Select item —</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Title *</label>
-                    <input type="text" id="cp-title" placeholder="e.g. 3 for 5 deal">
-                </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Quantity <span style="font-weight:400;color:var(--text3);">(in base units)</span>
-                            *</label>
-                        <input type="number" id="cp-qty" step="any" min="0.01" placeholder="e.g. 3">
+                        <label>Product *</label>
+                        <select id="cp-product" onchange="onPricingProductChange()">
+                            <option value="">— Select product —</option>
+                        </select>
                     </div>
                     <div class="form-group">
-                        <label>Price (PHP) *</label>
-                        <input type="number" id="cp-price" step="0.01" min="0" placeholder="e.g. 5.00">
+                        <label>Selling Unit *</label>
+                        <select id="cp-unit">
+                            <option value="">— Select product first —</option>
+                        </select>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Start Date <span style="font-weight:400;color:var(--text3);">(optional)</span></label>
-                        <input type="date" id="cp-start">
+                        <label>Tier Type *</label>
+                        <select id="cp-tier-type" onchange="updatePricingTierTypeUI()">
+                            <option value="BUNDLE_PRICE">Bundle Price (e.g. 3 for ₱5)</option>
+                            <option value="VOLUME_DISCOUNT">Volume Discount (e.g. 10+ pcs = ₱1.50 each)</option>
+                            <option value="FLAT_RATE">Flat Rate (e.g. January Sale ₱54/kg)</option>
+                        </select>
                     </div>
                     <div class="form-group">
-                        <label>End Date <span style="font-weight:400;color:var(--text3);">(optional)</span></label>
-                        <input type="date" id="cp-end">
+                        <label>Label / Promo Name <span
+                                style="font-weight:400;color:var(--text3);">(optional)</span></label>
+                        <input type="text" id="cp-label" placeholder="e.g. New Year Sale">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Note <span style="font-weight:400;color:var(--text3);">(optional)</span></label>
-                    <input type="text" id="cp-note" placeholder="Additional notes">
+
+                <!-- Bundle Price fields -->
+                <div id="cp-bundle-fields">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Exact Quantity *</label>
+                            <input type="number" id="cp-qty-min" step="1" min="1" placeholder="e.g. 3">
+                        </div>
+                        <div class="form-group">
+                            <label>Total Price for Bundle (₱) *</label>
+                            <input type="number" id="cp-total-price" step="0.01" min="0" placeholder="e.g. 5.00">
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group check-row">
-                    <input type="checkbox" id="cp-active" checked>
-                    <label for="cp-active">Active</label>
+
+                <!-- Volume / Flat Rate fields -->
+                <div id="cp-volume-fields" style="display:none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Min Qty *</label>
+                            <input type="number" id="cp-qty-min-v" step="1" min="1" placeholder="e.g. 10">
+                        </div>
+                        <div class="form-group">
+                            <label>Max Qty <span style="font-weight:400;color:var(--text3);">(999999 =
+                                    open-ended)</span></label>
+                            <input type="number" id="cp-qty-max" step="1" min="1" value="999999">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Price Per Unit (₱) *</label>
+                        <input type="number" id="cp-price-per-unit" step="0.01" min="0" placeholder="e.g. 1.50">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Effective From *</label>
+                        <input type="date" id="cp-from">
+                    </div>
+                    <div class="form-group">
+                        <label>Effective To <span style="font-weight:400;color:var(--text3);">(leave blank =
+                                open-ended)</span></label>
+                        <input type="date" id="cp-to">
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('modal-custom-price')">Cancel</button>
-                <button class="btn btn-primary" onclick="saveCustomPricing()">Save Pricing</button>
+                <button class="btn btn-primary" onclick="savePricingTier()">Save Pricing Tier</button>
             </div>
         </div>
     </div>

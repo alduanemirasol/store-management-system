@@ -1,45 +1,27 @@
-const CAT_COLORS = [
-  { key: "blue", label: "Blue", bg: "#eef2ff", text: "#3b6ef0" },
-  { key: "green", label: "Green", bg: "#dcfce7", text: "#16a34a" },
-  { key: "orange", label: "Orange", bg: "#ffedd5", text: "#ea580c" },
-  { key: "red", label: "Red", bg: "#fee2e2", text: "#dc2626" },
-  { key: "yellow", label: "Yellow", bg: "#fef3c7", text: "#d97706" },
-];
+/**
+ * categories.js
+ * Category CRUD — updated for new schema.
+ *
+ * Schema: categories(id, name, description, created_at, updated_at)
+ * UI extensions stored alongside (not in schema):
+ *   - categories[].emoji  (added as extra field on the row)
+ *   - db._catColors[catId] = colorKey  (stored in helpers.js getCatUIColor/setCatUIColor)
+ */
+
 const CAT_EMOJIS = [
-  "🌾",
-  "🥚",
-  "🫙",
-  "🍬",
-  "🥬",
-  "🥩",
-  "🧃",
-  "🍿",
-  "🧴",
-  "🛒",
-  "🧁",
-  "🍞",
-  "🍎",
-  "🐟",
-  "🧹",
-  "💊",
-  "🍫",
-  "🥤",
-  "🧂",
-  "🍳",
+  "🌾", "🥚", "🫙", "🍬", "🥬", "🥩", "🧃", "🍿", "🧴", "🛒",
+  "🧁", "🍞", "🍎", "🐟", "🧹", "💊", "🍫", "🥤", "🧂", "🍳",
 ];
 
 let editingCatId = null;
 let calledFromItemModal = false;
 
-function populateCategorySelect(selectId, selectedName) {
+function populateCategorySelect(selectId, selectedCatId) {
   const sel = document.getElementById(selectId);
   sel.innerHTML =
     '<option value="">— Select category —</option>' +
     db.categories
-      .map(
-        (c) =>
-          `<option value="${c.name}" ${c.name === selectedName ? "selected" : ""}>${c.emoji || ""} ${c.name}</option>`,
-      )
+      .map((c) => `<option value="${c.id}" ${c.id === selectedCatId ? "selected" : ""}>${c.emoji || ""} ${c.name}</option>`)
       .join("");
 }
 
@@ -49,32 +31,30 @@ function renderCategoriesPage() {
     tbody.innerHTML = `<tr><td colspan="5" class="page-empty">No categories yet.</td></tr>`;
     return;
   }
-  tbody.innerHTML = db.categories
-    .map((cat) => {
-      const itemCount = db.items.filter((i) => i.category === cat.name).length;
-      const colorObj =
-        CAT_COLORS.find((c) => c.key === cat.color) || CAT_COLORS[0];
-      return `<tr>
-        <td><strong>${cat.name}</strong></td>
-        <td style="font-size:20px;">${cat.emoji || "—"}</td>
-        <td>
-          <span class="badge badge-${cat.color}">
-            <span style="width:8px;height:8px;border-radius:50%;background:${colorObj.text};display:inline-block;"></span>
-            ${colorObj.label}
-          </span>
-        </td>
-        <td>${itemCount} item${itemCount !== 1 ? "s" : ""}</td>
-        <td>
-          <div style="display:flex;gap:6px;">
-            <button class="btn btn-secondary btn-sm" onclick="openEditCategoryModal(${cat.id})">Edit</button>
-            <button class="btn btn-sm" style="background:var(--red-light);color:var(--red);"
-              onclick="deleteCategory(${cat.id})"
-              ${itemCount > 0 ? 'disabled title="Cannot delete: category has items"' : ""}>Delete</button>
-          </div>
-        </td>
-      </tr>`;
-    })
-    .join("");
+  tbody.innerHTML = db.categories.map((cat) => {
+    const itemCount = db.products.filter((p) => p.category_id === cat.id && !p.is_deleted).length;
+    const colorKey = getCatUIColor(cat.id);
+    const colorObj = CAT_COLORS.find((c) => c.key === colorKey) || CAT_COLORS[0];
+    return `<tr>
+      <td><strong>${cat.name}</strong></td>
+      <td style="font-size:20px;">${cat.emoji || "—"}</td>
+      <td>
+        <span class="badge badge-${colorKey}">
+          <span style="width:8px;height:8px;border-radius:50%;background:${colorObj.text};display:inline-block;"></span>
+          ${colorObj.label}
+        </span>
+      </td>
+      <td>${itemCount} item${itemCount !== 1 ? "s" : ""}</td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-secondary btn-sm" onclick="openEditCategoryModal(${cat.id})">Edit</button>
+          <button class="btn btn-sm" style="background:var(--red-light);color:var(--red);"
+            onclick="deleteCategory(${cat.id})"
+            ${itemCount > 0 ? 'disabled title="Cannot delete: category has items"' : ""}>Delete</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join("");
 }
 
 function openAddCategoryModal(fromItemModal = false) {
@@ -98,17 +78,18 @@ function openEditCategoryModal(catId) {
   document.getElementById("cat-modal-title").textContent = "Edit Category";
   document.getElementById("cat-name").value = cat.name;
   document.getElementById("cat-emoji").value = cat.emoji || "";
-  document.getElementById("cat-color").value = cat.color || "blue";
+  const colorKey = getCatUIColor(catId);
+  document.getElementById("cat-color").value = colorKey;
   renderCatEmojiPresets(cat.emoji || "");
-  renderCatColorPresets(cat.color || "blue");
+  renderCatColorPresets(colorKey);
   updateCatPreview();
   openModal("modal-category");
 }
 
 function renderCatEmojiPresets(selected) {
   const el = document.getElementById("cat-emoji-presets");
-  el.innerHTML = CAT_EMOJIS.map(
-    (e) => `<span onclick="pickCatEmoji('${e}')" title="${e}"
+  el.innerHTML = CAT_EMOJIS.map((e) =>
+    `<span onclick="pickCatEmoji('${e}')" title="${e}"
       style="cursor:pointer;font-size:18px;padding:3px 5px;border-radius:6px;border:2px solid ${e === selected ? "var(--accent)" : "transparent"};transition:all 0.12s;"
       onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">${e}</span>`,
   ).join("");
@@ -122,8 +103,8 @@ function pickCatEmoji(emoji) {
 
 function renderCatColorPresets(selected) {
   const el = document.getElementById("cat-color-presets");
-  el.innerHTML = CAT_COLORS.map(
-    (c) => `<div onclick="pickCatColor('${c.key}')" title="${c.label}"
+  el.innerHTML = CAT_COLORS.map((c) =>
+    `<div onclick="pickCatColor('${c.key}')" title="${c.label}"
       style="width:24px;height:24px;border-radius:50%;background:${c.bg};border:2.5px solid ${c.key === selected ? c.text : "transparent"};cursor:pointer;box-shadow:inset 0 0 0 2px ${c.text};transition:all 0.12s;"
       onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></div>`,
   ).join("");
@@ -148,30 +129,30 @@ function saveCategory() {
   const name = document.getElementById("cat-name").value.trim();
   const emoji = document.getElementById("cat-emoji").value.trim();
   const color = document.getElementById("cat-color").value || "blue";
+  const now = new Date().toISOString();
 
-  if (!name) {
-    toast("Category name is required", "error");
-    return;
-  }
+  if (!name) { toast("Category name is required", "error"); return; }
 
   const duplicate = db.categories.find(
     (c) => c.name.toLowerCase() === name.toLowerCase() && c.id !== editingCatId,
   );
-  if (duplicate) {
-    toast("A category with that name already exists", "error");
-    return;
-  }
+  if (duplicate) { toast("A category with that name already exists", "error"); return; }
 
   if (editingCatId) {
     const cat = db.categories.find((c) => c.id === editingCatId);
-    const oldName = cat.name;
-    Object.assign(cat, { name, emoji, color });
-    db.items.forEach((item) => {
-      if (item.category === oldName) item.category = name;
-    });
+    Object.assign(cat, { name, emoji, updated_at: now });
+    setCatUIColor(editingCatId, color);
     toast("Category updated!", "success");
   } else {
-    db.categories.push({ id: newId("categories"), name, emoji, color });
+    const newCat = {
+      id: newId("categories"),
+      name, emoji,
+      description: null,
+      created_at: now,
+      updated_at: now,
+    };
+    db.categories.push(newCat);
+    setCatUIColor(newCat.id, color);
     toast(`Category "${name}" created!`, "success");
   }
 
@@ -179,7 +160,9 @@ function saveCategory() {
   persistDb();
 
   if (calledFromItemModal) {
-    populateCategorySelect("item-category", name);
+    const sel = document.getElementById("item-category");
+    const cat = db.categories.find((c) => c.name === name);
+    populateCategorySelect("item-category", cat ? cat.id : null);
   } else {
     renderCategoriesPage();
     renderInventory();
@@ -190,11 +173,8 @@ function saveCategory() {
 function deleteCategory(catId) {
   const cat = db.categories.find((c) => c.id === catId);
   if (!cat) return;
-  const itemCount = db.items.filter((i) => i.category === cat.name).length;
-  if (itemCount > 0) {
-    toast("Remove all items in this category first", "error");
-    return;
-  }
+  const itemCount = db.products.filter((p) => p.category_id === catId && !p.is_deleted).length;
+  if (itemCount > 0) { toast("Remove all items in this category first", "error"); return; }
   db.categories = db.categories.filter((c) => c.id !== catId);
   persistDb();
   renderCategoriesPage();
@@ -205,9 +185,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const nameEl = document.getElementById("cat-name");
   if (nameEl) nameEl.addEventListener("input", updateCatPreview);
   const emojiEl = document.getElementById("cat-emoji");
-  if (emojiEl)
-    emojiEl.addEventListener("input", () => {
-      renderCatEmojiPresets(emojiEl.value.trim());
-      updateCatPreview();
-    });
+  if (emojiEl) emojiEl.addEventListener("input", () => {
+    renderCatEmojiPresets(emojiEl.value.trim());
+    updateCatPreview();
+  });
 });

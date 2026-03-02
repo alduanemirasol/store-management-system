@@ -1,105 +1,151 @@
-let cartModalItem = null;
-let cartModalUnit = null;
+/**
+ * pos.js
+ * Point of Sale — rewritten for new schema.
+ *
+ * Key schema mappings:
+ *   Old: db.items[].item_name        → New: db.products[].name
+ *   Old: db.items[].stock_quantity   → New: db.product_stock[product_id].quantity
+ *   Old: db.item_units[]             → New: db.product_units[] (can_sell=true)
+ *   Old: db.custom_pricing[]         → New: db.pricing_tiers[] (BUNDLE_PRICE tier)
+ *   Old: db.transactions[]           → New: db.sales[] + db.sale_items[]
+ *   Old: db.stock_logs[]             → New: db.stock_movements[]
+ */
+
+let cartModalProductUnitId = null; // product_units.id selected in the add-to-cart modal
 let cart = [];
-let posFilterCat = "";
+let posFilterCatId = null; // categories.id or null for "All"
+
+// ─── POS category filter chips ─────────────────────────────────────────────────
 
 function renderPOSCategories() {
-  const usedCats = new Set(db.items.map((i) => i.category));
-  const cats = db.categories.filter((c) => usedCats.has(c.name));
+  // Only show categories that have at least one non-deleted, sellable product
+  const sellableProductIds = new Set(
+    db.product_units.filter((u) => u.can_sell).map((u) => u.product_id),
+  );
+  const usedCatIds = new Set(
+    db.products
+      .filter((p) => !p.is_deleted && sellableProductIds.has(p.id))
+      .map((p) => p.category_id),
+  );
+  const cats = db.categories.filter((c) => usedCatIds.has(c.id));
+
   const el = document.getElementById("pos-categories");
   el.innerHTML =
-    `<div class="cat-chip ${!posFilterCat ? "active" : ""}" onclick="setPosFilter('All')">All</div>` +
+    `<div class="cat-chip ${!posFilterCatId ? "active" : ""}" onclick="setPosFilter(null)">All</div>` +
     cats
       .map(
         (c) =>
-          `<div class="cat-chip ${c.name === posFilterCat ? "active" : ""}" onclick="setPosFilter('${c.name}')">${c.emoji || ""} ${c.name}</div>`,
+          `<div class="cat-chip ${c.id === posFilterCatId ? "active" : ""}" onclick="setPosFilter(${c.id})">${c.emoji || ""} ${c.name}</div>`,
       )
       .join("");
 }
 
-function setPosFilter(cat) {
-  posFilterCat = cat === "All" ? "" : cat;
+function setPosFilter(catId) {
+  posFilterCatId = catId;
   renderPOSCategories();
   renderPOSItems();
 }
 
+// ─── POS item grid ────────────────────────────────────────────────────────────
+
 function renderPOSItems() {
   renderPOSCategories();
   const q = document.getElementById("pos-search").value.toLowerCase();
-  let items = db.items;
-  if (posFilterCat) items = items.filter((i) => i.category === posFilterCat);
-  if (q)
-    items = items.filter(
-      (i) =>
-        i.item_name.toLowerCase().includes(q) ||
-        i.category.toLowerCase().includes(q),
-    );
+
+  let products = db.products.filter((p) => !p.is_deleted);
+  if (posFilterCatId) products = products.filter((p) => p.category_id === posFilterCatId);
+  if (q) {
+    products = products.filter((p) => {
+      const catName = getProductCategoryName(p).toLowerCase();
+      return p.name.toLowerCase().includes(q) || catName.includes(q);
+    });
+  }
+
+  // Only show products that have at least one sellable unit
+  products = products.filter((p) =>
+    db.product_units.some((u) => u.product_id === p.id && u.can_sell),
+  );
 
   const grid = document.getElementById("pos-grid");
-  if (!items.length) {
-    grid.innerHTML =
-      '<div style="color:var(--text3);padding:20px;grid-column:1/-1;">No items found</div>';
+  if (!products.length) {
+    grid.innerHTML = '<div class="pos-empty">No items found</div>';
     return;
   }
-  grid.innerHTML = items
-    .map((item) => {
-      const low =
-        item.low_stock_threshold &&
-        item.stock_quantity <= item.low_stock_threshold;
-      const outOfStock = item.stock_quantity <= 0;
-      return `<div class="item-card ${low ? "low-stock" : ""}" onclick="openCartModal(${item.id})" style="${outOfStock ? "opacity:0.5;pointer-events:none;" : ""}">
-      <div class="item-emoji">${item.emoji || "📦"}</div>
-      <div class="item-name">${item.item_name}</div>
-      <div class="item-stock">${formatStock(item)} ${item.base_unit}${outOfStock ? ' — <b style="color:var(--red)">Out</b>' : low ? ' — <span style="color:var(--orange)">Low</span>' : ""}</div>
-      <div class="item-price">₱${formatPeso(item.selling_price_per_unit)}/${item.base_unit}</div>
-    </div>`;
+
+  grid.innerHTML = products
+    .map((product) => {
+      const stockRow = getProductStock(product.id);
+      const qty = stockRow ? stockRow.quantity : 0;
+      const baseUnitName = getProductBaseUnitName(product);
+      const threshold = getLowStockThreshold(product);
+      const low = threshold > 0 && qty <= threshold;
+      const outOfStock = qty <= 0;
+
+      // Get default selling unit price for display
+      const defUnit = getDefaultSellingUnit(product.id);
+      const priceDisplay = defUnit
+        ? (() => {
+          const resolved = resolvePrice(defUnit.id, 1);
+          return resolved
+            ? `₱${formatPeso(resolved.unit_price)}/${defUnit.display_name}`
+            : "";
+        })()
+        : "";
+
+      return `<div class="item-card ${low && !outOfStock ? "low-stock" : ""} ${outOfStock ? "out-of-stock" : ""}"
+        onclick="${outOfStock ? "" : `openCartModal(${product.id})`}">
+        <div class="item-emoji">${product.emoji || "📦"}</div>
+        <div class="item-name">${product.name}</div>
+        <div class="item-stock">
+          ${formatQty(qty)} ${baseUnitName}${outOfStock
+          ? ' — <b style="color:var(--red)">Out</b>'
+          : low
+            ? ' — <span style="color:var(--orange)">Low</span>'
+            : ""}
+        </div>
+        <div class="item-price">${priceDisplay}</div>
+      </div>`;
     })
     .join("");
 }
 
-function openCartModal(itemId) {
-  const item = db.items.find((i) => i.id === itemId);
-  if (!item) return;
-  cartModalItem = item;
+// ─── Add-to-cart modal ────────────────────────────────────────────────────────
 
-  document.getElementById("cart-modal-title").textContent = item.item_name;
+function openCartModal(productId) {
+  const product = db.products.find((p) => p.id === productId && !p.is_deleted);
+  if (!product) return;
 
-  // Display available stock
-  const stockInfo = document.getElementById("cart-stock-value");
-  const stock = item.stock_quantity || 0;
-  const lowStock = item.low_stock_threshold || 0;
-  stockInfo.textContent = `${stock} ${item.base_unit}`;
-  stockInfo.classList.remove("low-stock", "out-of-stock");
-  if (stock <= 0) {
-    stockInfo.classList.add("out-of-stock");
-  } else if (lowStock && stock <= lowStock) {
-    stockInfo.classList.add("low-stock");
-  }
+  document.getElementById("cart-modal-title").textContent = product.name;
 
-  const opts = [];
-  opts.push({ type: "base", label: item.base_unit, id: "base" });
-  db.item_units
-    .filter((u) => u.item_id === item.id)
-    .forEach((u) => {
-      opts.push({ type: "unit", label: u.unit_name, id: "unit-" + u.id });
-    });
-  const activeCustom = getActiveCustomPricing(item.id);
-  activeCustom.forEach((cp) => {
-    opts.push({ type: "custom", label: cp.title, id: "custom-" + cp.id });
-  });
+  // Stock display
+  const stockRow = getProductStock(productId);
+  const stockQty = stockRow ? stockRow.quantity : 0;
+  const baseUnitName = getProductBaseUnitName(product);
+  const threshold = getLowStockThreshold(product);
+  const stockInfoEl = document.getElementById("cart-stock-value");
+  stockInfoEl.textContent = `${formatQty(stockQty)} ${baseUnitName}`;
+  stockInfoEl.className = "cart-stock-value";
+  if (stockQty <= 0) stockInfoEl.classList.add("out-of-stock");
+  else if (threshold > 0 && stockQty <= threshold) stockInfoEl.classList.add("low-stock");
 
-  const defUnit = item.default_selling_unit || "base";
+  // Build selling unit options
+  const sellableUnits = getSellableUnits(productId);
+  const defUnit = getDefaultSellingUnit(productId);
+  cartModalProductUnitId = defUnit ? defUnit.id : (sellableUnits[0] ? sellableUnits[0].id : null);
+
   const optEl = document.getElementById("cart-unit-options");
-  optEl.innerHTML = opts
-    .map(
-      (o) => `
-    <div class="unit-option ${o.type === "custom" ? "custom" : ""} ${o.id === defUnit ? "active" : ""}" 
-         onclick="selectCartUnit('${o.id}', this)">${o.label}${o.type === "custom" ? " 🏷️" : ""}</div>
-  `,
-    )
+  optEl.innerHTML = sellableUnits
+    .map((pu) => {
+      const tiers = getActiveTiersForUnit(pu.id);
+      const hasTier = tiers.length > 0;
+      const isDefault = pu.id === cartModalProductUnitId;
+      return `<div class="unit-option ${hasTier ? "custom" : ""} ${isDefault ? "active" : ""}"
+        onclick="selectCartUnit(${pu.id}, this)">
+        ${pu.display_name}${hasTier ? " 🏷️" : ""}
+      </div>`;
+    })
     .join("");
 
-  cartModalUnit = defUnit;
   document.getElementById("cart-qty").value = "1";
   document.getElementById("cart-manual-price").value = "";
   document.getElementById("cart-manual-check").checked = false;
@@ -112,10 +158,9 @@ function openCartModal(itemId) {
   openModal("modal-add-cart");
 }
 
-function selectCartUnit(unitId, el) {
-  cartModalUnit = unitId;
-  document
-    .querySelectorAll("#cart-unit-options .unit-option")
+function selectCartUnit(productUnitId, el) {
+  cartModalProductUnitId = productUnitId;
+  document.querySelectorAll("#cart-unit-options .unit-option")
     .forEach((o) => o.classList.remove("active"));
   el.classList.add("active");
   document.getElementById("cart-qty").value = "1";
@@ -124,20 +169,24 @@ function selectCartUnit(unitId, el) {
 }
 
 function updateCartUnitUI() {
-  const isCustom = cartModalUnit && cartModalUnit.startsWith("custom-");
-  const qtyLabel = document.getElementById("cart-qty-label");
+  const pu = getProductUnit(cartModalProductUnitId);
+  const label = pu ? pu.display_name : "unit";
+  document.getElementById("manual-per-unit").textContent = label;
 
-  if (isCustom) {
-    const cpId = parseInt(cartModalUnit.split("-")[1]);
-    const cp = db.custom_pricing.find((c) => c.id === cpId);
-    if (cp)
-      qtyLabel.textContent = `Number of deals (1 deal = ${cp.quantity} ${cartModalItem.base_unit})`;
+  // Show tier info in quantity label if applicable
+  const tiers = cartModalProductUnitId ? getActiveTiersForUnit(cartModalProductUnitId) : [];
+  const qtyLabel = document.getElementById("cart-qty-label");
+  if (tiers.length) {
+    const t = tiers[0];
+    if (t.tier_type === "BUNDLE_PRICE") {
+      qtyLabel.textContent = `Number of deals (${t.quantity_min} ${label} = ₱${formatPeso(t.total_price)})`;
+    } else {
+      qtyLabel.textContent = `Quantity (${t.label || "promo active"})`;
+    }
   } else {
     qtyLabel.textContent = "Quantity";
   }
 
-  const unitLabel = getUnitLabel(cartModalItem, cartModalUnit);
-  document.getElementById("manual-per-unit").textContent = unitLabel;
   document.getElementById("cart-manual-check").checked = false;
   document.getElementById("manual-price-fields").style.display = "none";
   document.getElementById("manual-price-section").classList.remove("active");
@@ -146,12 +195,8 @@ function updateCartUnitUI() {
 
 function onManualPriceToggle() {
   const checked = document.getElementById("cart-manual-check").checked;
-  document.getElementById("manual-price-fields").style.display = checked
-    ? "block"
-    : "none";
-  document
-    .getElementById("manual-price-section")
-    .classList.toggle("active", checked);
+  document.getElementById("manual-price-fields").style.display = checked ? "block" : "none";
+  document.getElementById("manual-price-section").classList.toggle("active", checked);
   if (checked) {
     document.getElementById("cart-manual-price").focus();
   } else {
@@ -161,133 +206,117 @@ function onManualPriceToggle() {
 }
 
 function updateCartPreview() {
-  if (!cartModalItem) return;
+  if (!cartModalProductUnitId) return;
   const qty = parseFloat(document.getElementById("cart-qty").value) || 0;
   const isManual = document.getElementById("cart-manual-check").checked;
-  const manualPricePerUnit = parseFloat(
-    document.getElementById("cart-manual-price").value,
-  );
+  const manualPricePerUnit = parseFloat(document.getElementById("cart-manual-price").value);
+
+  const pu = getProductUnit(cartModalProductUnitId);
+  if (!pu) return;
+  const product = db.products.find((p) => p.id === pu.product_id);
+  const stockRow = getProductStock(pu.product_id);
+  const stockQty = stockRow ? stockRow.quantity : 0;
+  const baseUnitName = getProductBaseUnitName(product);
 
   let price, label;
+  const baseQty = toBaseUnits(pu, qty);
+
   if (isManual && !isNaN(manualPricePerUnit) && manualPricePerUnit >= 0) {
     price = manualPricePerUnit * qty;
-    const unitLabel = getUnitLabel(cartModalItem, cartModalUnit);
-    label = `${qty} ${unitLabel} × ₱${formatPeso(manualPricePerUnit)} (manual)`;
+    label = `${qty} ${pu.display_name} × ₱${formatPeso(manualPricePerUnit)} (manual)`;
+    // Show normal price for comparison
+    const normalResolved = resolvePrice(cartModalProductUnitId, qty);
+    document.getElementById("normal-price-display").textContent =
+      normalResolved ? `₱${formatPeso(normalResolved.total_price)}` : "—";
   } else {
-    const result = calcPrice(cartModalItem, cartModalUnit, qty);
+    const result = calcPrice(cartModalProductUnitId, qty);
     price = result.price;
     label = result.label;
-  }
-
-  if (isManual) {
-    const { price: normalPrice } = calcPrice(cartModalItem, cartModalUnit, qty);
-    document.getElementById("normal-price-display").textContent =
-      `₱${formatPeso(normalPrice)}`;
   }
 
   document.getElementById("preview-label").textContent = label;
   document.getElementById("preview-value").textContent = "₱" + formatPeso(price);
 
-  const baseQty = toBaseUnits(cartModalItem, cartModalUnit, qty);
+  // Stock warning
   const warn = document.getElementById("stock-warning");
-  if (qty > 0 && baseQty > cartModalItem.stock_quantity) {
+  if (qty > 0 && baseQty > stockQty) {
     warn.style.display = "block";
-    warn.style.background = "var(--orange-light)";
-    warn.style.color = "var(--orange)";
-    warn.textContent = `⚠️ Only ${formatStock(cartModalItem)} ${cartModalItem.base_unit} in stock.`;
+    warn.textContent = `⚠️ Only ${formatQty(stockQty)} ${baseUnitName} in stock.`;
     document.getElementById("add-cart-btn").disabled = true;
   } else {
     warn.style.display = "none";
-    document.getElementById("add-cart-btn").disabled = false;
+    document.getElementById("add-cart-btn").disabled = qty <= 0;
   }
-}
-
-function calcPrice(item, unitId, qty) {
-  if (!unitId || unitId === "base") {
-    return {
-      price: item.selling_price_per_unit * qty,
-      label: `${qty} ${item.base_unit}`,
-    };
-  }
-  if (unitId.startsWith("custom-")) {
-    const cpId = parseInt(unitId.split("-")[1]);
-    const cp = db.custom_pricing.find((c) => c.id === cpId);
-    if (cp) return { price: cp.price * qty, label: `${qty} × ${cp.title}` };
-  }
-  if (unitId.startsWith("unit-")) {
-    const uid = parseInt(unitId.split("-")[1]);
-    const u = db.item_units.find((x) => x.id === uid);
-    if (u) {
-      const baseQty = toBaseUnits(item, unitId, qty);
-      // Show total in base unit (e.g., kg, pieces, mL)
-      return { price: u.selling_price * qty, label: `${qty} ${u.unit_name} (${baseQty.toFixed(1)} ${item.base_unit})` };
-    }
-  }
-  return { price: 0, label: "" };
 }
 
 function addToCart() {
   const qty = parseFloat(document.getElementById("cart-qty").value) || 0;
-  if (qty <= 0) {
+  if (qty <= 0 || !cartModalProductUnitId) {
     toast("Enter a valid quantity", "error");
     return;
   }
 
-  const item = cartModalItem;
-  const unitId = cartModalUnit;
-  const baseQty = toBaseUnits(item, unitId, qty);
-  if (baseQty > item.stock_quantity) {
+  const pu = getProductUnit(cartModalProductUnitId);
+  if (!pu) return;
+  const product = db.products.find((p) => p.id === pu.product_id);
+  const stockRow = getProductStock(pu.product_id);
+  const stockQty = stockRow ? stockRow.quantity : 0;
+  const baseQty = toBaseUnits(pu, qty);
+
+  if (baseQty > stockQty) {
     toast("Not enough stock!", "error");
     return;
   }
 
   const isManual = document.getElementById("cart-manual-check").checked;
-  const manualPricePerUnit = parseFloat(
-    document.getElementById("cart-manual-price").value,
-  );
+  const manualPricePerUnit = parseFloat(document.getElementById("cart-manual-price").value);
 
-  let price, label;
+  let price, unit_price, label, is_manual_priced, manual_price_reason;
+
   if (isManual && !isNaN(manualPricePerUnit) && manualPricePerUnit >= 0) {
+    unit_price = manualPricePerUnit;
     price = manualPricePerUnit * qty;
-    const unitLabel = getUnitLabel(item, unitId);
-    const baseQty = toBaseUnits(item, unitId, qty);
-    // Show total in base unit
-    label = `${qty} ${unitLabel} (${baseQty.toFixed(1)} ${item.base_unit}) × ₱${manualPricePerUnit.toFixed(2)} (manual)`;
+    const baseUnitName = getProductBaseUnitName(product);
+    label = `${qty} ${pu.display_name} (${formatQty(baseQty)} ${baseUnitName}) × ₱${formatPeso(manualPricePerUnit)} (manual)`;
+    is_manual_priced = true;
+    manual_price_reason = "Cashier override";
   } else {
-    const result = calcPrice(item, unitId, qty);
+    const result = calcPrice(cartModalProductUnitId, qty);
     price = result.price;
+    unit_price = result.unit_price;
     label = result.label;
+    is_manual_priced = false;
+    manual_price_reason = null;
   }
-
-  const base_qty_per_unit = qty > 0 ? baseQty / qty : 0;
 
   cart.push({
     cartId: Date.now() + Math.random(),
-    item_id: item.id,
-    item_name: item.item_name,
-    unit_id: unitId,
-    qty: qty,
+    product_id: product.id,
+    product_unit_id: pu.id,
+    item_name: product.name,   // kept for display convenience
+    emoji: product.emoji || "📦",
+    unit_label: pu.display_name,
+    qty,
     base_qty: baseQty,
-    base_qty_per_unit: base_qty_per_unit,
-    unit_label: getUnitLabel(item, unitId),
-    price: price,
+    unit_price,
+    price,
     detail: label,
-    emoji: item.emoji || "📦",
-    is_manual: isManual && !isNaN(manualPricePerUnit),
-    manual_price_per_unit:
-      isManual && !isNaN(manualPricePerUnit) ? manualPricePerUnit : null,
+    is_manual_priced,
+    manual_price_reason,
+    // weight_per_piece_kg: null — set if variable-weight item weighed at sale
   });
 
   closeModal("modal-add-cart");
   renderCart();
-  toast(`${item.item_name} added to cart`, "success");
+  toast(`${product.name} added to cart`, "success");
 }
+
+// ─── Cart rendering ───────────────────────────────────────────────────────────
 
 function renderCart() {
   const el = document.getElementById("cart-items");
   if (!cart.length) {
-    el.innerHTML =
-      '<div class="cart-empty"><div class="cart-empty-icon">🛒</div><div>No items yet.<br>Click an item to add.</div></div>';
+    el.innerHTML = '<div class="cart-empty"><div class="cart-empty-icon">🛒</div><div>No items yet.<br>Click an item to add.</div></div>';
     document.getElementById("checkout-btn").disabled = true;
     document.getElementById("cart-count").textContent = "0 items";
     document.getElementById("cart-subtotal").textContent = "₱0.00";
@@ -295,64 +324,49 @@ function renderCart() {
     return;
   }
 
-  el.innerHTML = cart
-    .map((ci) => {
-      const item = db.items.find((i) => i.id === ci.item_id);
-      const overStock = ci.base_qty > (item ? item.stock_quantity : 0);
-      const manualBadge = ci.is_manual
-        ? `<span class="manual-badge">✏️ manual</span>`
-        : "";
+  el.innerHTML = cart.map((ci) => {
+    const stockRow = getProductStock(ci.product_id);
+    const stockQty = stockRow ? stockRow.quantity : 0;
+    const overStock = ci.base_qty > stockQty;
+    const manualBadge = ci.is_manual_priced ? `<span class="manual-badge">✏️ manual</span>` : "";
 
-      return `
-    <div class="cart-item" data-cart-id="${ci.cartId}">
+    return `<div class="cart-item" data-cart-id="${ci.cartId}">
       <span style="font-size:20px;flex-shrink:0;">${ci.emoji}</span>
       <div class="cart-item-info" style="flex:1;min-width:0;">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;">
           <div class="cart-item-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ci.item_name}${manualBadge}</div>
-          <button class="cart-item-remove" onclick="removeFromCart('${ci.cartId}')" title="Remove item">🗑</button>
+          <button class="cart-item-remove" onclick="removeFromCart('${ci.cartId}')" title="Remove">🗑</button>
         </div>
-        <div class="cart-item-detail">${ci.detail || ci.unit_label}${ci.unit_id && ci.unit_id.startsWith("custom-") ? " 🏷️" : ""}</div>
+        <div class="cart-item-detail">${ci.detail || ci.unit_label}</div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
           <div class="qty-stepper">
-            <button class="qty-btn minus" onclick="changeCartQty('${ci.cartId}', -1)" ${ci.qty <= getMinStep(ci) ? "disabled" : ""}>−</button>
+            <button class="qty-btn minus" onclick="changeCartQty('${ci.cartId}', -1)" ${ci.qty <= 1 ? "disabled" : ""}>−</button>
             <input class="qty-input ${overStock ? "over-stock" : ""}"
-              type="number" min="${getMinStep(ci)}" step="${getMinStep(ci)}"
-              value="${ci.qty}"
-              onchange="setCartQty('${ci.cartId}', parseFloat(this.value) || ${getMinStep(ci)})"
-              onblur="setCartQty('${ci.cartId}', parseFloat(this.value) || ${getMinStep(ci)})"
-            >
+              type="number" min="1" step="1" value="${ci.qty}"
+              onchange="setCartQty('${ci.cartId}', parseFloat(this.value) || 1)"
+              onblur="setCartQty('${ci.cartId}', parseFloat(this.value) || 1)">
             <button class="qty-btn" onclick="changeCartQty('${ci.cartId}', 1)">+</button>
             <span class="qty-unit-label">${ci.unit_label}</span>
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
-            <button class="cart-inline-price-btn ${ci.is_manual ? "active" : ""}"
+            <button class="cart-inline-price-btn ${ci.is_manual_priced ? "active" : ""}"
               onclick="openInlineManualPrice('${ci.cartId}')"
-              title="${ci.is_manual ? `Manual: ₱${formatPeso(ci.manual_price_per_unit)} per ${ci.unit_label} — click to edit` : "Set manual price"}">✏️</button>
-            <div class="cart-item-price" style="${overStock ? "color:var(--red)" : ci.is_manual ? "color:var(--orange)" : ""}">₱${formatPeso(ci.price)}</div>
+              title="${ci.is_manual_priced ? `Manual: ₱${formatPeso(ci.unit_price)} per ${ci.unit_label}` : "Set manual price"}">✏️</button>
+            <div class="cart-item-price" style="${overStock ? "color:var(--red)" : ci.is_manual_priced ? "color:var(--orange)" : ""}">₱${formatPeso(ci.price)}</div>
           </div>
         </div>
         ${overStock ? `<div style="font-size:11px;color:var(--red);margin-top:3px;">⚠️ Exceeds available stock</div>` : ""}
         <div id="inline-price-row-${ci.cartId}" style="display:none;margin-top:8px;"></div>
       </div>
     </div>`;
-    })
-    .join("");
+  }).join("");
 
   updateCartTotals();
 }
 
-function getMinStep(ci) {
-  return ci.unit_id && ci.unit_id.startsWith("custom-")
-    ? 1
-    : Number.isInteger(ci.qty)
-      ? 1
-      : 0.01;
-}
-
 function updateCartTotals() {
   const total = cart.reduce((s, i) => s + i.price, 0);
-  document.getElementById("cart-count").textContent =
-    `${cart.length} line${cart.length !== 1 ? "s" : ""}`;
+  document.getElementById("cart-count").textContent = `${cart.length} line${cart.length !== 1 ? "s" : ""}`;
   document.getElementById("cart-subtotal").textContent = "₱" + formatPeso(total);
   document.getElementById("cart-total").textContent = "₱" + formatPeso(total);
   document.getElementById("checkout-btn").disabled = cart.length === 0;
@@ -361,8 +375,7 @@ function updateCartTotals() {
 function changeCartQty(cartId, delta) {
   const ci = cart.find((i) => i.cartId == cartId);
   if (!ci) return;
-  const step = getMinStep(ci);
-  const newQty = Math.max(step, parseFloat((ci.qty + delta * step).toFixed(4)));
+  const newQty = Math.max(1, ci.qty + delta);
   applyCartQty(ci, newQty);
   renderCart();
 }
@@ -370,27 +383,26 @@ function changeCartQty(cartId, delta) {
 function setCartQty(cartId, newQty) {
   const ci = cart.find((i) => i.cartId == cartId);
   if (!ci) return;
-  const step = getMinStep(ci);
-  const clamped = Math.max(step, parseFloat((newQty || step).toFixed(4)));
-  applyCartQty(ci, clamped);
+  applyCartQty(ci, Math.max(1, parseFloat(newQty) || 1));
   renderCart();
 }
 
 function applyCartQty(ci, newQty) {
-  const item = db.items.find((i) => i.id === ci.item_id);
-  if (!item) return;
+  const pu = getProductUnit(ci.product_unit_id);
+  if (!pu) return;
+  const product = db.products.find((p) => p.id === ci.product_id);
   ci.qty = newQty;
-  ci.base_qty = toBaseUnits(item, ci.unit_id, newQty);
+  ci.base_qty = toBaseUnits(pu, newQty);
 
-  if (ci.is_manual && ci.manual_price_per_unit !== null) {
-    ci.price = ci.manual_price_per_unit * newQty;
-    // Show total in base unit
-    const baseQty = toBaseUnits(item, ci.unit_id, newQty);
-    ci.detail = `${newQty} ${ci.unit_label} (${baseQty.toFixed(1)} ${item.base_unit}) × ₱${formatPeso(ci.manual_price_per_unit)} (manual)`;
+  if (ci.is_manual_priced && ci.unit_price !== null) {
+    ci.price = ci.unit_price * newQty;
+    const baseUnitName = getProductBaseUnitName(product);
+    ci.detail = `${newQty} ${ci.unit_label} (${formatQty(ci.base_qty)} ${baseUnitName}) × ₱${formatPeso(ci.unit_price)} (manual)`;
   } else {
-    const { price, label } = calcPrice(item, ci.unit_id, newQty);
-    ci.price = price;
-    ci.detail = label;
+    const result = calcPrice(ci.product_unit_id, newQty);
+    ci.price = result.price;
+    ci.unit_price = result.unit_price;
+    ci.detail = result.label;
   }
 }
 
@@ -404,6 +416,8 @@ function clearCart() {
   renderCart();
 }
 
+// ─── Inline manual price ──────────────────────────────────────────────────────
+
 function openInlineManualPrice(cartId) {
   const ci = cart.find((i) => i.cartId == cartId);
   if (!ci) return;
@@ -415,10 +429,9 @@ function openInlineManualPrice(cartId) {
     return;
   }
 
-  const item = db.items.find((i) => i.id === ci.item_id);
-  const normalResult = calcPrice(item, ci.unit_id, 1);
-  const normalPerUnit = normalResult.price;
-  const currentVal = ci.is_manual ? ci.manual_price_per_unit : "";
+  const normalResult = calcPrice(ci.product_unit_id, 1);
+  const normalPerUnit = normalResult.unit_price;
+  const currentVal = ci.is_manual_priced ? ci.unit_price : "";
 
   rowEl.style.display = "block";
   rowEl.innerHTML = `
@@ -428,7 +441,7 @@ function openInlineManualPrice(cartId) {
         value="${currentVal}" placeholder="${formatPeso(normalPerUnit)}"
         onkeydown="if(event.key==='Enter') applyInlineManualPrice('${cartId}')">
       <button class="btn btn-sm btn-success" onclick="applyInlineManualPrice('${cartId}')">Apply</button>
-      ${ci.is_manual ? `<button class="btn btn-sm btn-secondary" onclick="clearInlineManualPrice('${cartId}')">Clear</button>` : ""}
+      ${ci.is_manual_priced ? `<button class="btn btn-sm btn-secondary" onclick="clearInlineManualPrice('${cartId}')">Clear</button>` : ""}
     </div>
     <div class="inline-price-note">Normal price: ₱${formatPeso(normalPerUnit)} per ${ci.unit_label}</div>
   `;
@@ -438,20 +451,15 @@ function openInlineManualPrice(cartId) {
 function applyInlineManualPrice(cartId) {
   const ci = cart.find((i) => i.cartId == cartId);
   if (!ci) return;
-  const val = parseFloat(
-    document.getElementById(`inline-price-input-${cartId}`).value,
-  );
-  if (isNaN(val) || val < 0) {
-    toast("Enter a valid price", "error");
-    return;
-  }
-  ci.is_manual = true;
-  ci.manual_price_per_unit = val;
+  const val = parseFloat(document.getElementById(`inline-price-input-${cartId}`).value);
+  if (isNaN(val) || val < 0) { toast("Enter a valid price", "error"); return; }
+  const product = db.products.find((p) => p.id === ci.product_id);
+  const baseUnitName = getProductBaseUnitName(product);
+  ci.is_manual_priced = true;
+  ci.unit_price = val;
   ci.price = val * ci.qty;
-  // Show total in base unit
-  const item = db.items.find((i) => i.id === ci.item_id);
-  const baseQty = toBaseUnits(item, ci.unit_id, ci.qty);
-  ci.detail = `${ci.qty} ${ci.unit_label} (${baseQty.toFixed(1)} ${item.base_unit}) × ₱${formatPeso(val)} (manual)`;
+  ci.manual_price_reason = "Cashier override";
+  ci.detail = `${ci.qty} ${ci.unit_label} (${formatQty(ci.base_qty)} ${baseUnitName}) × ₱${formatPeso(val)} (manual)`;
   renderCart();
   toast("Manual price applied", "success");
 }
@@ -459,114 +467,145 @@ function applyInlineManualPrice(cartId) {
 function clearInlineManualPrice(cartId) {
   const ci = cart.find((i) => i.cartId == cartId);
   if (!ci) return;
-  const item = db.items.find((i) => i.id === ci.item_id);
-  ci.is_manual = false;
-  ci.manual_price_per_unit = null;
-  const { price, label } = calcPrice(item, ci.unit_id, ci.qty);
-  ci.price = price;
-  ci.detail = label;
+  ci.is_manual_priced = false;
+  ci.manual_price_reason = null;
+  const result = calcPrice(ci.product_unit_id, ci.qty);
+  ci.price = result.price;
+  ci.unit_price = result.unit_price;
+  ci.detail = result.label;
   renderCart();
   toast("Manual price removed", "info");
 }
 
+// ─── Checkout ─────────────────────────────────────────────────────────────────
+
 function checkout() {
   if (!cart.length) return;
 
-  // First pass: validate all stock levels before deducting anything
+  // Validate all stock before writing anything
   for (const ci of cart) {
-    const item = db.items.find((i) => i.id === ci.item_id);
-    if (!item) continue;
-    if (ci.base_qty > item.stock_quantity) {
-      toast(`Not enough stock for ${item.item_name}!`, "error");
+    const stockRow = getProductStock(ci.product_id);
+    const stockQty = stockRow ? stockRow.quantity : 0;
+    if (ci.base_qty > stockQty) {
+      toast(`Not enough stock for ${ci.item_name}!`, "error");
       return;
     }
   }
 
-  // Second pass: deduct stock only after all checks pass
-  for (const ci of cart) {
-    const item = db.items.find((i) => i.id === ci.item_id);
-    if (!item) continue;
-    item.stock_quantity -= ci.base_qty;
-  }
+  const saleDate = new Date().toISOString();
+  const userId = currentUser ? currentUser.id : null;
 
-  const txn = {
-    id: newId("transactions"),
-    date: new Date().toISOString(),
-    items: [...cart],
-    total: cart.reduce((s, i) => s + i.price, 0),
+  // Insert sales header
+  const sale = {
+    id: newId("sales"),
+    customer_id: null, // walk-in
+    payment_type_id: 1, // Cash (default)
+    sale_date: saleDate,
+    notes: null,
+    created_by: userId,
+    created_at: saleDate,
+    updated_at: saleDate,
   };
-  db.transactions.unshift(txn);
+  db.sales.unshift(sale);
 
-  const saleDate = txn.date;
-  for (const ci of txn.items) {
-    db.stock_logs.unshift({
-      id: newId("stock_logs"),
-      date: saleDate,
-      item_id: ci.item_id,
-      item_name: ci.item_name,
-      emoji: ci.emoji || "📦",
-      change_type: "sale",
-      qty_change: -ci.base_qty,
-      unit_label: ci.unit_label || "",
-      qty_display: ci.qty,
-      ref_id: txn.id,
-      note: `Order #${String(txn.id).padStart(4, "0")}`,
+  // Insert sale_items + stock_movements
+  const saleReasonId = db.stock_log_reasons.find((r) => r.name === "Sale")?.id || 2;
+
+  for (const ci of cart) {
+    // sale_items row
+    const saleItem = {
+      id: newId("sale_items"),
+      sale_id: sale.id,
+      product_unit_id: ci.product_unit_id,
+      quantity: ci.qty,
+      unit_price: ci.unit_price,
+      is_manual_priced: ci.is_manual_priced || false,
+      manual_price_reason: ci.manual_price_reason || null,
+      approved_by: null, // manager approval flow — placeholder
+      weight_per_piece_kg: null,
+      created_at: saleDate,
+      // UI display fields (not in schema — kept for renderRecentSales)
+      _product_name: ci.item_name,
+      _emoji: ci.emoji,
+      _unit_label: ci.unit_label,
+      _base_qty: ci.base_qty,
+    };
+    db.sale_items.unshift(saleItem);
+
+    // stock_movements — negative = stock removed
+    recordStockMovement({
+      product_id: ci.product_id,
+      stock_log_reason_id: saleReasonId,
+      quantity_changed: -ci.base_qty,
+      reference_type: "SALE",
+      reference_id: sale.id,
+      notes: `Sale #${String(sale.id).padStart(4, "0")}`,
     });
   }
 
-  toast(`✅ Checkout complete! Total: ₱${txn.total.toFixed(2)}`, "success");
+  // Cash fund transaction (cash in)
+  if (currentCashFund) {
+    const total = cart.reduce((s, i) => s + i.price, 0);
+    db.cash_fund_transactions.push({
+      id: newId("cash_fund_transactions"),
+      cash_fund_id: currentCashFund.id,
+      transaction_type: "IN",
+      amount: total,
+      reference_type: "SALE",
+      reference_id: sale.id,
+      description: `Sale #${String(sale.id).padStart(4, "0")}`,
+      created_by: userId,
+      created_at: saleDate,
+    });
+  }
+
+  const total = cart.reduce((s, i) => s + i.price, 0);
+  toast(`✅ Checkout complete! Total: ₱${formatPeso(total)}`, "success");
+
   persistDb();
   clearCart();
   renderPOSItems();
   updateLowStockAlerts();
   renderRecentSales();
+
   if (document.getElementById("page-recentsales").classList.contains("active"))
     renderRecentSalesPage();
   if (document.getElementById("page-stocklogs").classList.contains("active"))
     renderStockLogsPage();
 }
 
+// ─── Recent sales panel (bottom of cart) ─────────────────────────────────────
+
 function renderRecentSales() {
   const el = document.getElementById("recent-sales-list");
   if (!el) return;
 
-  const recentTxns = db.transactions.slice(0, 5);
-  if (!recentTxns.length) {
+  // Get last 5 sales
+  const recentSales = db.sales.slice(0, 5);
+  if (!recentSales.length) {
     el.innerHTML = '<div class="recent-sales-empty">No sales yet.</div>';
     return;
   }
 
   let html = "";
-  recentTxns.forEach((txn) => {
-    const d = new Date(txn.date);
-    const now = new Date();
-    const diffMin = Math.floor((now - d) / 60000);
-    let timeLabel;
-    if (diffMin < 1) timeLabel = "Just now";
-    else if (diffMin < 60) timeLabel = diffMin + "m ago";
-    else if (diffMin < 1440) timeLabel = Math.floor(diffMin / 60) + "h ago";
-    else
-      timeLabel = d.toLocaleDateString([], { month: "short", day: "numeric" });
-
-    const dateStr = d.toLocaleDateString([], {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-    const timeStr = d.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  recentSales.forEach((sale) => {
+    const d = new Date(sale.sale_date);
+    const timeLabel = relativeTime(sale.sale_date);
+    const dateStr = d.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+    const timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
     html += `<div class="recent-sale-divider">${dateStr} ${timeStr}</div>`;
-    txn.items.forEach((ci) => {
+
+    const saleItems = db.sale_items.filter((si) => si.sale_id === sale.id);
+    saleItems.forEach((si) => {
+      const lineTotal = si.quantity * si.unit_price;
       html += `
         <div class="recent-sale-row" title="${dateStr} ${timeStr}">
-            <span class="recent-sale-emoji">${ci.emoji || "📦"}</span>
-            <span class="recent-sale-name">${ci.item_name}</span>
-            <span class="recent-sale-qty">${ci.qty} ${ci.unit_label || ""}</span>
-            <span class="recent-sale-price">₱${ci.price.toFixed(2)}</span>
-            <span class="recent-sale-time">${timeLabel}</span>
+          <span class="recent-sale-emoji">${si._emoji || "📦"}</span>
+          <span class="recent-sale-name">${si._product_name || ""}</span>
+          <span class="recent-sale-qty">${si.quantity} ${si._unit_label || ""}</span>
+          <span class="recent-sale-price">₱${formatPeso(lineTotal)}</span>
+          <span class="recent-sale-time">${timeLabel}</span>
         </div>`;
     });
   });
