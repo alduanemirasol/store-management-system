@@ -1,0 +1,77 @@
+RICE
+Base Unit: kg
+Selling Options: kg, sack
+Conversion: 1 sack = 50 kg (depends on rice sack)
+Restock Options: kg, sack
+
+EGG
+Base Unit: piece
+Selling Options: piece, tray
+Conversion: 1 tray = 30 pieces (depends on egg tray)
+Restock Options: piece, tray
+Pricing: manual pricing allowed
+
+COOKING OIL
+Base Unit: mL
+Selling Options: mL, container, pack
+Pack Size: 250 mL per pack (depends on brand)
+Special Selling: enter amount, system calculates mL
+
+CANDY
+Base Unit: piece
+Selling Options: piece, pack
+Conversion: 1 pack = 50 pieces (depends on candy brand)
+Restock Options: piece, pack
+Pricing: custom pricing allowed (e.g., 3 pieces = 5 PHP)
+
+ONION
+Base Unit: kg
+Selling Options: kg, piece, sack
+Restock Options: kg, piece, sack
+Pricing: manual pricing allowed
+
+BEER
+Base Unit: bottle
+Selling Options: bottle, case
+Conversion: 1 case = 6 bottles (depends on brand)
+Restock Options: bottle, case
+
+SHAMPOO
+Base Unit: sachet
+Selling Options: sachet, pack
+Conversion: 1 pack = 12 sachets (depends on shampoo brand)
+Restock Options: sachet, pack
+
+BISCUIT
+Base Unit: piece
+Selling Options: piece, pack
+Conversion: 1 pack = 10 pieces (depends on biscuit brand)
+Restock Options: piece, pack
+
+SUGAR
+Base Unit: kg
+Selling Options: kg, pack
+Conversion: 1 pack = 0.25 kg (depends on pack size)
+Restock Options: kg, pack
+
+SALT
+Base Unit: kg
+Selling Options: kg, pack
+Restock Options: kg, pack
+
+SARDINES
+Base Unit: can
+Selling Options: can, box
+Conversion: 1 box = 12 cans (depends on brand)
+Restock Options: can, box
+
+CIGARETTES
+Base Unit: stick
+Selling Options: stick, box, pack
+Conversion: 1 pack = 20 sticks (depends on brand)
+
+BUTANE
+Base Unit: canister
+Selling Options: canister, box
+Conversion: 1 box = 4–12 canisters (depends on supplier)
+Restock Options: canister, box
