@@ -20,24 +20,28 @@ function renderRestockItemsTable(productsToRender) {
   const tbody = document.getElementById("restock-items-tbody");
   if (!tbody) return;
 
-  const products = (productsToRender || db.products).filter((p) => !p.is_deleted);
+  const products = (productsToRender || db.products).filter(
+    (p) => !p.is_deleted,
+  );
 
   if (!products.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No items available</td></tr>';
+    tbody.innerHTML =
+      '<tr><td colspan="6" style="text-align:center;">No items available</td></tr>';
     return;
   }
 
-  tbody.innerHTML = products.map((product) => {
-    const stockRow = getProductStock(product.id);
-    const qty = stockRow ? stockRow.quantity : 0;
-    const baseUnitName = getProductBaseUnitName(product);
-    const threshold = getLowStockThreshold(product);
-    const isLow = threshold > 0 && qty <= threshold;
-    const statusBadge = isLow
-      ? '<span class="badge badge-red">Low Stock</span>'
-      : '<span class="badge badge-green">In Stock</span>';
+  tbody.innerHTML = products
+    .map((product) => {
+      const stockRow = getProductStock(product.id);
+      const qty = stockRow ? stockRow.quantity : 0;
+      const baseUnitName = getProductBaseUnitName(product);
+      const threshold = getLowStockThreshold(product);
+      const isLow = threshold > 0 && qty <= threshold;
+      const statusBadge = isLow
+        ? '<span class="badge badge-red">Low Stock</span>'
+        : '<span class="badge badge-green">In Stock</span>';
 
-    return `<tr>
+      return `<tr>
       <td>
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:20px;">${product.emoji || "📦"}</span>
@@ -52,17 +56,24 @@ function renderRestockItemsTable(productsToRender) {
         <button class="btn btn-sm btn-success" onclick="openRestockModal(${product.id})">🔄 Restock</button>
       </td>
     </tr>`;
-  }).join("");
+    })
+    .join("");
 }
 
 function filterRestockItems() {
-  const searchTerm = document.getElementById("restock-search").value.toLowerCase();
-  if (!searchTerm) { renderRestockItemsTable(); return; }
-  const filtered = db.products.filter((p) =>
-    !p.is_deleted &&
-    (p.name.toLowerCase().includes(searchTerm) ||
-      getProductCategoryName(p).toLowerCase().includes(searchTerm) ||
-      getProductBaseUnitName(p).toLowerCase().includes(searchTerm)),
+  const searchTerm = document
+    .getElementById("restock-search")
+    .value.toLowerCase();
+  if (!searchTerm) {
+    renderRestockItemsTable();
+    return;
+  }
+  const filtered = db.products.filter(
+    (p) =>
+      !p.is_deleted &&
+      (p.name.toLowerCase().includes(searchTerm) ||
+        getProductCategoryName(p).toLowerCase().includes(searchTerm) ||
+        getProductBaseUnitName(p).toLowerCase().includes(searchTerm)),
   );
   renderRestockItemsTable(filtered);
 }
@@ -93,13 +104,16 @@ function openRestockModal(productId) {
   const firstUnit = restockableUnits[0];
   selectedRestockProductUnitId = firstUnit ? firstUnit.id : null;
 
-  document.getElementById("restock-modal-units").innerHTML = restockableUnits.map((pu) => {
-    const isDefault = pu.id === selectedRestockProductUnitId;
-    const label = pu.pack_quantity === 1
-      ? pu.display_name
-      : `${pu.display_name} (${pu.pack_quantity} ${baseUnitName})`;
-    return `<div class="unit-option ${isDefault ? "active" : ""}" onclick="selectRestockModalUnit(${pu.id}, this)">${label}</div>`;
-  }).join("");
+  document.getElementById("restock-modal-units").innerHTML = restockableUnits
+    .map((pu) => {
+      const isDefault = pu.id === selectedRestockProductUnitId;
+      const label =
+        pu.pack_quantity === 1
+          ? pu.display_name
+          : `${pu.display_name} (${pu.pack_quantity} ${baseUnitName})`;
+      return `<div class="unit-option ${isDefault ? "active" : ""}" onclick="selectRestockModalUnit(${pu.id}, this)">${label}</div>`;
+    })
+    .join("");
 
   document.getElementById("restock-modal-qty").value = "";
   document.getElementById("restock-modal-note").value = "";
@@ -110,14 +124,16 @@ function openRestockModal(productId) {
 
 function selectRestockModalUnit(productUnitId, el) {
   selectedRestockProductUnitId = productUnitId;
-  document.querySelectorAll("#restock-modal-units .unit-option")
+  document
+    .querySelectorAll("#restock-modal-units .unit-option")
     .forEach((o) => o.classList.remove("active"));
   el.classList.add("active");
   updateRestockModalPreview();
 }
 
 function updateRestockModalPreview() {
-  const qty = parseFloat(document.getElementById("restock-modal-qty").value) || 0;
+  const qty =
+    parseFloat(document.getElementById("restock-modal-qty").value) || 0;
   const prev = document.getElementById("restock-modal-preview");
 
   if (!selectedRestockProductId || !qty || !selectedRestockProductUnitId) {
@@ -137,7 +153,8 @@ function updateRestockModalPreview() {
 }
 
 function doRestockFromModal() {
-  const qty = parseFloat(document.getElementById("restock-modal-qty").value) || 0;
+  const qty =
+    parseFloat(document.getElementById("restock-modal-qty").value) || 0;
   if (!selectedRestockProductId || qty <= 0 || !selectedRestockProductUnitId) {
     toast("Enter a valid quantity", "error");
     return;
@@ -148,7 +165,8 @@ function doRestockFromModal() {
   const baseQty = toBaseUnits(pu, qty);
   const baseUnitName = getProductBaseUnitName(product);
   const note = document.getElementById("restock-modal-note").value;
-  const purchaseReasonId = db.stock_log_reasons.find((r) => r.name === "Purchase")?.id || 1;
+  const purchaseReasonId =
+    db.stock_log_reasons.find((r) => r.name === "Purchase")?.id || 1;
 
   // Insert stock_movements record and update product_stock
   recordStockMovement({
@@ -160,14 +178,18 @@ function doRestockFromModal() {
     notes: note || `Restocked ${qty} ${pu.display_name}`,
   });
 
-  toast(`Restocked ${formatQty(baseQty)} ${baseUnitName} of ${product.name}`, "success");
+  toast(
+    `Restocked ${formatQty(baseQty)} ${baseUnitName} of ${product.name}`,
+    "success",
+  );
   persistDb();
 
   closeModal("modal-restock");
   renderRestockItemsTable();
   renderPOSItems();
   renderInventory();
-  bannerDismissed = false;
+  // resetLowStockBanner: Allows banner to re-evaluate after new stock is added
+  if (typeof resetLowStockBanner === "function") resetLowStockBanner();
   updateLowStockAlerts();
 
   if (document.getElementById("page-stocklogs").classList.contains("active"))

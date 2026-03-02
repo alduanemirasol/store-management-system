@@ -53,7 +53,8 @@ function renderPOSItems() {
   const q = document.getElementById("pos-search").value.toLowerCase();
 
   let products = db.products.filter((p) => !p.is_deleted);
-  if (posFilterCatId) products = products.filter((p) => p.category_id === posFilterCatId);
+  if (posFilterCatId)
+    products = products.filter((p) => p.category_id === posFilterCatId);
   if (q) {
     products = products.filter((p) => {
       const catName = getProductCategoryName(p).toLowerCase();
@@ -85,11 +86,11 @@ function renderPOSItems() {
       const defUnit = getDefaultSellingUnit(product.id);
       const priceDisplay = defUnit
         ? (() => {
-          const resolved = resolvePrice(defUnit.id, 1);
-          return resolved
-            ? `₱${formatPeso(resolved.unit_price)}/${defUnit.display_name}`
-            : "";
-        })()
+            const resolved = resolvePrice(defUnit.id, 1);
+            return resolved
+              ? `₱${formatPeso(resolved.unit_price)}/${defUnit.display_name}`
+              : "";
+          })()
         : "";
 
       return `<div class="item-card ${low && !outOfStock ? "low-stock" : ""} ${outOfStock ? "out-of-stock" : ""}"
@@ -97,11 +98,13 @@ function renderPOSItems() {
         <div class="item-emoji">${product.emoji || "📦"}</div>
         <div class="item-name">${product.name}</div>
         <div class="item-stock">
-          ${formatQty(qty)} ${baseUnitName}${outOfStock
-          ? ' — <b style="color:var(--red)">Out</b>'
-          : low
-            ? ' — <span style="color:var(--orange)">Low</span>'
-            : ""}
+          ${formatQty(qty)} ${baseUnitName}${
+            outOfStock
+              ? ' — <b style="color:var(--red)">Out</b>'
+              : low
+                ? ' — <span style="color:var(--orange)">Low</span>'
+                : ""
+          }
         </div>
         <div class="item-price">${priceDisplay}</div>
       </div>`;
@@ -126,12 +129,17 @@ function openCartModal(productId) {
   stockInfoEl.textContent = `${formatQty(stockQty)} ${baseUnitName}`;
   stockInfoEl.className = "cart-stock-value";
   if (stockQty <= 0) stockInfoEl.classList.add("out-of-stock");
-  else if (threshold > 0 && stockQty <= threshold) stockInfoEl.classList.add("low-stock");
+  else if (threshold > 0 && stockQty <= threshold)
+    stockInfoEl.classList.add("low-stock");
 
   // Build selling unit options
   const sellableUnits = getSellableUnits(productId);
   const defUnit = getDefaultSellingUnit(productId);
-  cartModalProductUnitId = defUnit ? defUnit.id : (sellableUnits[0] ? sellableUnits[0].id : null);
+  cartModalProductUnitId = defUnit
+    ? defUnit.id
+    : sellableUnits[0]
+      ? sellableUnits[0].id
+      : null;
 
   const optEl = document.getElementById("cart-unit-options");
   optEl.innerHTML = sellableUnits
@@ -160,7 +168,8 @@ function openCartModal(productId) {
 
 function selectCartUnit(productUnitId, el) {
   cartModalProductUnitId = productUnitId;
-  document.querySelectorAll("#cart-unit-options .unit-option")
+  document
+    .querySelectorAll("#cart-unit-options .unit-option")
     .forEach((o) => o.classList.remove("active"));
   el.classList.add("active");
   document.getElementById("cart-qty").value = "1";
@@ -174,7 +183,9 @@ function updateCartUnitUI() {
   document.getElementById("manual-per-unit").textContent = label;
 
   // Show tier info in quantity label if applicable
-  const tiers = cartModalProductUnitId ? getActiveTiersForUnit(cartModalProductUnitId) : [];
+  const tiers = cartModalProductUnitId
+    ? getActiveTiersForUnit(cartModalProductUnitId)
+    : [];
   const qtyLabel = document.getElementById("cart-qty-label");
   if (tiers.length) {
     const t = tiers[0];
@@ -195,8 +206,12 @@ function updateCartUnitUI() {
 
 function onManualPriceToggle() {
   const checked = document.getElementById("cart-manual-check").checked;
-  document.getElementById("manual-price-fields").style.display = checked ? "block" : "none";
-  document.getElementById("manual-price-section").classList.toggle("active", checked);
+  document.getElementById("manual-price-fields").style.display = checked
+    ? "block"
+    : "none";
+  document
+    .getElementById("manual-price-section")
+    .classList.toggle("active", checked);
   if (checked) {
     document.getElementById("cart-manual-price").focus();
   } else {
@@ -209,7 +224,9 @@ function updateCartPreview() {
   if (!cartModalProductUnitId) return;
   const qty = parseFloat(document.getElementById("cart-qty").value) || 0;
   const isManual = document.getElementById("cart-manual-check").checked;
-  const manualPricePerUnit = parseFloat(document.getElementById("cart-manual-price").value);
+  const manualPricePerUnit = parseFloat(
+    document.getElementById("cart-manual-price").value,
+  );
 
   const pu = getProductUnit(cartModalProductUnitId);
   if (!pu) return;
@@ -226,8 +243,9 @@ function updateCartPreview() {
     label = `${qty} ${pu.display_name} × ₱${formatPeso(manualPricePerUnit)} (manual)`;
     // Show normal price for comparison
     const normalResolved = resolvePrice(cartModalProductUnitId, qty);
-    document.getElementById("normal-price-display").textContent =
-      normalResolved ? `₱${formatPeso(normalResolved.total_price)}` : "—";
+    document.getElementById("normal-price-display").textContent = normalResolved
+      ? `₱${formatPeso(normalResolved.total_price)}`
+      : "—";
   } else {
     const result = calcPrice(cartModalProductUnitId, qty);
     price = result.price;
@@ -235,7 +253,8 @@ function updateCartPreview() {
   }
 
   document.getElementById("preview-label").textContent = label;
-  document.getElementById("preview-value").textContent = "₱" + formatPeso(price);
+  document.getElementById("preview-value").textContent =
+    "₱" + formatPeso(price);
 
   // Stock warning
   const warn = document.getElementById("stock-warning");
@@ -269,7 +288,9 @@ function addToCart() {
   }
 
   const isManual = document.getElementById("cart-manual-check").checked;
-  const manualPricePerUnit = parseFloat(document.getElementById("cart-manual-price").value);
+  const manualPricePerUnit = parseFloat(
+    document.getElementById("cart-manual-price").value,
+  );
 
   let price, unit_price, label, is_manual_priced, manual_price_reason;
 
@@ -290,10 +311,10 @@ function addToCart() {
   }
 
   cart.push({
-    cartId: Date.now() + Math.random(),
+    cartId: Date.now() + Math.floor(Math.random() * 10000), // Integer cartId prevents float ID issues in DOM
     product_id: product.id,
     product_unit_id: pu.id,
-    item_name: product.name,   // kept for display convenience
+    item_name: product.name, // kept for display convenience
     emoji: product.emoji || "📦",
     unit_label: pu.display_name,
     qty,
@@ -316,7 +337,8 @@ function addToCart() {
 function renderCart() {
   const el = document.getElementById("cart-items");
   if (!cart.length) {
-    el.innerHTML = '<div class="cart-empty"><div class="cart-empty-icon">🛒</div><div>No items yet.<br>Click an item to add.</div></div>';
+    el.innerHTML =
+      '<div class="cart-empty"><div class="cart-empty-icon">🛒</div><div>No items yet.<br>Click an item to add.</div></div>';
     document.getElementById("checkout-btn").disabled = true;
     document.getElementById("cart-count").textContent = "0 items";
     document.getElementById("cart-subtotal").textContent = "₱0.00";
@@ -324,13 +346,16 @@ function renderCart() {
     return;
   }
 
-  el.innerHTML = cart.map((ci) => {
-    const stockRow = getProductStock(ci.product_id);
-    const stockQty = stockRow ? stockRow.quantity : 0;
-    const overStock = ci.base_qty > stockQty;
-    const manualBadge = ci.is_manual_priced ? `<span class="manual-badge">✏️ manual</span>` : "";
+  el.innerHTML = cart
+    .map((ci) => {
+      const stockRow = getProductStock(ci.product_id);
+      const stockQty = stockRow ? stockRow.quantity : 0;
+      const overStock = ci.base_qty > stockQty;
+      const manualBadge = ci.is_manual_priced
+        ? `<span class="manual-badge">✏️ manual</span>`
+        : "";
 
-    return `<div class="cart-item" data-cart-id="${ci.cartId}">
+      return `<div class="cart-item" data-cart-id="${ci.cartId}">
       <span style="font-size:20px;flex-shrink:0;">${ci.emoji}</span>
       <div class="cart-item-info" style="flex:1;min-width:0;">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;">
@@ -359,15 +384,18 @@ function renderCart() {
         <div id="inline-price-row-${ci.cartId}" style="display:none;margin-top:8px;"></div>
       </div>
     </div>`;
-  }).join("");
+    })
+    .join("");
 
   updateCartTotals();
 }
 
 function updateCartTotals() {
   const total = cart.reduce((s, i) => s + i.price, 0);
-  document.getElementById("cart-count").textContent = `${cart.length} line${cart.length !== 1 ? "s" : ""}`;
-  document.getElementById("cart-subtotal").textContent = "₱" + formatPeso(total);
+  document.getElementById("cart-count").textContent =
+    `${cart.length} line${cart.length !== 1 ? "s" : ""}`;
+  document.getElementById("cart-subtotal").textContent =
+    "₱" + formatPeso(total);
   document.getElementById("cart-total").textContent = "₱" + formatPeso(total);
   document.getElementById("checkout-btn").disabled = cart.length === 0;
 }
@@ -451,8 +479,13 @@ function openInlineManualPrice(cartId) {
 function applyInlineManualPrice(cartId) {
   const ci = cart.find((i) => i.cartId == cartId);
   if (!ci) return;
-  const val = parseFloat(document.getElementById(`inline-price-input-${cartId}`).value);
-  if (isNaN(val) || val < 0) { toast("Enter a valid price", "error"); return; }
+  const val = parseFloat(
+    document.getElementById(`inline-price-input-${cartId}`).value,
+  );
+  if (isNaN(val) || val < 0) {
+    toast("Enter a valid price", "error");
+    return;
+  }
   const product = db.products.find((p) => p.id === ci.product_id);
   const baseUnitName = getProductBaseUnitName(product);
   ci.is_manual_priced = true;
@@ -509,7 +542,8 @@ function checkout() {
   db.sales.unshift(sale);
 
   // Insert sale_items + stock_movements
-  const saleReasonId = db.stock_log_reasons.find((r) => r.name === "Sale")?.id || 2;
+  const saleReasonId =
+    db.stock_log_reasons.find((r) => r.name === "Sale")?.id || 2;
 
   for (const ci of cart) {
     // sale_items row
@@ -591,8 +625,15 @@ function renderRecentSales() {
   recentSales.forEach((sale) => {
     const d = new Date(sale.sale_date);
     const timeLabel = relativeTime(sale.sale_date);
-    const dateStr = d.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
-    const timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const dateStr = d.toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+    const timeStr = d.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
     html += `<div class="recent-sale-divider">${dateStr} ${timeStr}</div>`;
 

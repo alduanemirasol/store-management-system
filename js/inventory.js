@@ -23,15 +23,20 @@ function renderInventory() {
   catEl.innerHTML =
     '<option value="">All Categories</option>' +
     db.categories
-      .map((c) => `<option value="${c.id}" ${c.id === catId ? "selected" : ""}>${c.emoji || ""} ${c.name}</option>`)
+      .map(
+        (c) =>
+          `<option value="${c.id}" ${c.id === catId ? "selected" : ""}>${c.emoji || ""} ${c.name}</option>`,
+      )
       .join("");
 
   let products = db.products.filter((p) => !p.is_deleted);
   if (catId) products = products.filter((p) => p.category_id === catId);
-  if (q) products = products.filter((p) =>
-    p.name.toLowerCase().includes(q) ||
-    getProductCategoryName(p).toLowerCase().includes(q),
-  );
+  if (q)
+    products = products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        getProductCategoryName(p).toLowerCase().includes(q),
+    );
 
   const tbody = document.getElementById("inv-tbody");
   if (!products.length) {
@@ -40,34 +45,39 @@ function renderInventory() {
     return;
   }
 
-  tbody.innerHTML = products.map((product) => {
-    const stockRow = getProductStock(product.id);
-    const qty = stockRow ? stockRow.quantity : 0;
-    const baseUnitName = getProductBaseUnitName(product);
-    const threshold = getLowStockThreshold(product);
-    const low = threshold > 0 && qty <= threshold;
-    const out = qty <= 0;
+  tbody.innerHTML = products
+    .map((product) => {
+      const stockRow = getProductStock(product.id);
+      const qty = stockRow ? stockRow.quantity : 0;
+      const baseUnitName = getProductBaseUnitName(product);
+      const threshold = getLowStockThreshold(product);
+      const low = threshold > 0 && qty <= threshold;
+      const out = qty <= 0;
 
-    // Get base product_unit and its price
-    const baseUnit = db.product_units.find(
-      (u) => u.product_id === product.id && u.display_name === baseUnitName,
-    );
-    const basePriceRow = baseUnit ? getActiveUnitPrice(baseUnit.id) : null;
-    const buyPrice = basePriceRow ? basePriceRow.purchase_price : 0;
-    const sellPrice = basePriceRow ? basePriceRow.selling_price : 0;
+      // Get base product_unit and its price
+      const baseUnit = db.product_units.find(
+        (u) => u.product_id === product.id && u.display_name === baseUnitName,
+      );
+      const basePriceRow = baseUnit ? getActiveUnitPrice(baseUnit.id) : null;
+      const buyPrice = basePriceRow ? basePriceRow.purchase_price : 0;
+      const sellPrice = basePriceRow ? basePriceRow.selling_price : 0;
 
-    // Category badge
-    const cat = db.categories.find((c) => c.id === product.category_id);
-    const catColor = getCatUIColor(product.category_id);
+      // Category badge
+      const cat = db.categories.find((c) => c.id === product.category_id);
+      const catColor = getCatUIColor(product.category_id);
 
-    // Pack units summary (non-base units)
-    const packUnits = db.product_units.filter(
-      (u) => u.product_id === product.id && u.pack_quantity !== 1,
-    );
+      // Pack units summary (non-base units)
+      const packUnits = db.product_units.filter(
+        (u) => u.product_id === product.id && u.pack_quantity !== 1,
+      );
 
-    const stockColor = out ? "color:var(--red)" : low ? "color:var(--orange)" : "";
+      const stockColor = out
+        ? "color:var(--red)"
+        : low
+          ? "color:var(--orange)"
+          : "";
 
-    return `<tr>
+      return `<tr>
       <td><strong>${product.emoji || "📦"} ${product.name}</strong></td>
       <td><span class="badge badge-${catColor}">${cat ? (cat.emoji || "") + " " + cat.name : "—"}</span></td>
       <td><span style="color:var(--text3);">${baseUnitName}</span></td>
@@ -86,7 +96,8 @@ function renderInventory() {
         </div>
       </td>
     </tr>`;
-  }).join("");
+    })
+    .join("");
 
   updateInventoryLowStockPanel(getLowStockProducts());
 }
@@ -163,16 +174,28 @@ function setBaseUnitSelector(unitName) {
 function _applyUnitToForm(unit) {
   const u = unit || "";
   const helper = document.getElementById("item-base-unit-helper");
-  if (helper) helper.textContent = u ? `Enter prices for 1 ${u}. Stock is counted in ${u}.` : "";
+  if (helper)
+    helper.textContent = u
+      ? `Enter prices for 1 ${u}. Stock is counted in ${u}.`
+      : "";
 
-  const setSuffix = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  const setSuffix = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  };
   setSuffix("suffix-buy", u ? `for 1 ${u}` : "");
   setSuffix("suffix-sell", u ? `for 1 ${u}` : "");
   setSuffix("suffix-stock", u);
   setSuffix("suffix-low", u);
 
-  const setBuyLabel = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text ? `(per 1 ${text})` : ""; };
-  const setStockLabel = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text ? `(in ${text})` : ""; };
+  const setBuyLabel = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text ? `(per 1 ${text})` : "";
+  };
+  const setStockLabel = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text ? `(in ${text})` : "";
+  };
   setBuyLabel("label-unit-buy", u);
   setBuyLabel("label-unit-sell", u);
   setStockLabel("label-unit-stock", u);
@@ -214,16 +237,25 @@ function editItem(productId) {
     (u) => u.product_id === productId && u.display_name === baseUnitName,
   );
   const basePriceRow = baseUnit ? getActiveUnitPrice(baseUnit.id) : null;
-  document.getElementById("item-buy-price").value = basePriceRow ? basePriceRow.purchase_price : "";
-  document.getElementById("item-sell-price").value = basePriceRow ? basePriceRow.selling_price : "";
+  document.getElementById("item-buy-price").value = basePriceRow
+    ? basePriceRow.purchase_price
+    : "";
+  document.getElementById("item-sell-price").value = basePriceRow
+    ? basePriceRow.selling_price
+    : "";
 
   const stockRow = getProductStock(productId);
-  document.getElementById("item-stock").value = stockRow ? stockRow.quantity : 0;
-  document.getElementById("item-low-stock").value = product.low_stock_threshold || "";
+  document.getElementById("item-stock").value = stockRow
+    ? stockRow.quantity
+    : 0;
+  document.getElementById("item-low-stock").value =
+    product.low_stock_threshold || "";
 
   // Load variant units (non-base-unit product_units)
   itemModalVariants = db.product_units
-    .filter((u) => u.product_id === productId && u.display_name !== baseUnitName)
+    .filter(
+      (u) => u.product_id === productId && u.display_name !== baseUnitName,
+    )
     .map((u) => {
       const priceRow = getActiveUnitPrice(u.id);
       return {
@@ -241,7 +273,10 @@ function editItem(productId) {
 function renderItemVariants() {
   const baseUnit = document.getElementById("item-base-unit").value || "unit";
   const el = document.getElementById("unit-variants-list");
-  el.innerHTML = itemModalVariants.map((v, i) => `
+  el.innerHTML =
+    itemModalVariants
+      .map(
+        (v, i) => `
     <div style="background:var(--surface2);border-radius:var(--radius);padding:14px;margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <strong style="font-size:13px;">Size ${i + 1}</strong>
@@ -276,7 +311,10 @@ function renderItemVariants() {
         </div>
       </div>
     </div>
-  `).join("") + (itemModalVariants.length
+  `,
+      )
+      .join("") +
+    (itemModalVariants.length
       ? ""
       : '<p class="helper" style="margin-bottom:12px;">No sizes added yet. Most items don\'t need this.</p>');
 }
@@ -315,7 +353,8 @@ function saveItem() {
   const bp = parseFloat(document.getElementById("item-buy-price").value) || 0;
   const sp = parseFloat(document.getElementById("item-sell-price").value) || 0;
   const stock = parseFloat(document.getElementById("item-stock").value) || 0;
-  const lowStock = parseFloat(document.getElementById("item-low-stock").value) || 0;
+  const lowStock =
+    parseFloat(document.getElementById("item-low-stock").value) || 0;
   const userId = currentUser ? currentUser.id : null;
   const today = new Date().toISOString().split("T")[0];
   const now = new Date().toISOString();
@@ -333,26 +372,41 @@ function saveItem() {
   }
 
   const catRow = db.categories.find((c) => c.id === catId);
-  const emoji = catRow ? (catRow.emoji || "📦") : "📦";
+  const emoji = catRow ? catRow.emoji || "📦" : "📦";
 
   if (editingProductId) {
-    // Update existing product
+    // Capture old base unit name BEFORE updating product fields to find the existing unit row
     const product = db.products.find((p) => p.id === editingProductId);
+    const oldBaseUnitName = getProductBaseUnitName(product);
+
     Object.assign(product, {
-      name, category_id: catId, base_unit_id: unitRow.id,
-      emoji, low_stock_threshold: lowStock, updated_at: now,
+      name,
+      category_id: catId,
+      base_unit_id: unitRow.id,
+      emoji,
+      low_stock_threshold: lowStock,
+      updated_at: now,
     });
 
-    // Update or create base product_unit
+    // Update or create base product_unit using the captured old name
     let baseUnit = db.product_units.find(
-      (u) => u.product_id === editingProductId && u.display_name === getProductBaseUnitName(product),
+      (u) =>
+        u.product_id === editingProductId && u.display_name === oldBaseUnitName,
     );
     if (!baseUnit) {
       baseUnit = {
-        id: newId("product_units"), product_id: editingProductId,
-        unit_id: unitRow.id, display_name: baseUnitName, pack_quantity: 1,
-        is_default_selling: false, can_restock: true, can_sell: true,
-        approx_base_qty_per_piece: null, notes: null, created_at: now, updated_at: now,
+        id: newId("product_units"),
+        product_id: editingProductId,
+        unit_id: unitRow.id,
+        display_name: baseUnitName,
+        pack_quantity: 1,
+        is_default_selling: false,
+        can_restock: true,
+        can_sell: true,
+        approx_base_qty_per_piece: null,
+        notes: null,
+        created_at: now,
+        updated_at: now,
       };
       db.product_units.push(baseUnit);
     } else {
@@ -362,31 +416,75 @@ function saveItem() {
     }
     _upsertPriceRow(baseUnit.id, bp, sp, today, userId, now);
 
-    // Remove old non-base variant units and replace with current modal state
-    db.product_units = db.product_units.filter(
-      (u) => !(u.product_id === editingProductId && u.display_name !== baseUnitName),
+    // Preserve existing variant units by display_name; only delete unmatched ones
+    const incomingNames = new Set(
+      itemModalVariants.map((v) => v.display_name).filter(Boolean),
     );
+    db.product_units = db.product_units.filter(
+      (u) =>
+        !(
+          u.product_id === editingProductId &&
+          u.display_name !== baseUnitName &&
+          !incomingNames.has(u.display_name)
+        ),
+    );
+
     itemModalVariants.forEach((v) => {
       if (!v.display_name) return;
       const varUnitRow = _ensureUnit(v.display_name, now);
-      const newPU = {
-        id: newId("product_units"), product_id: editingProductId,
-        unit_id: varUnitRow.id, display_name: v.display_name,
-        pack_quantity: v.pack_quantity || 1,
-        is_default_selling: false, can_restock: v.can_restock !== false,
-        can_sell: v.can_sell !== false,
-        approx_base_qty_per_piece: null, notes: v.notes || null,
-        created_at: now, updated_at: now,
-      };
-      db.product_units.push(newPU);
-      _upsertPriceRow(newPU.id, v.purchase_price || 0, v.selling_price || 0, today, userId, now);
+      // Reuse existing product_unit row when possible to preserve FK references in pricing_tiers
+      let existingPU = db.product_units.find(
+        (u) =>
+          u.product_id === editingProductId &&
+          u.display_name === v.display_name,
+      );
+      if (existingPU) {
+        existingPU.unit_id = varUnitRow.id;
+        existingPU.pack_quantity = v.pack_quantity || 1;
+        existingPU.can_restock = v.can_restock !== false;
+        existingPU.can_sell = v.can_sell !== false;
+        existingPU.updated_at = now;
+        _upsertPriceRow(
+          existingPU.id,
+          v.purchase_price || 0,
+          v.selling_price || 0,
+          today,
+          userId,
+          now,
+        );
+      } else {
+        const newPU = {
+          id: newId("product_units"),
+          product_id: editingProductId,
+          unit_id: varUnitRow.id,
+          display_name: v.display_name,
+          pack_quantity: v.pack_quantity || 1,
+          is_default_selling: false,
+          can_restock: v.can_restock !== false,
+          can_sell: v.can_sell !== false,
+          approx_base_qty_per_piece: null,
+          notes: v.notes || null,
+          created_at: now,
+          updated_at: now,
+        };
+        db.product_units.push(newPU);
+        _upsertPriceRow(
+          newPU.id,
+          v.purchase_price || 0,
+          v.selling_price || 0,
+          today,
+          userId,
+          now,
+        );
+      }
     });
 
     // Update stock (Adjustment movement if changed)
     const stockRow = getProductStock(editingProductId);
     if (stockRow && stockRow.quantity !== stock) {
       const diff = stock - stockRow.quantity;
-      const adjReasonId = db.stock_log_reasons.find((r) => r.name === "Adjustment")?.id || 7;
+      const adjReasonId =
+        db.stock_log_reasons.find((r) => r.name === "Adjustment")?.id || 7;
       recordStockMovement({
         product_id: editingProductId,
         stock_log_reason_id: adjReasonId,
@@ -396,7 +494,12 @@ function saveItem() {
         notes: "Manual inventory edit",
       });
     } else if (!stockRow) {
-      db.product_stock.push({ product_id: editingProductId, quantity: stock, updated_at: now, updated_by: userId });
+      db.product_stock.push({
+        product_id: editingProductId,
+        quantity: stock,
+        updated_at: now,
+        updated_by: userId,
+      });
     }
 
     toast("Item updated!", "success");
@@ -404,19 +507,33 @@ function saveItem() {
     // Create new product
     const productId = newId("products");
     db.products.push({
-      id: productId, name, category_id: catId, base_unit_id: unitRow.id,
-      description: null, emoji, low_stock_threshold: lowStock,
-      is_deleted: false, created_at: now, updated_at: now,
+      id: productId,
+      name,
+      category_id: catId,
+      base_unit_id: unitRow.id,
+      description: null,
+      emoji,
+      low_stock_threshold: lowStock,
+      is_deleted: false,
+      created_at: now,
+      updated_at: now,
     });
 
     // Base product_unit
     const baseUnitId = newId("product_units");
     db.product_units.push({
-      id: baseUnitId, product_id: productId,
-      unit_id: unitRow.id, display_name: baseUnitName, pack_quantity: 1,
+      id: baseUnitId,
+      product_id: productId,
+      unit_id: unitRow.id,
+      display_name: baseUnitName,
+      pack_quantity: 1,
       is_default_selling: itemModalVariants.length === 0,
-      can_restock: true, can_sell: true,
-      approx_base_qty_per_piece: null, notes: null, created_at: now, updated_at: now,
+      can_restock: true,
+      can_sell: true,
+      approx_base_qty_per_piece: null,
+      notes: null,
+      created_at: now,
+      updated_at: now,
     });
     _upsertPriceRow(baseUnitId, bp, sp, today, userId, now);
 
@@ -426,26 +543,49 @@ function saveItem() {
       const varUnitRow = _ensureUnit(v.display_name, now);
       const puId = newId("product_units");
       db.product_units.push({
-        id: puId, product_id: productId,
-        unit_id: varUnitRow.id, display_name: v.display_name,
+        id: puId,
+        product_id: productId,
+        unit_id: varUnitRow.id,
+        display_name: v.display_name,
         pack_quantity: v.pack_quantity || 1,
         is_default_selling: idx === 0 && itemModalVariants.length > 0,
-        can_restock: v.can_restock !== false, can_sell: v.can_sell !== false,
-        approx_base_qty_per_piece: null, notes: v.notes || null,
-        created_at: now, updated_at: now,
+        can_restock: v.can_restock !== false,
+        can_sell: v.can_sell !== false,
+        approx_base_qty_per_piece: null,
+        notes: v.notes || null,
+        created_at: now,
+        updated_at: now,
       });
-      _upsertPriceRow(puId, v.purchase_price || 0, v.selling_price || 0, today, userId, now);
+      _upsertPriceRow(
+        puId,
+        v.purchase_price || 0,
+        v.selling_price || 0,
+        today,
+        userId,
+        now,
+      );
     });
 
     // Initial stock
-    db.product_stock.push({ product_id: productId, quantity: stock, updated_at: now, updated_by: userId });
+    db.product_stock.push({
+      product_id: productId,
+      quantity: stock,
+      updated_at: now,
+      updated_by: userId,
+    });
     if (stock > 0) {
-      const purchaseReasonId = db.stock_log_reasons.find((r) => r.name === "Purchase")?.id || 1;
+      const purchaseReasonId =
+        db.stock_log_reasons.find((r) => r.name === "Purchase")?.id || 1;
       db.stock_movements.push({
-        id: newId("stock_movements"), product_id: productId,
-        stock_log_reason_id: purchaseReasonId, quantity_changed: stock,
-        reference_type: null, reference_id: null,
-        notes: "Initial stock on item creation", created_by: userId, created_at: now,
+        id: newId("stock_movements"),
+        product_id: productId,
+        stock_log_reason_id: purchaseReasonId,
+        quantity_changed: stock,
+        reference_type: null,
+        reference_id: null,
+        notes: "Initial stock on item creation",
+        created_by: userId,
+        created_at: now,
       });
     }
 
@@ -470,11 +610,22 @@ function _ensureUnit(unitName, now) {
   return u;
 }
 
-function _upsertPriceRow(productUnitId, purchasePrice, sellingPrice, today, userId, now) {
-  // Expire any existing active price row
+// _upsertPriceRow: Expires active price row then inserts a new one.
+function _upsertPriceRow(
+  productUnitId,
+  purchasePrice,
+  sellingPrice,
+  today,
+  userId,
+  now,
+) {
+  // Expire old active rows using yesterday so today's new row is unambiguously active
+  const yesterday = new Date(new Date(today) - 86400000)
+    .toISOString()
+    .split("T")[0];
   db.product_unit_prices.forEach((p) => {
     if (p.product_unit_id === productUnitId && p.expiry_date === null) {
-      p.expiry_date = today;
+      p.expiry_date = yesterday;
       p.updated_at = now;
       p.updated_by = userId;
     }

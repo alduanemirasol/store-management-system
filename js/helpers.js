@@ -177,11 +177,15 @@ function getLowStockThreshold(product) {
 }
 
 /**
- * Convert a quantity in a product_unit's display unit to base units.
- * quantity_in_base = qty * product_units.pack_quantity
+ * toBaseUnits: Converts display-unit qty to base-unit qty.
+ * Uses approx_base_qty_per_piece when pack_quantity would be wrong (e.g. variable-weight pieces).
  */
 function toBaseUnits(productUnit, qty) {
   if (!productUnit) return qty;
+  // approx_base_qty_per_piece overrides pack_quantity for approximate conversions (e.g. onion piece ≈ 0.15 kg)
+  if (productUnit.approx_base_qty_per_piece != null) {
+    return qty * productUnit.approx_base_qty_per_piece;
+  }
   return qty * productUnit.pack_quantity;
 }
 

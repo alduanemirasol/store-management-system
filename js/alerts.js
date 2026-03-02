@@ -49,15 +49,17 @@ function updateLowStockAlerts() {
   const chipsEl = document.getElementById("low-stock-chips");
   if (lowProducts.length > 0 && !bannerDismissed) {
     bannerEl.style.display = "flex";
-    chipsEl.innerHTML = lowProducts.map((p) => {
-      const stockRow = getProductStock(p.id);
-      const qty = stockRow ? stockRow.quantity : 0;
-      const baseUnitName = getProductBaseUnitName(p);
-      const isOut = qty <= 0;
-      return `<span class="low-stock-chip ${isOut ? "out" : ""}" onclick="showPage('inventory')" title="Click to view inventory">
+    chipsEl.innerHTML = lowProducts
+      .map((p) => {
+        const stockRow = getProductStock(p.id);
+        const qty = stockRow ? stockRow.quantity : 0;
+        const baseUnitName = getProductBaseUnitName(p);
+        const isOut = qty <= 0;
+        return `<span class="low-stock-chip ${isOut ? "out" : ""}" onclick="showPage('inventory')" title="Click to view inventory">
         ${p.emoji || "📦"} ${p.name}: ${formatQty(qty)} ${baseUnitName}${isOut ? " (Out)" : ""}
       </span>`;
-    }).join("");
+      })
+      .join("");
   } else {
     bannerEl.style.display = "none";
   }
@@ -76,17 +78,21 @@ function updateInventoryLowStockPanel(lowProducts) {
 
   panel.style.display = "block";
   const tbody = document.getElementById("low-stock-tbody");
-  tbody.innerHTML = lowProducts.map((p) => {
-    const stockRow = getProductStock(p.id);
-    const qty = stockRow ? stockRow.quantity : 0;
-    const baseUnitName = getProductBaseUnitName(p);
-    const threshold = getLowStockThreshold(p);
-    const isOut = qty <= 0;
-    const pct = threshold > 0 ? Math.min(100, Math.round((qty / threshold) * 100)) : 100;
-    const barColor = isOut ? "var(--red)" : "var(--orange)";
-    const stockColor = isOut ? "var(--red)" : "var(--orange)";
+  tbody.innerHTML = lowProducts
+    .map((p) => {
+      const stockRow = getProductStock(p.id);
+      const qty = stockRow ? stockRow.quantity : 0;
+      const baseUnitName = getProductBaseUnitName(p);
+      const threshold = getLowStockThreshold(p);
+      const isOut = qty <= 0;
+      const pct =
+        threshold > 0
+          ? Math.min(100, Math.round((qty / threshold) * 100))
+          : 100;
+      const barColor = isOut ? "var(--red)" : "var(--orange)";
+      const stockColor = isOut ? "var(--red)" : "var(--orange)";
 
-    return `<tr>
+      return `<tr>
       <td><strong>${p.emoji || "📦"} ${p.name}</strong></td>
       <td>
         <strong style="color:${stockColor};">${formatQty(qty)} ${baseUnitName}</strong>
@@ -95,9 +101,10 @@ function updateInventoryLowStockPanel(lowProducts) {
         </div>
       </td>
       <td style="color:var(--text2);">${threshold} ${baseUnitName}</td>
-      <td>${isOut
-        ? '<span class="badge badge-red">Out of Stock</span>'
-        : '<span class="badge badge-orange">Low Stock</span>'
+      <td>${
+        isOut
+          ? '<span class="badge badge-red">Out of Stock</span>'
+          : '<span class="badge badge-orange">Low Stock</span>'
       }</td>
       <td>
         <div style="display:flex;gap:6px;">
@@ -106,10 +113,16 @@ function updateInventoryLowStockPanel(lowProducts) {
         </div>
       </td>
     </tr>`;
-  }).join("");
+    })
+    .join("");
 }
 
 function dismissLowStockBanner() {
   bannerDismissed = true;
   document.getElementById("low-stock-banner").style.display = "none";
+}
+
+// resetBanner: Allows other modules to re-enable the banner without direct variable access.
+function resetLowStockBanner() {
+  bannerDismissed = false;
 }
