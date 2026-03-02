@@ -271,7 +271,6 @@ function seedData() {
   db.payment_types = [
     { id: 1, name: "Cash" },
     { id: 2, name: "Credit" },
-    { id: 3, name: "GCash" },
   ];
 
   db.sales = [];
