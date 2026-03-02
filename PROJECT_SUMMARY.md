@@ -39,7 +39,7 @@ store-management-system/
 ├── js/
 │   ├── alerts.js               # Low stock alert banner and notifications
 │   ├── categories.js           # Category management module
-│   ├── helpers.js               # Utility functions and shared helpers
+│   ├── helpers.js              # Utility functions and shared helpers
 │   ├── inventory.js            # Inventory management (add/edit/delete products)
 │   ├── navigation.js           # Page navigation and routing
 │   ├── pos.js                  # Point of Sale - cart, checkout, sales
