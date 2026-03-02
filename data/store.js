@@ -134,13 +134,21 @@ function seedData() {
     { id: 23, name: "container", created_at: new Date().toISOString() },
   ];
 
-  // Products — base_unit_id references units.id
+  // Products with base units, selling options, and conversions
   db.products = [
-    { id: 1, name: "Rice", category_id: 1, base_unit_id: 1, description: null, emoji: "🌾", is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 2, name: "Egg", category_id: 2, base_unit_id: 5, description: null, emoji: "🥚", is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 3, name: "Cooking Oil", category_id: 3, base_unit_id: 3, description: null, emoji: "🫙", is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 4, name: "Candy", category_id: 4, base_unit_id: 5, description: null, emoji: "🍬", is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 5, name: "Cabbage", category_id: 5, base_unit_id: 1, description: null, emoji: "🥬", is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 1, name: "Rice", category_id: 9, base_unit_id: 1, emoji: "🌾", selling_options: ["kg", "sack"], conversion: { sack: 50 }, restock_options: ["kg", "sack"], description: null, is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 2, name: "Egg", category_id: 6, base_unit_id: 5, emoji: "🥚", selling_options: ["piece", "tray"], conversion: { tray: 30 }, restock_options: ["piece", "tray"], pricing_manual: true, description: null, is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 3, name: "Cooking Oil", category_id: 10, base_unit_id: 6, emoji: "🫙", selling_options: ["mL", "container", "pack"], conversion: { pack: 250 }, restock_options: ["mL", "container", "pack"], special_selling: "enter amount, system calculates mL", description: null, is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 4, name: "Candy", category_id: 2, base_unit_id: 5, emoji: "🍬", selling_options: ["piece", "pack"], conversion: { pack: 50 }, restock_options: ["piece", "pack"], pricing_custom: true, description: null, is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 5, name: "Onion", category_id: 5, base_unit_id: 1, emoji: "🧅", selling_options: ["kg", "piece", "sack"], restock_options: ["kg", "piece", "sack"], pricing_manual: true, description: null, is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 6, name: "Beer", category_id: 7, base_unit_id: 7, emoji: "🍺", selling_options: ["bottle", "case"], conversion: { case: 6 }, restock_options: ["bottle", "case"], description: null, is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 7, name: "Shampoo", category_id: 12, base_unit_id: 8, emoji: "🧴", selling_options: ["sachet", "pack"], conversion: { pack: 12 }, restock_options: ["sachet", "pack"], description: null, is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 8, name: "Biscuit", category_id: 3, base_unit_id: 5, emoji: "🍪", selling_options: ["piece", "pack"], conversion: { pack: 10 }, restock_options: ["piece", "pack"], description: null, is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 9, name: "Sugar", category_id: 10, base_unit_id: 1, emoji: "🍚", selling_options: ["kg", "pack"], conversion: { pack: 0.25 }, restock_options: ["kg", "pack"], description: null, is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 10, name: "Salt", category_id: 10, base_unit_id: 1, emoji: "🧂", selling_options: ["kg", "pack"], restock_options: ["kg", "pack"], description: null, is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 11, name: "Sardines", category_id: 1, base_unit_id: 9, emoji: "🐟", selling_options: ["can", "box"], conversion: { box: 12 }, restock_options: ["can", "box"], description: null, is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 12, name: "Cigarettes", category_id: 5, base_unit_id: 5, emoji: "🚬", selling_options: ["stick", "box", "pack"], conversion: { pack: 20 }, restock_options: ["stick", "box", "pack"], description: null, is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 13, name: "Butane", category_id: 10, base_unit_id: 10, emoji: "🛢️", selling_options: ["canister", "box"], conversion: { box: [4, 12] }, restock_options: ["canister", "box"], description: null, is_deleted: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
   ];
 
   /**
