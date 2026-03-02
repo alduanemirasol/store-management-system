@@ -221,10 +221,18 @@ function seedData() {
   // INVENTORY — stock in base units, one row per product
   db.product_stock = [
     { product_id: 1, quantity: 150, updated_at: new Date().toISOString(), updated_by: 1 }, // Rice: 150 kg
-    { product_id: 2, quantity: 90, updated_at: new Date().toISOString(), updated_by: 1 }, // Egg: 90 pieces
-    { product_id: 3, quantity: 60000, updated_at: new Date().toISOString(), updated_by: 1 }, // Oil: 60,000 mL
+    { product_id: 2, quantity: 90, updated_at: new Date().toISOString(), updated_by: 1 },  // Egg: 90 pieces
+    { product_id: 3, quantity: 60000, updated_at: new Date().toISOString(), updated_by: 1 }, // Cooking Oil: 60,000 mL
     { product_id: 4, quantity: 500, updated_at: new Date().toISOString(), updated_by: 1 }, // Candy: 500 pieces
-    { product_id: 5, quantity: 25, updated_at: new Date().toISOString(), updated_by: 1 }, // Cabbage: 25 kg
+    { product_id: 5, quantity: 25, updated_at: new Date().toISOString(), updated_by: 1 }, // Onion: 25 kg
+    { product_id: 6, quantity: 48, updated_at: new Date().toISOString(), updated_by: 1 }, // Beer: 48 bottles
+    { product_id: 7, quantity: 120, updated_at: new Date().toISOString(), updated_by: 1 }, // Shampoo: 120 sachets
+    { product_id: 8, quantity: 300, updated_at: new Date().toISOString(), updated_by: 1 }, // Biscuit: 300 pieces
+    { product_id: 9, quantity: 75, updated_at: new Date().toISOString(), updated_by: 1 }, // Sugar: 75 kg
+    { product_id: 10, quantity: 50, updated_at: new Date().toISOString(), updated_by: 1 }, // Salt: 50 kg
+    { product_id: 11, quantity: 60, updated_at: new Date().toISOString(), updated_by: 1 }, // Sardines: 60 cans
+    { product_id: 12, quantity: 200, updated_at: new Date().toISOString(), updated_by: 1 }, // Cigarettes: 200 sticks
+    { product_id: 13, quantity: 16, updated_at: new Date().toISOString(), updated_by: 1 }, // Butane: 16 canisters
   ];
 
   db.stock_log_reasons = [
