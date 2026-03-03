@@ -12,7 +12,7 @@ function showPage(page) {
 
   const pages = [
     "pos", "inventory", "restock", "pricing",
-    "categories", "transactions", "recentsales", "stocklogs",
+    "categories", "transactions", "recentsales", "stocklogs", "customers",
   ];
   const idx = pages.indexOf(page);
   if (idx >= 0) {
@@ -28,6 +28,7 @@ function showPage(page) {
   if (page === "transactions") renderTransactions();
   if (page === "recentsales") renderRecentSalesPage();
   if (page === "stocklogs") renderStockLogsPage();
+  if (page === "customers") renderCustomersPage();
 }
 
 function switchTab(tab) {
@@ -35,6 +36,6 @@ function switchTab(tab) {
     t.classList.toggle("active", ["basic", "units"][i] === tab);
   });
   document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
-  const panel = document.getElementById("tab-" + tab);
+  const panel = document.getElementById("tab-" + tab);``
   if (panel) panel.classList.add("active");
 }
