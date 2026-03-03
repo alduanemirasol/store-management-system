@@ -11,6 +11,424 @@
     <link rel="stylesheet" href="styles/components.css">
     <link rel="stylesheet" href="styles/pos.css">
     <link rel="stylesheet" href="styles/inventory.css">
+    <style>
+        /* ── Utang Page ─────────────────────────────────────────────────────────── */
+        .utang-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+            margin-top: 4px;
+        }
+
+        .utang-card {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: box-shadow 0.15s, transform 0.15s;
+        }
+
+        .utang-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+
+        .utang-card.overdue {
+            border-color: var(--red);
+            background: linear-gradient(to bottom, #fff5f5 0%, var(--surface) 60px);
+        }
+
+        .utang-card.paid {
+            border-color: var(--green);
+            opacity: 0.75;
+            background: linear-gradient(to bottom, #f0fdf4 0%, var(--surface) 60px);
+        }
+
+        .utang-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .utang-card-customer {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .utang-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent-light);
+            color: var(--accent);
+            font-weight: 800;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            letter-spacing: -0.5px;
+        }
+
+        .utang-card.overdue .utang-avatar {
+            background: var(--red-light);
+            color: var(--red);
+        }
+
+        .utang-card.paid .utang-avatar {
+            background: var(--green-light);
+            color: var(--green);
+        }
+
+        .utang-customer-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .utang-sale-ref {
+            font-size: 12px;
+            color: var(--text3);
+            margin-top: 1px;
+        }
+
+        .utang-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .utang-status-badge.pending {
+            background: var(--yellow-light);
+            color: var(--yellow);
+        }
+
+        .utang-status-badge.overdue {
+            background: var(--red-light);
+            color: var(--red);
+        }
+
+        .utang-status-badge.paid {
+            background: var(--green-light);
+            color: var(--green);
+        }
+
+        .utang-card-body {
+            padding: 14px 16px;
+            flex: 1;
+        }
+
+        .utang-amount-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .utang-amount-item {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .utang-amount-item.highlight {
+            background: var(--surface2);
+            border-radius: var(--radius);
+            padding: 6px 8px;
+            margin: -6px -8px;
+        }
+
+        .utang-amount-label {
+            font-size: 11px;
+            color: var(--text3);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .utang-amount-value {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .utang-amount-value.owed {
+            color: var(--text2);
+        }
+
+        .utang-amount-value.paid-val {
+            color: var(--green);
+        }
+
+        .utang-amount-value.remaining {
+            color: var(--red);
+            font-size: 17px;
+        }
+
+        .utang-amount-value.remaining.is-paid {
+            color: var(--green);
+        }
+
+        .utang-amount-value.remaining.is-overdue {
+            color: var(--red);
+        }
+
+        .utang-progress-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .utang-progress-bar {
+            flex: 1;
+            height: 7px;
+            background: var(--surface2);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .utang-progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s;
+        }
+
+        .utang-progress-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text3);
+            white-space: nowrap;
+            min-width: 48px;
+            text-align: right;
+        }
+
+        .utang-meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+        }
+
+        .utang-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12.5px;
+        }
+
+        .utang-meta-icon {
+            font-size: 13px;
+        }
+
+        .utang-meta-label {
+            color: var(--text3);
+            font-weight: 500;
+        }
+
+        .utang-meta-val {
+            color: var(--text2);
+            font-weight: 600;
+        }
+
+        .utang-meta-val.overdue-text {
+            color: var(--red);
+            font-weight: 700;
+        }
+
+        .utang-card-footer {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .utang-bayad-btn {
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 9px 20px;
+        }
+
+        .utang-paid-stamp {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--green);
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        .utang-empty {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text3);
+        }
+
+        .utang-empty-icon {
+            font-size: 48px;
+            margin-bottom: 14px;
+        }
+
+        .utang-empty-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text2);
+            margin-bottom: 6px;
+        }
+
+        .utang-empty-sub {
+            font-size: 14px;
+        }
+
+        /* ── Bayad Modal ────────────────────────────────────────────────────────── */
+        .bayad-customer-block {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--surface2);
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            margin-bottom: 18px;
+        }
+
+        .bayad-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--accent-light);
+            color: var(--accent);
+            font-weight: 800;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .bayad-customer-name {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .bayad-credit-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .bayad-summary-item {
+            background: var(--surface2);
+            border-radius: var(--radius);
+            padding: 10px 12px;
+            text-align: center;
+        }
+
+        .bayad-summary-label {
+            font-size: 11px;
+            color: var(--text3);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 4px;
+        }
+
+        .bayad-summary-value {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .bayad-summary-value.red {
+            color: var(--red);
+        }
+
+        .bayad-summary-value.green {
+            color: var(--green);
+        }
+
+        .bayad-input-row {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        .bayad-input-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .bayad-error {
+            background: var(--red-light);
+            color: var(--red);
+            border-radius: var(--radius);
+            padding: 9px 13px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .bayad-preview {
+            background: var(--accent-light);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px 14px;
+            margin-top: 12px;
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .bayad-preview-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13.5px;
+        }
+
+        .bayad-preview-row span:first-child {
+            color: var(--text3);
+            font-weight: 500;
+        }
+
+        .bayad-preview-row span:last-child {
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .bayad-preview-status {
+            text-align: center;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 6px 10px;
+            border-radius: 8px;
+            margin-top: 4px;
+        }
+
+        .bayad-preview-status.is-paid {
+            background: var(--green-light);
+            color: var(--green);
+        }
+
+        .bayad-preview-status.is-pending {
+            background: var(--yellow-light);
+            color: var(--yellow);
+        }
+    </style>
 </head>
 
 <body>
@@ -49,6 +467,9 @@
                 </div>
                 <div class="nav-item" onclick="showPage('customers')">
                     <span class="icon">👥</span> Customers
+                </div>
+                <div class="nav-item" onclick="showPage('utang')">
+                    <span class="icon">💸</span> Utang
                 </div>
             </nav>
             <div style="padding: 12px 8px; border-top: 1px solid var(--border); flex-shrink: 0;">
@@ -381,6 +802,30 @@
                         </table>
                     </div>
                 </div>
+            </div>
+
+            <!-- ── Utang Page ──────────────────────────────────────────────── -->
+            <div id="page-utang" class="page">
+                <div class="page-header">
+                    <h2>💸 Utang</h2>
+                    <div class="topbar-actions">
+                        <select id="utang-filter-status" onchange="renderUtangPage()" style="width:140px;">
+                            <option value="unpaid">Unpaid Only</option>
+                            <option value="all">All Records</option>
+                            <option value="paid">Paid Only</option>
+                        </select>
+                        <div class="search-box" style="width:220px;">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="utang-search" placeholder="Search customer…"
+                                oninput="renderUtangPage()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-grid" id="utang-stats"
+                    style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;"></div>
+
+                <div class="utang-grid" id="utang-grid"></div>
             </div>
 
         </div>
@@ -860,6 +1305,81 @@
         </div>
     </div>
 
+    <!-- ── Bayad (Payment) Modal ────────────────────────────────────────── -->
+    <div class="modal-backdrop" id="modal-bayad">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3>💰 Bayad — Record Payment</h3>
+                <button class="close-btn" onclick="closeModal('modal-bayad')">✕</button>
+            </div>
+            <div class="modal-body">
+                <!-- Customer info -->
+                <div class="bayad-customer-block">
+                    <div class="bayad-avatar">👤</div>
+                    <div>
+                        <div class="bayad-customer-name" id="bayad-customer-name">—</div>
+                        <div style="font-size:12px;color:var(--text3);">Credit Record</div>
+                    </div>
+                </div>
+
+                <!-- Summary row -->
+                <div class="bayad-credit-summary">
+                    <div class="bayad-summary-item">
+                        <div class="bayad-summary-label">Owed</div>
+                        <div class="bayad-summary-value" id="bayad-amount-owed">₱0.00</div>
+                    </div>
+                    <div class="bayad-summary-item">
+                        <div class="bayad-summary-label">Paid</div>
+                        <div class="bayad-summary-value green" id="bayad-amount-paid">₱0.00</div>
+                    </div>
+                    <div class="bayad-summary-item">
+                        <div class="bayad-summary-label">Remaining</div>
+                        <div class="bayad-summary-value red" id="bayad-remaining">₱0.00</div>
+                    </div>
+                </div>
+
+                <!-- Amount input -->
+                <div class="form-group">
+                    <label>Payment Amount (₱) *</label>
+                    <div class="bayad-input-row">
+                        <div class="form-group">
+                            <div style="position:relative;">
+                                <span
+                                    style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none;">₱</span>
+                                <input type="number" id="bayad-amount-input" min="0.01" step="0.01" placeholder="0.00"
+                                    style="padding-left:26px;" oninput="onBayadAmountInput()">
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary" id="bayad-full-btn" data-remaining="0"
+                            onclick="bayad_fillFull()" style="white-space:nowrap;flex-shrink:0;">
+                            Full Amount
+                        </button>
+                    </div>
+                    <div class="bayad-error" id="bayad-error"></div>
+                </div>
+
+                <!-- Live preview -->
+                <div class="bayad-preview" id="bayad-preview">
+                    <div class="bayad-preview-row">
+                        <span>New Total Paid:</span>
+                        <span id="bayad-preview-paid">₱0.00</span>
+                    </div>
+                    <div class="bayad-preview-row">
+                        <span>New Remaining:</span>
+                        <span id="bayad-preview-remaining">₱0.00</span>
+                    </div>
+                    <div class="bayad-preview-status is-pending" id="bayad-preview-status">🕐 Still pending</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modal-bayad')">Cancel</button>
+                <button class="btn btn-success" id="bayad-confirm-btn" onclick="confirmBayad()" disabled>
+                    ✅ Confirm Payment
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="data/store.js"></script>
     <script src="js/helpers.js"></script>
     <script src="js/storage.js"></script>
@@ -873,6 +1393,7 @@
     <script src="js/reports.js"></script>
     <script src="js/alerts.js"></script>
     <script src="js/customers.js"></script>
+    <script src="js/utang.js"></script>
     <script>
         loadOrSeedDb();
         renderPOSItems();
