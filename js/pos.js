@@ -86,11 +86,11 @@ function renderPOSItems() {
       const defUnit = getDefaultSellingUnit(product.id);
       const priceDisplay = defUnit
         ? (() => {
-            const resolved = resolvePrice(defUnit.id, 1);
-            return resolved
-              ? `₱${formatPeso(resolved.unit_price)}/${defUnit.display_name}`
-              : "";
-          })()
+          const resolved = resolvePrice(defUnit.id, 1);
+          return resolved
+            ? `₱${formatPeso(resolved.unit_price)}/${defUnit.display_name}`
+            : "";
+        })()
         : "";
 
       return `<div class="item-card ${low && !outOfStock ? "low-stock" : ""} ${outOfStock ? "out-of-stock" : ""}"
@@ -98,13 +98,12 @@ function renderPOSItems() {
         <div class="item-emoji">${product.emoji || "📦"}</div>
         <div class="item-name">${product.name}</div>
         <div class="item-stock">
-          ${formatQty(qty)} ${baseUnitName}${
-            outOfStock
-              ? ' — <b style="color:var(--red)">Out</b>'
-              : low
-                ? ' — <span style="color:var(--orange)">Low</span>'
-                : ""
-          }
+          ${formatQty(qty)} ${baseUnitName}${outOfStock
+          ? ' — <b style="color:var(--red)">Out</b>'
+          : low
+            ? ' — <span style="color:var(--orange)">Low</span>'
+            : ""
+        }
         </div>
         <div class="item-price">${priceDisplay}</div>
       </div>`;
@@ -624,10 +623,9 @@ function onCheckoutCustomerChange() {
       <span>After This Sale</span>
       <strong style="color:${canApprove ? "var(--green)" : "var(--red)"};">₱${formatPeso(projectedTotal)}</strong>
     </div>
-    ${
-      canApprove
-        ? `<div class="credit-info-status ok">✅ Approved — ₱${formatPeso(remaining - saleTotal)} remaining after this sale</div>`
-        : `<div class="credit-info-status over">🚫 Exceeds credit limit by ₱${formatPeso(projectedTotal - customer.credit_limit)}</div>`
+    ${canApprove
+      ? `<div class="credit-info-status ok">✅ Approved — ₱${formatPeso(remaining - saleTotal)} remaining after this sale</div>`
+      : `<div class="credit-info-status over">🚫 Exceeds credit limit by ₱${formatPeso(projectedTotal - customer.credit_limit)}</div>`
     }
   `;
 
@@ -647,7 +645,7 @@ function confirmCheckout() {
   const customerId = isCash
     ? null
     : parseInt(document.getElementById("checkout-customer-select").value) ||
-      null;
+    null;
 
   if (!isCash && !customerId) {
     toast("Select a customer for credit sale", "error");

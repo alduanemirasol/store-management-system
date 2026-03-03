@@ -101,11 +101,10 @@ function updateInventoryLowStockPanel(lowProducts) {
         </div>
       </td>
       <td style="color:var(--text2);">${threshold} ${baseUnitName}</td>
-      <td>${
-        isOut
+      <td>${isOut
           ? '<span class="badge badge-red">Out of Stock</span>'
           : '<span class="badge badge-orange">Low Stock</span>'
-      }</td>
+        }</td>
       <td>
         <div style="display:flex;gap:6px;">
           <button class="btn btn-sm" style="background:var(--green-light);color:var(--green);" onclick="quickRestock(${p.id})">Restock</button>

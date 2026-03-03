@@ -1,0 +1,673 @@
+/* ============================================================
+ * pages.css
+ * Page-specific styles extracted from index.html inline <style>.
+ * Covers: Utang page, Bayad modal, Sales History page,
+ *         Sale Detail modal.
+ * ============================================================ */
+
+/* ── Utang Page ──────────────────────────────────────────────────────────── */
+
+.utang-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    margin-top: 4px;
+}
+
+.utang-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.utang-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.utang-card.overdue {
+    border-color: var(--red);
+    background: linear-gradient(to bottom, #fff5f5 0%, var(--surface) 60px);
+}
+
+.utang-card.paid {
+    border-color: var(--green);
+    opacity: 0.75;
+    background: linear-gradient(to bottom, #f0fdf4 0%, var(--surface) 60px);
+}
+
+.utang-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.utang-card-customer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.utang-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    letter-spacing: -0.5px;
+}
+
+.utang-card.overdue .utang-avatar {
+    background: var(--red-light);
+    color: var(--red);
+}
+
+.utang-card.paid .utang-avatar {
+    background: var(--green-light);
+    color: var(--green);
+}
+
+.utang-customer-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.utang-sale-ref {
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 1px;
+}
+
+.utang-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.utang-status-badge.pending {
+    background: var(--yellow-light);
+    color: var(--yellow);
+}
+
+.utang-status-badge.overdue {
+    background: var(--red-light);
+    color: var(--red);
+}
+
+.utang-status-badge.paid {
+    background: var(--green-light);
+    color: var(--green);
+}
+
+.utang-card-body {
+    padding: 14px 16px;
+    flex: 1;
+}
+
+.utang-amount-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.utang-amount-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.utang-amount-item.highlight {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 6px 8px;
+    margin: -6px -8px;
+}
+
+.utang-amount-label {
+    font-size: 11px;
+    color: var(--text3);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.utang-amount-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.utang-amount-value.owed {
+    color: var(--text2);
+}
+
+.utang-amount-value.paid-val {
+    color: var(--green);
+}
+
+.utang-amount-value.remaining {
+    color: var(--red);
+    font-size: 17px;
+}
+
+.utang-amount-value.remaining.is-paid {
+    color: var(--green);
+}
+
+.utang-amount-value.remaining.is-overdue {
+    color: var(--red);
+}
+
+.utang-progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.utang-progress-bar {
+    flex: 1;
+    height: 7px;
+    background: var(--surface2);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.utang-progress-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s;
+}
+
+.utang-progress-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text3);
+    white-space: nowrap;
+    min-width: 48px;
+    text-align: right;
+}
+
+.utang-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+}
+
+.utang-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12.5px;
+}
+
+.utang-meta-icon {
+    font-size: 13px;
+}
+
+.utang-meta-label {
+    color: var(--text3);
+    font-weight: 500;
+}
+
+.utang-meta-val {
+    color: var(--text2);
+    font-weight: 600;
+}
+
+.utang-meta-val.overdue-text {
+    color: var(--red);
+    font-weight: 700;
+}
+
+.utang-card-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.utang-bayad-btn {
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 9px 20px;
+}
+
+.utang-paid-stamp {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--green);
+    letter-spacing: 1px;
+    opacity: 0.8;
+}
+
+.utang-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text3);
+}
+
+.utang-empty-icon {
+    font-size: 48px;
+    margin-bottom: 14px;
+}
+
+.utang-empty-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text2);
+    margin-bottom: 6px;
+}
+
+.utang-empty-sub {
+    font-size: 14px;
+}
+
+
+/* ── Bayad Modal ─────────────────────────────────────────────────────────── */
+
+.bayad-customer-block {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    margin-bottom: 18px;
+}
+
+.bayad-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.bayad-customer-name {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.bayad-credit-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.bayad-summary-item {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    text-align: center;
+}
+
+.bayad-summary-label {
+    font-size: 11px;
+    color: var(--text3);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 4px;
+}
+
+.bayad-summary-value {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.bayad-summary-value.red {
+    color: var(--red);
+}
+
+.bayad-summary-value.green {
+    color: var(--green);
+}
+
+.bayad-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+}
+
+.bayad-input-row .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.bayad-error {
+    background: var(--red-light);
+    color: var(--red);
+    border-radius: var(--radius);
+    padding: 9px 13px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 10px;
+    display: none;
+}
+
+.bayad-preview {
+    background: var(--accent-light);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-top: 12px;
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.bayad-preview-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13.5px;
+}
+
+.bayad-preview-row span:first-child {
+    color: var(--text3);
+    font-weight: 500;
+}
+
+.bayad-preview-row span:last-child {
+    font-weight: 700;
+    color: var(--text);
+}
+
+.bayad-preview-status {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 8px;
+    margin-top: 4px;
+}
+
+.bayad-preview-status.is-paid {
+    background: var(--green-light);
+    color: var(--green);
+}
+
+.bayad-preview-status.is-pending {
+    background: var(--yellow-light);
+    color: var(--yellow);
+}
+
+
+/* ── Sales History Page ──────────────────────────────────────────────────── */
+
+.sh-row {
+    cursor: pointer;
+    transition: background 0.12s;
+}
+
+.sh-row:hover td {
+    background: var(--accent-light) !important;
+}
+
+.sh-row:hover .sh-view-btn {
+    color: var(--accent);
+    opacity: 1;
+}
+
+.sh-datetime {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.sh-date {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text);
+}
+
+.sh-time {
+    font-size: 12px;
+    color: var(--text3);
+}
+
+.sh-relative {
+    font-size: 11.5px;
+    color: var(--text3);
+    margin-top: 2px;
+}
+
+.sh-customer-name {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+.sh-items-preview {
+    font-size: 13.5px;
+    color: var(--text2);
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.sh-item-count {
+    font-size: 11.5px;
+    color: var(--text3);
+    margin-top: 2px;
+}
+
+.sh-overflow-badge {
+    display: inline-flex;
+    align-items: center;
+    background: var(--surface2);
+    color: var(--text3);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+
+.sh-total {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--green);
+    letter-spacing: -0.3px;
+}
+
+.sh-view-btn {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text3);
+    opacity: 0.6;
+    transition: all 0.12s;
+    white-space: nowrap;
+}
+
+
+/* ── Sale Detail Modal ───────────────────────────────────────────────────── */
+
+.sh-modal-header-block {
+    background: linear-gradient(135deg, var(--accent-light) 0%, #f8faff 100%);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 18px;
+    border: 1px solid var(--border);
+}
+
+.sh-modal-sale-num {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+}
+
+.sh-modal-datetime {
+    font-size: 13px;
+    color: var(--text3);
+    margin-top: 2px;
+}
+
+.sh-detail-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sh-detail-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+}
+
+.sh-detail-info-row:last-child {
+    border-bottom: none;
+}
+
+.sh-detail-info-label {
+    color: var(--text3);
+    font-weight: 500;
+}
+
+.sh-detail-info-value {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.sh-detail-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.sh-detail-item.last {
+    border-bottom: none;
+}
+
+.sh-detail-item-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.sh-detail-item-emoji {
+    font-size: 26px;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface2);
+    border-radius: var(--radius);
+}
+
+.sh-detail-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.sh-detail-item-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.sh-detail-item-meta {
+    font-size: 12.5px;
+    color: var(--text3);
+    margin-top: 2px;
+}
+
+.sh-detail-item-total {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.sh-detail-summary {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-top: 4px;
+}
+
+.sh-detail-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13.5px;
+    padding: 4px 0;
+    color: var(--text2);
+}
+
+.sh-detail-summary-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 10px;
+    margin-top: 6px;
+    border-top: 2px solid var(--border);
+}
+
+.sh-detail-total-label {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.sh-detail-total-value {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--green);
+    letter-spacing: -0.5px;
+}

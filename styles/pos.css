@@ -549,6 +549,7 @@
 .cart-stock-value.out-of-stock {
   color: var(--red);
 }
+
 /* ─── Checkout / Payment Modal ────────────────────────────────────────────── */
 
 /* checkout-total-box: Shows order total prominently at top of modal. */
