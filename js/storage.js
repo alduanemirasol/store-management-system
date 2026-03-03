@@ -3,7 +3,7 @@
  * localStorage persistence for the new schema db object.
  */
 
-const DB_KEY = "store_db_v3"; // v2 to avoid collision with old schema
+const DB_KEY = "store_db_v4"; // v2 to avoid collision with old schema
 
 function persistDb() {
   try {

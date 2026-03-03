@@ -168,7 +168,7 @@ function seedData() {
     { id: 4, product_id: 2, unit_id: 21, display_name: "tray", pack_quantity: 30, is_default_selling: false, can_restock: true, can_sell: true, approx_base_qty_per_piece: null, notes: "1 tray = 30 pcs", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
     // ── Cooking Oil (base: mL) ───────────────────────────────────────────────
     { id: 5, product_id: 3, unit_id: 3, display_name: "mL", pack_quantity: 1, is_default_selling: false, can_restock: true, can_sell: true, approx_base_qty_per_piece: null, notes: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 6, product_id: 3, unit_id: 3, display_name: "1/2 (250mL)", pack_quantity: 250, is_default_selling: true, can_restock: false, can_sell: true, approx_base_qty_per_piece: null, notes: "Sell only", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 6, product_id: 3, unit_id: 3, display_name: "250mL", pack_quantity: 250, is_default_selling: true, can_restock: false, can_sell: true, approx_base_qty_per_piece: null, notes: "Sell only", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
     { id: 7, product_id: 3, unit_id: 23, display_name: "container", pack_quantity: 20000, is_default_selling: false, can_restock: true, can_sell: true, approx_base_qty_per_piece: null, notes: "1 container=20 L", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
     // ── Candy (base: piece) ──────────────────────────────────────────────────
     { id: 8, product_id: 4, unit_id: 5, display_name: "piece", pack_quantity: 1, is_default_selling: true, can_restock: true, can_sell: true, approx_base_qty_per_piece: null, notes: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
@@ -336,12 +336,106 @@ function seedData() {
     { id: 2, name: "Credit" },
   ];
 
-  db.sales = [];
-  db.sale_items = [];
+  // ── SALES (demo data) ────────────────────────────────────────────────────────
+  // Dates are spread across today, yesterday, and a few days back
+  const now = new Date();
+  const daysAgo = (n, h = 10, m = 0) => {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - n, h, m, 0);
+    return d.toISOString();
+  };
+
+  db.sales = [
+    { id: 1, customer_id: null, payment_type_id: 1, sale_date: daysAgo(0, 9, 12), notes: null, created_by: 1, created_at: daysAgo(0, 9, 12), updated_at: daysAgo(0, 9, 12) },
+    { id: 2, customer_id: null, payment_type_id: 1, sale_date: daysAgo(0, 11, 45), notes: null, created_by: 1, created_at: daysAgo(0, 11, 45), updated_at: daysAgo(0, 11, 45) },
+    { id: 3, customer_id: 1, payment_type_id: 2, sale_date: daysAgo(0, 14, 30), notes: null, created_by: 1, created_at: daysAgo(0, 14, 30), updated_at: daysAgo(0, 14, 30) },
+    { id: 4, customer_id: null, payment_type_id: 1, sale_date: daysAgo(1, 8, 5), notes: null, created_by: 1, created_at: daysAgo(1, 8, 5), updated_at: daysAgo(1, 8, 5) },
+    { id: 5, customer_id: null, payment_type_id: 1, sale_date: daysAgo(1, 16, 20), notes: null, created_by: 1, created_at: daysAgo(1, 16, 20), updated_at: daysAgo(1, 16, 20) },
+    { id: 6, customer_id: null, payment_type_id: 1, sale_date: daysAgo(2, 10, 0), notes: null, created_by: 1, created_at: daysAgo(2, 10, 0), updated_at: daysAgo(2, 10, 0) },
+    { id: 7, customer_id: 1, payment_type_id: 2, sale_date: daysAgo(3, 9, 30), notes: null, created_by: 1, created_at: daysAgo(3, 9, 30), updated_at: daysAgo(3, 9, 30) },
+    { id: 8, customer_id: null, payment_type_id: 1, sale_date: daysAgo(5, 13, 15), notes: null, created_by: 1, created_at: daysAgo(5, 13, 15), updated_at: daysAgo(5, 13, 15) },
+  ];
+
+  db.sale_items = [
+    // Sale 1 — today: Rice + Egg
+    { id: 1, sale_id: 1, product_unit_id: 2, quantity: 1, unit_price: 2850.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 9, 12), _product_name: "Rice", _emoji: "🌾", _unit_label: "sack", _base_qty: 50 },
+    { id: 2, sale_id: 1, product_unit_id: 3, quantity: 6, unit_price: 9.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 9, 12), _product_name: "Egg", _emoji: "🥚", _unit_label: "piece", _base_qty: 6 },
+    // Sale 2 — today: Candy + Shampoo + Biscuit
+    { id: 3, sale_id: 2, product_unit_id: 8, quantity: 5, unit_price: 2.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 11, 45), _product_name: "Candy", _emoji: "🍬", _unit_label: "piece", _base_qty: 5 },
+    { id: 4, sale_id: 2, product_unit_id: 15, quantity: 3, unit_price: 8.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 11, 45), _product_name: "Shampoo", _emoji: "🧴", _unit_label: "sachet", _base_qty: 3 },
+    { id: 5, sale_id: 2, product_unit_id: 17, quantity: 4, unit_price: 6.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 11, 45), _product_name: "Biscuit", _emoji: "🍪", _unit_label: "piece", _base_qty: 4 },
+    // Sale 3 — today: Credit sale to Juan (Beer + Sardines)
+    { id: 6, sale_id: 3, product_unit_id: 13, quantity: 3, unit_price: 70.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 14, 30), _product_name: "Beer", _emoji: "🍺", _unit_label: "bottle", _base_qty: 3 },
+    { id: 7, sale_id: 3, product_unit_id: 23, quantity: 2, unit_price: 22.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 14, 30), _product_name: "Sardines", _emoji: "🐟", _unit_label: "can", _base_qty: 2 },
+    // Sale 4 — yesterday: Cooking Oil + Sugar
+    { id: 8, sale_id: 4, product_unit_id: 6, quantity: 2, unit_price: 37.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(1, 8, 5), _product_name: "Cooking Oil", _emoji: "🫙", _unit_label: "250mL", _base_qty: 500 },
+    { id: 9, sale_id: 4, product_unit_id: 19, quantity: 1, unit_price: 72.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(1, 8, 5), _product_name: "Sugar", _emoji: "🍚", _unit_label: "kg", _base_qty: 1 },
+    // Sale 5 — yesterday: Cigarettes + Beer (manual price)
+    { id: 10, sale_id: 5, product_unit_id: 25, quantity: 10, unit_price: 5.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(1, 16, 20), _product_name: "Cigarettes", _emoji: "🚬", _unit_label: "stick", _base_qty: 10 },
+    { id: 11, sale_id: 5, product_unit_id: 13, quantity: 1, unit_price: 65.00, is_manual_priced: true, manual_price_reason: "Loyalty discount", approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(1, 16, 20), _product_name: "Beer", _emoji: "🍺", _unit_label: "bottle", _base_qty: 1 },
+    // Sale 6 — 2 days ago: Salt + Sardines + Egg
+    { id: 12, sale_id: 6, product_unit_id: 21, quantity: 2, unit_price: 25.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(2, 10, 0), _product_name: "Salt", _emoji: "🧂", _unit_label: "kg", _base_qty: 2 },
+    { id: 13, sale_id: 6, product_unit_id: 23, quantity: 3, unit_price: 22.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(2, 10, 0), _product_name: "Sardines", _emoji: "🐟", _unit_label: "can", _base_qty: 3 },
+    { id: 14, sale_id: 6, product_unit_id: 3, quantity: 12, unit_price: 9.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(2, 10, 0), _product_name: "Egg", _emoji: "🥚", _unit_label: "piece", _base_qty: 12 },
+    // Sale 7 — 3 days ago: Credit sale (Onion + Butane)
+    { id: 15, sale_id: 7, product_unit_id: 10, quantity: 0.5, unit_price: 90.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(3, 9, 30), _product_name: "Onion", _emoji: "🧅", _unit_label: "kg", _base_qty: 0.5 },
+    { id: 16, sale_id: 7, product_unit_id: 28, quantity: 2, unit_price: 55.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(3, 9, 30), _product_name: "Butane", _emoji: "🛢️", _unit_label: "canister", _base_qty: 2 },
+    // Sale 8 — 5 days ago: Rice + Egg + Candy
+    { id: 17, sale_id: 8, product_unit_id: 1, quantity: 5, unit_price: 57.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(5, 13, 15), _product_name: "Rice", _emoji: "🌾", _unit_label: "kg", _base_qty: 5 },
+    { id: 18, sale_id: 8, product_unit_id: 4, quantity: 1, unit_price: 270.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(5, 13, 15), _product_name: "Egg", _emoji: "🥚", _unit_label: "tray", _base_qty: 30 },
+    { id: 19, sale_id: 8, product_unit_id: 8, quantity: 10, unit_price: 2.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(5, 13, 15), _product_name: "Candy", _emoji: "🍬", _unit_label: "piece", _base_qty: 10 },
+  ];
+
   db.sales_returns = [];
 
+  // Deduct seeded sales from product_stock so inventory stays consistent
+  const saleStockDeductions = [
+    { product_id: 1, qty: 50 },  // Rice: 1 sack
+    { product_id: 2, qty: 48 },  // Egg: 6+12+30
+    { product_id: 3, qty: 1000 },// Oil: 500+500 mL
+    { product_id: 4, qty: 25 },  // Candy: 5+10+10
+    { product_id: 5, qty: 0.5 }, // Onion
+    { product_id: 6, qty: 4 },   // Beer: 3+1
+    { product_id: 7, qty: 3 },   // Shampoo
+    { product_id: 8, qty: 4 },   // Biscuit
+    { product_id: 9, qty: 1 },   // Sugar
+    { product_id: 10, qty: 2 },  // Salt
+    { product_id: 11, qty: 5 },  // Sardines: 2+3
+    { product_id: 12, qty: 10 }, // Cigarettes
+    { product_id: 13, qty: 2 },  // Butane
+  ];
+  saleStockDeductions.forEach(({ product_id, qty }) => {
+    const row = db.product_stock.find((s) => s.product_id === product_id);
+    if (row) row.quantity = Math.max(0, row.quantity - qty);
+  });
+
   // ── CREDIT ───────────────────────────────────────────────────────────────────
-  db.credit = [];
+  // Credit records matching the credit sales above (sale 3 and sale 7)
+  db.credit = [
+    {
+      id: 1,
+      sale_id: 3,
+      customer_id: 1,
+      amount_owed: 254.00, // 3×70 + 2×22
+      amount_paid: 100.00,
+      due_date: (() => { const d = new Date(now); d.setDate(d.getDate() + 27); return d.toISOString().split("T")[0]; })(),
+      status: "PENDING",
+      notes: null,
+      created_at: daysAgo(0, 14, 30),
+      updated_at: daysAgo(0, 14, 30),
+    },
+    {
+      id: 2,
+      sale_id: 7,
+      customer_id: 1,
+      amount_owed: 155.00, // 0.5×90 + 2×55
+      amount_paid: 0,
+      due_date: (() => { const d = new Date(now); d.setDate(d.getDate() + 24); return d.toISOString().split("T")[0]; })(),
+      status: "PENDING",
+      notes: null,
+      created_at: daysAgo(3, 9, 30),
+      updated_at: daysAgo(3, 9, 30),
+    },
+  ];
   db.credit_payments = [];
 
   // ── EXPENSES ─────────────────────────────────────────────────────────────────
