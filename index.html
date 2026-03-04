@@ -45,6 +45,12 @@
                 <div class="nav-item" onclick="showPage('categories')">
                     <span class="icon">🗂️</span> Categories
                 </div>
+                <div class="nav-item" onclick="showPage('transactions')">
+                    <span class="icon">📋</span> Transactions
+                </div>
+                <div class="nav-item" onclick="showPage('recentsales')">
+                    <span class="icon">🕒</span> Recent Sales
+                </div>
                 <div class="nav-item" onclick="showPage('stocklogs')">
                     <span class="icon">📝</span> Stock Logs
                 </div>
@@ -251,21 +257,39 @@
                 </div>
             </div>
 
-            <div id="page-stocklogs" class="page">
+            <div id="page-transactions" class="page">
                 <div class="topbar">
-                    <h2>📝 Stock Logs</h2>
+                    <h2>📋 Transactions</h2>
+                </div>
+                <div class="stats-grid" id="txn-stats"></div>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Date & Time</th>
+                                    <th>Items</th>
+                                    <th>Total</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="txn-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page-recentsales" class="page">
+                <div class="topbar">
+                    <h2>🕒 Recent Sales</h2>
                     <div class="topbar-actions">
-                        <div class="search-box" style="width:180px;">
+                        <div class="search-box" style="width:200px;">
                             <span class="search-icon">🔍</span>
-                            <input type="text" id="sl-search" placeholder="Search item..."
-                                oninput="renderStockLogsPage()">
+                            <input type="text" id="rs-search" placeholder="Search item..."
+                                oninput="renderRecentSalesPage()">
                         </div>
-                        <select id="sl-filter-type" onchange="renderStockLogsPage()" style="width:140px;">
-                            <option value="all">All Types</option>
-                            <option value="sale">Sales Only</option>
-                            <option value="restock">Restocks Only</option>
-                        </select>
-                        <select id="sl-filter-date" onchange="renderStockLogsPage()" style="width:140px;">
+                        <select id="rs-filter-date" onchange="renderRecentSalesPage()" style="width:150px;">
                             <option value="all">All Time</option>
                             <option value="today">Today</option>
                             <option value="week">This Week</option>
@@ -273,17 +297,65 @@
                         </select>
                     </div>
                 </div>
-                <div class="stats-grid" id="sl-stats"></div>
+                <div class="stats-grid" id="rs-stats"></div>
                 <div class="card">
                     <div class="table-wrap">
                         <table>
                             <thead>
                                 <tr>
                                     <th>Item</th>
-                                    <th>Change Type</th>
-                                    <th>Qty Change</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
                                     <th>Date & Time</th>
-                                    <th>Note</th>
+                                    <th>Order #</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rs-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page-stocklogs" class="page">
+                <div class="page-header">
+                    <h2>📝 Stock Logs</h2>
+                    <div class="topbar-actions">
+                        <div class="search-box" style="width:180px;">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="sl-search" placeholder="Search item..."
+                                oninput="renderStockLogsPage()">
+                        </div>
+                        <select id="sl-filter-reason" onchange="renderStockLogsPage()" style="width:150px;">
+                            <option value="all">All Reasons</option>
+                            <option value="1">Purchase</option>
+                            <option value="2">Sale</option>
+                            <option value="3">Return</option>
+                            <option value="4">Damage</option>
+                            <option value="5">Recount</option>
+                            <option value="6">Sample</option>
+                            <option value="7">Adjustment</option>
+                        </select>
+                        <select id="sl-filter-date" onchange="renderStockLogsPage()" style="width:140px;">
+                            <option value="all">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="openLogStockChangeModal()">+ Log Stock Change</button>
+                    </div>
+                </div>
+                <div class="stats-grid" id="sl-stats" style="margin-bottom:20px;"></div>
+                <div class="card" style="padding:0;overflow:hidden;">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Change</th>
+                                    <th>Reason</th>
+                                    <th>Expiry</th>
+                                    <th>Notes</th>
+                                    <th>Date</th>
                                 </tr>
                             </thead>
                             <tbody id="sl-tbody"></tbody>
@@ -719,6 +791,16 @@
         </div>
     </div>
 
+    <div class="modal-backdrop" id="modal-txn-detail">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Transaction Details</h3>
+                <button class="close-btn" onclick="closeModal('modal-txn-detail')">✕</button>
+            </div>
+            <div class="modal-body" id="txn-detail-body"></div>
+        </div>
+    </div>
+
     <div class="modal-backdrop" id="modal-restock">
         <div class="modal">
             <div class="modal-header">
@@ -994,6 +1076,71 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('modal-sale-detail')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Log Stock Change Modal ────────────────────────────────────────── -->
+    <div class="modal-backdrop" id="modal-log-stock">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3>📝 Log Stock Change</h3>
+                <button class="close-btn" onclick="closeModal('modal-log-stock')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Product *</label>
+                    <select id="sl-log-product" onchange="onLogStockProductChange()">
+                        <option value="">— Select product —</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Reason *</label>
+                    <select id="sl-log-reason" onchange="onLogStockReasonChange()">
+                        <option value="">— Select reason —</option>
+                        <option value="1">📦 Purchase (restock)</option>
+                        <option value="2">🛒 Sale</option>
+                        <option value="3">↩️ Return</option>
+                        <option value="4">💥 Damage</option>
+                        <option value="5">🔢 Recount</option>
+                        <option value="6">🧪 Sample</option>
+                        <option value="7">⚙️ Adjustment</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Change Quantity *</label>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <select id="sl-log-direction" style="width:110px;flex-shrink:0;">
+                            <option value="+">+ Add</option>
+                            <option value="-">− Remove</option>
+                        </select>
+                        <div style="position:relative;flex:1;">
+                            <input type="number" id="sl-log-qty" min="0.001" step="any" placeholder="0"
+                                oninput="updateLogStockPreview()">
+                            <span id="sl-log-unit-suffix"
+                                style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none;"></span>
+                        </div>
+                    </div>
+                    <div id="sl-log-stock-preview"
+                        style="display:none;margin-top:8px;padding:9px 12px;border-radius:var(--radius);font-size:13px;font-weight:500;">
+                    </div>
+                </div>
+                <div class="form-group" id="sl-log-expiry-group">
+                    <label>Expiration Date <span id="sl-log-expiry-required"
+                            style="color:var(--red);font-weight:700;"></span></label>
+                    <input type="date" id="sl-log-expiry">
+                    <p class="helper" id="sl-log-expiry-hint">Required for Purchase restocks. Leave blank if product has
+                        no expiry.</p>
+                </div>
+                <div class="form-group">
+                    <label>Notes <span style="font-weight:400;color:var(--text3);">(optional)</span></label>
+                    <textarea id="sl-log-notes"
+                        placeholder="e.g. Delivered by supplier, damaged in flood..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modal-log-stock')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveLogStockChange()">✅ Save Log</button>
             </div>
         </div>
     </div>

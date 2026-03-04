@@ -231,6 +231,7 @@ function recordStockMovement({
   reference_type = null,
   reference_id = null,
   notes = null,
+  expiry_date = null,
 }) {
   const userId = currentUser ? currentUser.id : null;
 
@@ -243,6 +244,7 @@ function recordStockMovement({
     reference_type,
     reference_id,
     notes,
+    expiry_date,
     created_by: userId,
     created_at: new Date().toISOString(),
   });
