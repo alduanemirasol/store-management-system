@@ -337,7 +337,7 @@ function seedData() {
   ];
 
   // ── SALES (demo data) ────────────────────────────────────────────────────────
-  // Dates are spread across today, yesterday, and a few days back
+  // Dates spread across today, this week, this month, and last month
   const now = new Date();
   const daysAgo = (n, h = 10, m = 0) => {
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - n, h, m, 0);
@@ -345,63 +345,164 @@ function seedData() {
   };
 
   db.sales = [
-    { id: 1, customer_id: null, payment_type_id: 1, sale_date: daysAgo(0, 9, 12), notes: null, created_by: 1, created_at: daysAgo(0, 9, 12), updated_at: daysAgo(0, 9, 12) },
-    { id: 2, customer_id: null, payment_type_id: 1, sale_date: daysAgo(0, 11, 45), notes: null, created_by: 1, created_at: daysAgo(0, 11, 45), updated_at: daysAgo(0, 11, 45) },
-    { id: 3, customer_id: 1, payment_type_id: 2, sale_date: daysAgo(0, 14, 30), notes: null, created_by: 1, created_at: daysAgo(0, 14, 30), updated_at: daysAgo(0, 14, 30) },
-    { id: 4, customer_id: null, payment_type_id: 1, sale_date: daysAgo(1, 8, 5), notes: null, created_by: 1, created_at: daysAgo(1, 8, 5), updated_at: daysAgo(1, 8, 5) },
-    { id: 5, customer_id: null, payment_type_id: 1, sale_date: daysAgo(1, 16, 20), notes: null, created_by: 1, created_at: daysAgo(1, 16, 20), updated_at: daysAgo(1, 16, 20) },
-    { id: 6, customer_id: null, payment_type_id: 1, sale_date: daysAgo(2, 10, 0), notes: null, created_by: 1, created_at: daysAgo(2, 10, 0), updated_at: daysAgo(2, 10, 0) },
-    { id: 7, customer_id: 1, payment_type_id: 2, sale_date: daysAgo(3, 9, 30), notes: null, created_by: 1, created_at: daysAgo(3, 9, 30), updated_at: daysAgo(3, 9, 30) },
-    { id: 8, customer_id: null, payment_type_id: 1, sale_date: daysAgo(5, 13, 15), notes: null, created_by: 1, created_at: daysAgo(5, 13, 15), updated_at: daysAgo(5, 13, 15) },
+    // ── Today ──
+    { id: 1, customer_id: null, payment_type_id: 1, sale_date: daysAgo(0, 7, 30), notes: null, created_by: 1, created_at: daysAgo(0, 7, 30), updated_at: daysAgo(0, 7, 30) },
+    { id: 2, customer_id: null, payment_type_id: 1, sale_date: daysAgo(0, 9, 12), notes: null, created_by: 1, created_at: daysAgo(0, 9, 12), updated_at: daysAgo(0, 9, 12) },
+    { id: 3, customer_id: null, payment_type_id: 1, sale_date: daysAgo(0, 11, 45), notes: null, created_by: 1, created_at: daysAgo(0, 11, 45), updated_at: daysAgo(0, 11, 45) },
+    { id: 4, customer_id: 1, payment_type_id: 2, sale_date: daysAgo(0, 14, 30), notes: null, created_by: 1, created_at: daysAgo(0, 14, 30), updated_at: daysAgo(0, 14, 30) },
+    // ── Yesterday ──
+    { id: 5, customer_id: null, payment_type_id: 1, sale_date: daysAgo(1, 8, 5), notes: null, created_by: 1, created_at: daysAgo(1, 8, 5), updated_at: daysAgo(1, 8, 5) },
+    { id: 6, customer_id: null, payment_type_id: 1, sale_date: daysAgo(1, 12, 20), notes: null, created_by: 1, created_at: daysAgo(1, 12, 20), updated_at: daysAgo(1, 12, 20) },
+    { id: 7, customer_id: null, payment_type_id: 1, sale_date: daysAgo(1, 16, 50), notes: null, created_by: 1, created_at: daysAgo(1, 16, 50), updated_at: daysAgo(1, 16, 50) },
+    // ── 2 days ago ──
+    { id: 8, customer_id: null, payment_type_id: 1, sale_date: daysAgo(2, 9, 0), notes: null, created_by: 1, created_at: daysAgo(2, 9, 0), updated_at: daysAgo(2, 9, 0) },
+    { id: 9, customer_id: 1, payment_type_id: 2, sale_date: daysAgo(2, 15, 10), notes: null, created_by: 1, created_at: daysAgo(2, 15, 10), updated_at: daysAgo(2, 15, 10) },
+    // ── 3 days ago ──
+    { id: 10, customer_id: null, payment_type_id: 1, sale_date: daysAgo(3, 8, 40), notes: null, created_by: 1, created_at: daysAgo(3, 8, 40), updated_at: daysAgo(3, 8, 40) },
+    { id: 11, customer_id: null, payment_type_id: 1, sale_date: daysAgo(3, 17, 5), notes: null, created_by: 1, created_at: daysAgo(3, 17, 5), updated_at: daysAgo(3, 17, 5) },
+    // ── 5 days ago ──
+    { id: 12, customer_id: null, payment_type_id: 1, sale_date: daysAgo(5, 10, 30), notes: null, created_by: 1, created_at: daysAgo(5, 10, 30), updated_at: daysAgo(5, 10, 30) },
+    { id: 13, customer_id: null, payment_type_id: 1, sale_date: daysAgo(5, 14, 0), notes: null, created_by: 1, created_at: daysAgo(5, 14, 0), updated_at: daysAgo(5, 14, 0) },
+    // ── 8 days ago (last week) ──
+    { id: 14, customer_id: null, payment_type_id: 1, sale_date: daysAgo(8, 9, 20), notes: null, created_by: 1, created_at: daysAgo(8, 9, 20), updated_at: daysAgo(8, 9, 20) },
+    { id: 15, customer_id: 1, payment_type_id: 2, sale_date: daysAgo(8, 13, 45), notes: null, created_by: 1, created_at: daysAgo(8, 13, 45), updated_at: daysAgo(8, 13, 45) },
+    // ── 12 days ago ──
+    { id: 16, customer_id: null, payment_type_id: 1, sale_date: daysAgo(12, 11, 0), notes: null, created_by: 1, created_at: daysAgo(12, 11, 0), updated_at: daysAgo(12, 11, 0) },
+    { id: 17, customer_id: null, payment_type_id: 1, sale_date: daysAgo(12, 15, 30), notes: null, created_by: 1, created_at: daysAgo(12, 15, 30), updated_at: daysAgo(12, 15, 30) },
+    // ── 18 days ago ──
+    { id: 18, customer_id: null, payment_type_id: 1, sale_date: daysAgo(18, 8, 15), notes: null, created_by: 1, created_at: daysAgo(18, 8, 15), updated_at: daysAgo(18, 8, 15) },
+    { id: 19, customer_id: null, payment_type_id: 1, sale_date: daysAgo(18, 16, 40), notes: null, created_by: 1, created_at: daysAgo(18, 16, 40), updated_at: daysAgo(18, 16, 40) },
+    // ── 25 days ago ──
+    { id: 20, customer_id: null, payment_type_id: 1, sale_date: daysAgo(25, 10, 0), notes: null, created_by: 1, created_at: daysAgo(25, 10, 0), updated_at: daysAgo(25, 10, 0) },
+    { id: 21, customer_id: 1, payment_type_id: 2, sale_date: daysAgo(25, 14, 20), notes: null, created_by: 1, created_at: daysAgo(25, 14, 20), updated_at: daysAgo(25, 14, 20) },
+    // ── 35 days ago (last month) ──
+    { id: 22, customer_id: null, payment_type_id: 1, sale_date: daysAgo(35, 9, 0), notes: null, created_by: 1, created_at: daysAgo(35, 9, 0), updated_at: daysAgo(35, 9, 0) },
+    { id: 23, customer_id: null, payment_type_id: 1, sale_date: daysAgo(35, 13, 10), notes: null, created_by: 1, created_at: daysAgo(35, 13, 10), updated_at: daysAgo(35, 13, 10) },
+    // ── 45 days ago ──
+    { id: 24, customer_id: null, payment_type_id: 1, sale_date: daysAgo(45, 11, 30), notes: null, created_by: 1, created_at: daysAgo(45, 11, 30), updated_at: daysAgo(45, 11, 30) },
+    { id: 25, customer_id: null, payment_type_id: 1, sale_date: daysAgo(45, 17, 0), notes: null, created_by: 1, created_at: daysAgo(45, 17, 0), updated_at: daysAgo(45, 17, 0) },
+    // ── 60 days ago ──
+    { id: 26, customer_id: null, payment_type_id: 1, sale_date: daysAgo(60, 8, 0), notes: null, created_by: 1, created_at: daysAgo(60, 8, 0), updated_at: daysAgo(60, 8, 0) },
+    { id: 27, customer_id: 1, payment_type_id: 2, sale_date: daysAgo(60, 14, 30), notes: null, created_by: 1, created_at: daysAgo(60, 14, 30), updated_at: daysAgo(60, 14, 30) },
   ];
 
   db.sale_items = [
-    // Sale 1 — today: Rice + Egg
-    { id: 1, sale_id: 1, product_unit_id: 2, quantity: 1, unit_price: 2850.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 9, 12), _product_name: "Rice", _emoji: "🌾", _unit_label: "sack", _base_qty: 50 },
-    { id: 2, sale_id: 1, product_unit_id: 3, quantity: 6, unit_price: 9.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 9, 12), _product_name: "Egg", _emoji: "🥚", _unit_label: "piece", _base_qty: 6 },
-    // Sale 2 — today: Candy + Shampoo + Biscuit
-    { id: 3, sale_id: 2, product_unit_id: 8, quantity: 5, unit_price: 2.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 11, 45), _product_name: "Candy", _emoji: "🍬", _unit_label: "piece", _base_qty: 5 },
-    { id: 4, sale_id: 2, product_unit_id: 15, quantity: 3, unit_price: 8.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 11, 45), _product_name: "Shampoo", _emoji: "🧴", _unit_label: "sachet", _base_qty: 3 },
-    { id: 5, sale_id: 2, product_unit_id: 17, quantity: 4, unit_price: 6.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 11, 45), _product_name: "Biscuit", _emoji: "🍪", _unit_label: "piece", _base_qty: 4 },
-    // Sale 3 — today: Credit sale to Juan (Beer + Sardines)
-    { id: 6, sale_id: 3, product_unit_id: 13, quantity: 3, unit_price: 70.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 14, 30), _product_name: "Beer", _emoji: "🍺", _unit_label: "bottle", _base_qty: 3 },
-    { id: 7, sale_id: 3, product_unit_id: 23, quantity: 2, unit_price: 22.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 14, 30), _product_name: "Sardines", _emoji: "🐟", _unit_label: "can", _base_qty: 2 },
-    // Sale 4 — yesterday: Cooking Oil + Sugar
-    { id: 8, sale_id: 4, product_unit_id: 6, quantity: 2, unit_price: 37.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(1, 8, 5), _product_name: "Cooking Oil", _emoji: "🫙", _unit_label: "1/2 (250mL)", _base_qty: 500 },
-    { id: 9, sale_id: 4, product_unit_id: 19, quantity: 1, unit_price: 72.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(1, 8, 5), _product_name: "Sugar", _emoji: "🍚", _unit_label: "kg", _base_qty: 1 },
-    // Sale 5 — yesterday: Cigarettes + Beer (manual price)
-    { id: 10, sale_id: 5, product_unit_id: 25, quantity: 10, unit_price: 5.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(1, 16, 20), _product_name: "Cigarettes", _emoji: "🚬", _unit_label: "stick", _base_qty: 10 },
-    { id: 11, sale_id: 5, product_unit_id: 13, quantity: 1, unit_price: 65.00, is_manual_priced: true, manual_price_reason: "Loyalty discount", approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(1, 16, 20), _product_name: "Beer", _emoji: "🍺", _unit_label: "bottle", _base_qty: 1 },
-    // Sale 6 — 2 days ago: Salt + Sardines + Egg
-    { id: 12, sale_id: 6, product_unit_id: 21, quantity: 2, unit_price: 25.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(2, 10, 0), _product_name: "Salt", _emoji: "🧂", _unit_label: "kg", _base_qty: 2 },
-    { id: 13, sale_id: 6, product_unit_id: 23, quantity: 3, unit_price: 22.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(2, 10, 0), _product_name: "Sardines", _emoji: "🐟", _unit_label: "can", _base_qty: 3 },
-    { id: 14, sale_id: 6, product_unit_id: 3, quantity: 12, unit_price: 9.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(2, 10, 0), _product_name: "Egg", _emoji: "🥚", _unit_label: "piece", _base_qty: 12 },
-    // Sale 7 — 3 days ago: Credit sale (Onion + Butane)
-    { id: 15, sale_id: 7, product_unit_id: 10, quantity: 0.5, unit_price: 90.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(3, 9, 30), _product_name: "Onion", _emoji: "🧅", _unit_label: "kg", _base_qty: 0.5 },
-    { id: 16, sale_id: 7, product_unit_id: 28, quantity: 2, unit_price: 55.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(3, 9, 30), _product_name: "Butane", _emoji: "🛢️", _unit_label: "canister", _base_qty: 2 },
-    // Sale 8 — 5 days ago: Rice + Egg + Candy
-    { id: 17, sale_id: 8, product_unit_id: 1, quantity: 5, unit_price: 57.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(5, 13, 15), _product_name: "Rice", _emoji: "🌾", _unit_label: "kg", _base_qty: 5 },
-    { id: 18, sale_id: 8, product_unit_id: 4, quantity: 1, unit_price: 270.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(5, 13, 15), _product_name: "Egg", _emoji: "🥚", _unit_label: "tray", _base_qty: 30 },
-    { id: 19, sale_id: 8, product_unit_id: 8, quantity: 10, unit_price: 2.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(5, 13, 15), _product_name: "Candy", _emoji: "🍬", _unit_label: "piece", _base_qty: 10 },
+    // Sale 1 — today early: Egg + Candy
+    { id: 1, sale_id: 1, product_unit_id: 3, quantity: 4, unit_price: 9.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 7, 30), _product_name: "Egg", _emoji: "🥚", _unit_label: "piece", _base_qty: 4 },
+    { id: 2, sale_id: 1, product_unit_id: 8, quantity: 3, unit_price: 2.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 7, 30), _product_name: "Candy", _emoji: "🍬", _unit_label: "piece", _base_qty: 3 },
+    // Sale 2 — today: Rice sack + Egg
+    { id: 3, sale_id: 2, product_unit_id: 2, quantity: 1, unit_price: 2850.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 9, 12), _product_name: "Rice", _emoji: "🌾", _unit_label: "sack", _base_qty: 50 },
+    { id: 4, sale_id: 2, product_unit_id: 3, quantity: 6, unit_price: 9.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 9, 12), _product_name: "Egg", _emoji: "🥚", _unit_label: "piece", _base_qty: 6 },
+    // Sale 3 — today: Candy + Shampoo + Biscuit
+    { id: 5, sale_id: 3, product_unit_id: 8, quantity: 5, unit_price: 2.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 11, 45), _product_name: "Candy", _emoji: "🍬", _unit_label: "piece", _base_qty: 5 },
+    { id: 6, sale_id: 3, product_unit_id: 15, quantity: 3, unit_price: 8.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 11, 45), _product_name: "Shampoo", _emoji: "🧴", _unit_label: "sachet", _base_qty: 3 },
+    { id: 7, sale_id: 3, product_unit_id: 17, quantity: 4, unit_price: 6.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 11, 45), _product_name: "Biscuit", _emoji: "🍪", _unit_label: "piece", _base_qty: 4 },
+    // Sale 4 — today credit: Beer + Sardines
+    { id: 8, sale_id: 4, product_unit_id: 13, quantity: 3, unit_price: 70.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 14, 30), _product_name: "Beer", _emoji: "🍺", _unit_label: "bottle", _base_qty: 3 },
+    { id: 9, sale_id: 4, product_unit_id: 23, quantity: 2, unit_price: 22.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(0, 14, 30), _product_name: "Sardines", _emoji: "🐟", _unit_label: "can", _base_qty: 2 },
+    // Sale 5 — yesterday: Cooking Oil + Sugar
+    { id: 10, sale_id: 5, product_unit_id: 6, quantity: 2, unit_price: 37.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(1, 8, 5), _product_name: "Cooking Oil", _emoji: "🫙", _unit_label: "1/2 (250mL)", _base_qty: 500 },
+    { id: 11, sale_id: 5, product_unit_id: 19, quantity: 1, unit_price: 72.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(1, 8, 5), _product_name: "Sugar", _emoji: "🍚", _unit_label: "kg", _base_qty: 1 },
+    // Sale 6 — yesterday: Cigarettes + Beer (manual price)
+    { id: 12, sale_id: 6, product_unit_id: 25, quantity: 10, unit_price: 5.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(1, 12, 20), _product_name: "Cigarettes", _emoji: "🚬", _unit_label: "stick", _base_qty: 10 },
+    { id: 13, sale_id: 6, product_unit_id: 13, quantity: 1, unit_price: 65.00, is_manual_priced: true, manual_price_reason: "Loyalty discount", approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(1, 12, 20), _product_name: "Beer", _emoji: "🍺", _unit_label: "bottle", _base_qty: 1 },
+    // Sale 7 — yesterday: Egg tray + Biscuit
+    { id: 14, sale_id: 7, product_unit_id: 4, quantity: 1, unit_price: 270.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(1, 16, 50), _product_name: "Egg", _emoji: "🥚", _unit_label: "tray", _base_qty: 30 },
+    { id: 15, sale_id: 7, product_unit_id: 17, quantity: 6, unit_price: 6.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(1, 16, 50), _product_name: "Biscuit", _emoji: "🍪", _unit_label: "piece", _base_qty: 6 },
+    // Sale 8 — 2 days ago: Salt + Sardines + Egg
+    { id: 16, sale_id: 8, product_unit_id: 21, quantity: 2, unit_price: 25.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(2, 9, 0), _product_name: "Salt", _emoji: "🧂", _unit_label: "kg", _base_qty: 2 },
+    { id: 17, sale_id: 8, product_unit_id: 23, quantity: 3, unit_price: 22.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(2, 9, 0), _product_name: "Sardines", _emoji: "🐟", _unit_label: "can", _base_qty: 3 },
+    { id: 18, sale_id: 8, product_unit_id: 3, quantity: 12, unit_price: 9.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(2, 9, 0), _product_name: "Egg", _emoji: "🥚", _unit_label: "piece", _base_qty: 12 },
+    // Sale 9 — 2 days ago credit: Onion + Butane
+    { id: 19, sale_id: 9, product_unit_id: 10, quantity: 0.5, unit_price: 90.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(2, 15, 10), _product_name: "Onion", _emoji: "🧅", _unit_label: "kg", _base_qty: 0.5 },
+    { id: 20, sale_id: 9, product_unit_id: 28, quantity: 2, unit_price: 55.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(2, 15, 10), _product_name: "Butane", _emoji: "🛢️", _unit_label: "canister", _base_qty: 2 },
+    // Sale 10 — 3 days ago: Rice + Shampoo
+    { id: 21, sale_id: 10, product_unit_id: 1, quantity: 3, unit_price: 57.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(3, 8, 40), _product_name: "Rice", _emoji: "🌾", _unit_label: "kg", _base_qty: 3 },
+    { id: 22, sale_id: 10, product_unit_id: 15, quantity: 5, unit_price: 8.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(3, 8, 40), _product_name: "Shampoo", _emoji: "🧴", _unit_label: "sachet", _base_qty: 5 },
+    // Sale 11 — 3 days ago: Sugar + Salt + Candy
+    { id: 23, sale_id: 11, product_unit_id: 19, quantity: 2, unit_price: 72.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(3, 17, 5), _product_name: "Sugar", _emoji: "🍚", _unit_label: "kg", _base_qty: 2 },
+    { id: 24, sale_id: 11, product_unit_id: 21, quantity: 1, unit_price: 25.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(3, 17, 5), _product_name: "Salt", _emoji: "🧂", _unit_label: "kg", _base_qty: 1 },
+    { id: 25, sale_id: 11, product_unit_id: 8, quantity: 8, unit_price: 2.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(3, 17, 5), _product_name: "Candy", _emoji: "🍬", _unit_label: "piece", _base_qty: 8 },
+    // Sale 12 — 5 days ago: Beer case + Sardines
+    { id: 26, sale_id: 12, product_unit_id: 14, quantity: 1, unit_price: 390.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(5, 10, 30), _product_name: "Beer", _emoji: "🍺", _unit_label: "case", _base_qty: 6 },
+    { id: 27, sale_id: 12, product_unit_id: 23, quantity: 4, unit_price: 22.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(5, 10, 30), _product_name: "Sardines", _emoji: "🐟", _unit_label: "can", _base_qty: 4 },
+    // Sale 13 — 5 days ago: Cooking Oil + Egg + Candy
+    { id: 28, sale_id: 13, product_unit_id: 6, quantity: 4, unit_price: 37.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(5, 14, 0), _product_name: "Cooking Oil", _emoji: "🫙", _unit_label: "1/2 (250mL)", _base_qty: 1000 },
+    { id: 29, sale_id: 13, product_unit_id: 3, quantity: 6, unit_price: 9.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(5, 14, 0), _product_name: "Egg", _emoji: "🥚", _unit_label: "piece", _base_qty: 6 },
+    { id: 30, sale_id: 13, product_unit_id: 8, quantity: 6, unit_price: 2.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(5, 14, 0), _product_name: "Candy", _emoji: "🍬", _unit_label: "piece", _base_qty: 6 },
+    // Sale 14 — 8 days ago: Rice + Biscuit + Shampoo
+    { id: 31, sale_id: 14, product_unit_id: 2, quantity: 1, unit_price: 2850.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(8, 9, 20), _product_name: "Rice", _emoji: "🌾", _unit_label: "sack", _base_qty: 50 },
+    { id: 32, sale_id: 14, product_unit_id: 17, quantity: 5, unit_price: 6.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(8, 9, 20), _product_name: "Biscuit", _emoji: "🍪", _unit_label: "piece", _base_qty: 5 },
+    { id: 33, sale_id: 14, product_unit_id: 15, quantity: 2, unit_price: 8.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(8, 9, 20), _product_name: "Shampoo", _emoji: "🧴", _unit_label: "sachet", _base_qty: 2 },
+    // Sale 15 — 8 days ago credit: Cigarettes + Butane
+    { id: 34, sale_id: 15, product_unit_id: 25, quantity: 20, unit_price: 5.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(8, 13, 45), _product_name: "Cigarettes", _emoji: "🚬", _unit_label: "stick", _base_qty: 20 },
+    { id: 35, sale_id: 15, product_unit_id: 28, quantity: 1, unit_price: 55.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(8, 13, 45), _product_name: "Butane", _emoji: "🛢️", _unit_label: "canister", _base_qty: 1 },
+    // Sale 16 — 12 days ago: Onion + Sugar + Egg
+    { id: 36, sale_id: 16, product_unit_id: 10, quantity: 1, unit_price: 90.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(12, 11, 0), _product_name: "Onion", _emoji: "🧅", _unit_label: "kg", _base_qty: 1 },
+    { id: 37, sale_id: 16, product_unit_id: 19, quantity: 2, unit_price: 72.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(12, 11, 0), _product_name: "Sugar", _emoji: "🍚", _unit_label: "kg", _base_qty: 2 },
+    { id: 38, sale_id: 16, product_unit_id: 4, quantity: 1, unit_price: 270.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(12, 11, 0), _product_name: "Egg", _emoji: "🥚", _unit_label: "tray", _base_qty: 30 },
+    // Sale 17 — 12 days ago: Beer + Sardines + Candy
+    { id: 39, sale_id: 17, product_unit_id: 13, quantity: 2, unit_price: 70.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(12, 15, 30), _product_name: "Beer", _emoji: "🍺", _unit_label: "bottle", _base_qty: 2 },
+    { id: 40, sale_id: 17, product_unit_id: 23, quantity: 2, unit_price: 22.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(12, 15, 30), _product_name: "Sardines", _emoji: "🐟", _unit_label: "can", _base_qty: 2 },
+    { id: 41, sale_id: 17, product_unit_id: 8, quantity: 10, unit_price: 2.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(12, 15, 30), _product_name: "Candy", _emoji: "🍬", _unit_label: "piece", _base_qty: 10 },
+    // Sale 18 — 18 days ago: Rice + Cooking Oil
+    { id: 42, sale_id: 18, product_unit_id: 1, quantity: 10, unit_price: 57.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(18, 8, 15), _product_name: "Rice", _emoji: "🌾", _unit_label: "kg", _base_qty: 10 },
+    { id: 43, sale_id: 18, product_unit_id: 7, quantity: 1, unit_price: 700.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(18, 8, 15), _product_name: "Cooking Oil", _emoji: "🫙", _unit_label: "container", _base_qty: 20000 },
+    // Sale 19 — 18 days ago: Cigarettes + Salt + Biscuit
+    { id: 44, sale_id: 19, product_unit_id: 25, quantity: 15, unit_price: 5.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(18, 16, 40), _product_name: "Cigarettes", _emoji: "🚬", _unit_label: "stick", _base_qty: 15 },
+    { id: 45, sale_id: 19, product_unit_id: 21, quantity: 3, unit_price: 25.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(18, 16, 40), _product_name: "Salt", _emoji: "🧂", _unit_label: "kg", _base_qty: 3 },
+    { id: 46, sale_id: 19, product_unit_id: 18, quantity: 2, unit_price: 55.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(18, 16, 40), _product_name: "Biscuit", _emoji: "🍪", _unit_label: "pack", _base_qty: 20 },
+    // Sale 20 — 25 days ago: Egg tray + Onion + Shampoo
+    { id: 47, sale_id: 20, product_unit_id: 4, quantity: 2, unit_price: 270.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(25, 10, 0), _product_name: "Egg", _emoji: "🥚", _unit_label: "tray", _base_qty: 60 },
+    { id: 48, sale_id: 20, product_unit_id: 10, quantity: 2, unit_price: 90.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(25, 10, 0), _product_name: "Onion", _emoji: "🧅", _unit_label: "kg", _base_qty: 2 },
+    { id: 49, sale_id: 20, product_unit_id: 15, quantity: 4, unit_price: 8.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(25, 10, 0), _product_name: "Shampoo", _emoji: "🧴", _unit_label: "sachet", _base_qty: 4 },
+    // Sale 21 — 25 days ago credit: Beer + Sardines + Butane
+    { id: 50, sale_id: 21, product_unit_id: 14, quantity: 2, unit_price: 390.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(25, 14, 20), _product_name: "Beer", _emoji: "🍺", _unit_label: "case", _base_qty: 12 },
+    { id: 51, sale_id: 21, product_unit_id: 23, quantity: 6, unit_price: 22.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(25, 14, 20), _product_name: "Sardines", _emoji: "🐟", _unit_label: "can", _base_qty: 6 },
+    { id: 52, sale_id: 21, product_unit_id: 28, quantity: 3, unit_price: 55.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(25, 14, 20), _product_name: "Butane", _emoji: "🛢️", _unit_label: "canister", _base_qty: 3 },
+    // Sale 22 — 35 days ago: Rice sack + Sugar + Egg
+    { id: 53, sale_id: 22, product_unit_id: 2, quantity: 2, unit_price: 2850.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(35, 9, 0), _product_name: "Rice", _emoji: "🌾", _unit_label: "sack", _base_qty: 100 },
+    { id: 54, sale_id: 22, product_unit_id: 19, quantity: 3, unit_price: 72.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(35, 9, 0), _product_name: "Sugar", _emoji: "🍚", _unit_label: "kg", _base_qty: 3 },
+    { id: 55, sale_id: 22, product_unit_id: 4, quantity: 1, unit_price: 270.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(35, 9, 0), _product_name: "Egg", _emoji: "🥚", _unit_label: "tray", _base_qty: 30 },
+    // Sale 23 — 35 days ago: Candy + Biscuit + Cigarettes
+    { id: 56, sale_id: 23, product_unit_id: 9, quantity: 1, unit_price: 180.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(35, 13, 10), _product_name: "Candy", _emoji: "🍬", _unit_label: "pack", _base_qty: 100 },
+    { id: 57, sale_id: 23, product_unit_id: 18, quantity: 3, unit_price: 55.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(35, 13, 10), _product_name: "Biscuit", _emoji: "🍪", _unit_label: "pack", _base_qty: 30 },
+    { id: 58, sale_id: 23, product_unit_id: 25, quantity: 30, unit_price: 5.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(35, 13, 10), _product_name: "Cigarettes", _emoji: "🚬", _unit_label: "stick", _base_qty: 30 },
+    // Sale 24 — 45 days ago: Beer + Onion + Salt
+    { id: 59, sale_id: 24, product_unit_id: 14, quantity: 2, unit_price: 390.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(45, 11, 30), _product_name: "Beer", _emoji: "🍺", _unit_label: "case", _base_qty: 12 },
+    { id: 60, sale_id: 24, product_unit_id: 10, quantity: 3, unit_price: 90.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(45, 11, 30), _product_name: "Onion", _emoji: "🧅", _unit_label: "kg", _base_qty: 3 },
+    { id: 61, sale_id: 24, product_unit_id: 22, quantity: 1, unit_price: 24.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(45, 11, 30), _product_name: "Salt", _emoji: "🧂", _unit_label: "pack", _base_qty: 1 },
+    // Sale 25 — 45 days ago: Shampoo pack + Sardines box + Egg
+    { id: 62, sale_id: 25, product_unit_id: 16, quantity: 1, unit_price: 90.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(45, 17, 0), _product_name: "Shampoo", _emoji: "🧴", _unit_label: "pack", _base_qty: 12 },
+    { id: 63, sale_id: 25, product_unit_id: 24, quantity: 1, unit_price: 240.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(45, 17, 0), _product_name: "Sardines", _emoji: "🐟", _unit_label: "box", _base_qty: 12 },
+    { id: 64, sale_id: 25, product_unit_id: 3, quantity: 10, unit_price: 9.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(45, 17, 0), _product_name: "Egg", _emoji: "🥚", _unit_label: "piece", _base_qty: 10 },
+    // Sale 26 — 60 days ago: Rice + Cooking Oil + Candy
+    { id: 65, sale_id: 26, product_unit_id: 2, quantity: 1, unit_price: 2850.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(60, 8, 0), _product_name: "Rice", _emoji: "🌾", _unit_label: "sack", _base_qty: 50 },
+    { id: 66, sale_id: 26, product_unit_id: 6, quantity: 4, unit_price: 37.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(60, 8, 0), _product_name: "Cooking Oil", _emoji: "🫙", _unit_label: "1/2 (250mL)", _base_qty: 1000 },
+    { id: 67, sale_id: 26, product_unit_id: 9, quantity: 1, unit_price: 180.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(60, 8, 0), _product_name: "Candy", _emoji: "🍬", _unit_label: "pack", _base_qty: 100 },
+    // Sale 27 — 60 days ago credit: Beer + Butane + Cigarettes
+    { id: 68, sale_id: 27, product_unit_id: 14, quantity: 3, unit_price: 390.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(60, 14, 30), _product_name: "Beer", _emoji: "🍺", _unit_label: "case", _base_qty: 18 },
+    { id: 69, sale_id: 27, product_unit_id: 28, quantity: 4, unit_price: 55.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(60, 14, 30), _product_name: "Butane", _emoji: "🛢️", _unit_label: "canister", _base_qty: 4 },
+    { id: 70, sale_id: 27, product_unit_id: 25, quantity: 40, unit_price: 5.00, is_manual_priced: false, manual_price_reason: null, approved_by: null, weight_per_piece_kg: null, created_at: daysAgo(60, 14, 30), _product_name: "Cigarettes", _emoji: "🚬", _unit_label: "stick", _base_qty: 40 },
   ];
 
   db.sales_returns = [];
 
   // Deduct seeded sales from product_stock so inventory stays consistent
   const saleStockDeductions = [
-    { product_id: 1, qty: 50 },  // Rice: 1 sack
-    { product_id: 2, qty: 48 },  // Egg: 6+12+30
-    { product_id: 3, qty: 1000 },// Oil: 500+500 mL
-    { product_id: 4, qty: 25 },  // Candy: 5+10+10
-    { product_id: 5, qty: 0.5 }, // Onion
-    { product_id: 6, qty: 4 },   // Beer: 3+1
-    { product_id: 7, qty: 3 },   // Shampoo
-    { product_id: 8, qty: 4 },   // Biscuit
-    { product_id: 9, qty: 1 },   // Sugar
-    { product_id: 10, qty: 2 },  // Salt
-    { product_id: 11, qty: 5 },  // Sardines: 2+3
-    { product_id: 12, qty: 10 }, // Cigarettes
-    { product_id: 13, qty: 2 },  // Butane
+    { product_id: 1, qty: 268 },  // Rice: various sales
+    { product_id: 2, qty: 181 },  // Egg: pieces + trays
+    { product_id: 3, qty: 23500 },// Oil: mL across all sales
+    { product_id: 4, qty: 251 },  // Candy: pieces + packs
+    { product_id: 5, qty: 8.5 },  // Onion: kg
+    { product_id: 6, qty: 55 },   // Beer: bottles + cases
+    { product_id: 7, qty: 33 },   // Shampoo: sachets + packs
+    { product_id: 8, qty: 81 },   // Biscuit: pieces + packs
+    { product_id: 9, qty: 11 },   // Sugar: kg
+    { product_id: 10, qty: 12 },   // Salt: kg + packs
+    { product_id: 11, qty: 47 },   // Sardines: cans + boxes
+    { product_id: 12, qty: 125 },  // Cigarettes: sticks
+    { product_id: 13, qty: 12 },   // Butane: canisters
   ];
   saleStockDeductions.forEach(({ product_id, qty }) => {
     const row = db.product_stock.find((s) => s.product_id === product_id);
@@ -409,11 +510,11 @@ function seedData() {
   });
 
   // ── CREDIT ───────────────────────────────────────────────────────────────────
-  // Credit records matching the credit sales above (sale 3 and sale 7)
+  // Credit records matching all credit sales: 4, 9, 15, 21, 27
   db.credit = [
     {
       id: 1,
-      sale_id: 3,
+      sale_id: 4,
       customer_id: 1,
       amount_owed: 254.00, // 3×70 + 2×22
       amount_paid: 100.00,
@@ -425,15 +526,51 @@ function seedData() {
     },
     {
       id: 2,
-      sale_id: 7,
+      sale_id: 9,
       customer_id: 1,
       amount_owed: 155.00, // 0.5×90 + 2×55
+      amount_paid: 155.00,
+      due_date: (() => { const d = new Date(now); d.setDate(d.getDate() + 25); return d.toISOString().split("T")[0]; })(),
+      status: "PAID",
+      notes: null,
+      created_at: daysAgo(2, 15, 10),
+      updated_at: daysAgo(1, 9, 0),
+    },
+    {
+      id: 3,
+      sale_id: 15,
+      customer_id: 1,
+      amount_owed: 155.00, // 20×5 + 1×55
       amount_paid: 0,
-      due_date: (() => { const d = new Date(now); d.setDate(d.getDate() + 24); return d.toISOString().split("T")[0]; })(),
+      due_date: (() => { const d = new Date(now); d.setDate(d.getDate() + 19); return d.toISOString().split("T")[0]; })(),
       status: "PENDING",
       notes: null,
-      created_at: daysAgo(3, 9, 30),
-      updated_at: daysAgo(3, 9, 30),
+      created_at: daysAgo(8, 13, 45),
+      updated_at: daysAgo(8, 13, 45),
+    },
+    {
+      id: 4,
+      sale_id: 21,
+      customer_id: 1,
+      amount_owed: 1043.00, // 2×390 + 6×22 + 3×55
+      amount_paid: 500.00,
+      due_date: (() => { const d = new Date(now); d.setDate(d.getDate() + 2); return d.toISOString().split("T")[0]; })(),
+      status: "PENDING",
+      notes: null,
+      created_at: daysAgo(25, 14, 20),
+      updated_at: daysAgo(10, 10, 0),
+    },
+    {
+      id: 5,
+      sale_id: 27,
+      customer_id: 1,
+      amount_owed: 1590.00, // 3×390 + 4×55 + 40×5
+      amount_paid: 1590.00,
+      due_date: (() => { const d = new Date(now); d.setDate(d.getDate() - 30); return d.toISOString().split("T")[0]; })(),
+      status: "PAID",
+      notes: null,
+      created_at: daysAgo(60, 14, 30),
+      updated_at: daysAgo(45, 9, 0),
     },
   ];
   db.credit_payments = [];
