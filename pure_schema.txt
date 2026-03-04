@@ -1,0 +1,231 @@
+users
+- id                        PK, AUTO INCREMENT
+- mobile_number             VARCHAR(20), UNIQUE, NOT NULL
+- pin_hash                  VARCHAR(64), NOT NULL
+- first_name                VARCHAR(50), NOT NULL
+- middle_name               VARCHAR(50), NULL
+- last_name                 VARCHAR(50), NOT NULL
+- role                      ENUM('admin','manager','cashier'), NOT NULL DEFAULT 'cashier'
+- is_deleted                BOOLEAN, NOT NULL DEFAULT FALSE
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+security_questions
+- id                        PK, AUTO INCREMENT
+- question_text             VARCHAR(255), NOT NULL
+
+user_security_questions
+- id                        PK, AUTO INCREMENT
+- user_id                   FK → users.id, NOT NULL
+- question_id               FK → security_questions.id, NOT NULL
+- answer_hash               VARCHAR(64), NOT NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+UNIQUE (user_id, question_id)
+
+categories
+- id                        PK, AUTO INCREMENT
+- name                      VARCHAR(100), NOT NULL UNIQUE
+- description               TEXT, NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+units
+- id                        PK, AUTO INCREMENT
+- name                      VARCHAR(50), NOT NULL UNIQUE
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+
+products
+- id                        PK, AUTO INCREMENT
+- name                      VARCHAR(150), NOT NULL
+- category_id               FK → categories.id, NOT NULL
+- base_unit_id              FK → units.id, NOT NULL
+- description               TEXT, NULL
+- is_deleted                BOOLEAN, NOT NULL DEFAULT FALSE
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+product_units
+- id                        PK, AUTO INCREMENT
+- product_id                FK → products.id, NOT NULL
+- unit_id                   FK → units.id, NOT NULL
+- display_name              VARCHAR(50), NOT NULL
+- pack_quantity             DECIMAL(10,4), NOT NULL
+- is_default_selling        BOOLEAN, NOT NULL DEFAULT FALSE
+- can_restock               BOOLEAN, NOT NULL DEFAULT FALSE
+- can_sell                  BOOLEAN, NOT NULL DEFAULT FALSE
+- approx_base_qty_per_piece DECIMAL(10,4), NULL
+- notes                     TEXT, NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+CONSTRAINT: Only one row per product_id can have is_default_selling = TRUE
+
+product_unit_prices
+- id                        PK, AUTO INCREMENT
+- product_unit_id           FK → product_units.id, NOT NULL
+- purchase_price            DECIMAL(10,2), NOT NULL DEFAULT 0.00
+- selling_price             DECIMAL(10,2), NOT NULL
+- effective_date            DATE, NOT NULL
+- expiry_date               DATE, NULL
+- created_by                FK → users.id, NOT NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_by                FK → users.id, NULL
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+CONSTRAINT: No two active rows (expiry_date IS NULL or >= today) for the same product_unit_id
+
+pricing_tiers
+- id                        PK, AUTO INCREMENT
+- product_unit_id           FK → product_units.id, NOT NULL
+- label                     VARCHAR(100), NULL
+- tier_type                 ENUM('BUNDLE_PRICE','VOLUME_DISCOUNT','FLAT_RATE'), NOT NULL
+- quantity_min              INT UNSIGNED, NOT NULL
+- quantity_max              INT UNSIGNED, NOT NULL
+- price_per_unit            DECIMAL(10,2), NULL
+- total_price               DECIMAL(10,2), NULL
+- effective_from            DATE, NOT NULL
+- effective_to              DATE, NULL
+- created_by                FK → users.id, NOT NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_by                FK → users.id, NULL
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+CONSTRAINT: quantity_min <= quantity_max
+CONSTRAINT: No overlapping (quantity_min, quantity_max) ranges for the same product_unit_id within the same active date window
+CONSTRAINT: price_per_unit NOT NULL when tier_type IN ('VOLUME_DISCOUNT','FLAT_RATE')
+CONSTRAINT: total_price NOT NULL when tier_type = 'BUNDLE_PRICE'
+
+product_stock
+- product_id                PK, FK → products.id
+- quantity                  DECIMAL(12,4), NOT NULL DEFAULT 0.00
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+- updated_by                FK → users.id, NULL
+
+stock_log_reasons
+- id                        PK, AUTO INCREMENT
+- name                      VARCHAR(100), NOT NULL UNIQUE
+
+stock_movements
+- id                        PK, AUTO INCREMENT
+- product_id                FK → products.id, NOT NULL
+- stock_log_reason_id       FK → stock_log_reasons.id, NOT NULL
+- quantity_changed          DECIMAL(12,4), NOT NULL
+- reference_type            VARCHAR(50), NULL
+- reference_id              INT UNSIGNED, NULL
+- notes                     TEXT, NULL
+- created_by                FK → users.id, NOT NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+
+customers
+- id                        PK, AUTO INCREMENT
+- first_name                VARCHAR(50), NOT NULL
+- middle_name               VARCHAR(50), NULL
+- last_name                 VARCHAR(50), NOT NULL
+- contact_number            VARCHAR(20), NULL
+- credit_limit              DECIMAL(10,2), NOT NULL DEFAULT 0.00
+- is_deleted                BOOLEAN, NOT NULL DEFAULT FALSE
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+customer_addresses
+- id                        PK, AUTO INCREMENT
+- customer_id               FK → customers.id, NOT NULL
+- municipality              VARCHAR(100), NULL
+- barangay                  VARCHAR(100), NULL
+- street                    VARCHAR(255), NULL
+- is_primary                BOOLEAN, NOT NULL DEFAULT FALSE
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+CONSTRAINT: Only one row per customer_id can have is_primary = TRUE
+
+payment_types
+- id                        PK, AUTO INCREMENT
+- name                      VARCHAR(50), NOT NULL UNIQUE
+
+sales
+- id                        PK, AUTO INCREMENT
+- customer_id               FK → customers.id, NULL
+- payment_type_id           FK → payment_types.id, NOT NULL
+- sale_date                 TIMESTAMP, NOT NULL DEFAULT CURRENT_TIMESTAMP
+- notes                     TEXT, NULL
+- created_by                FK → users.id, NOT NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+sale_items
+- id                        PK, AUTO INCREMENT
+- sale_id                   FK → sales.id, NOT NULL
+- product_unit_id           FK → product_units.id, NOT NULL
+- quantity                  DECIMAL(10,4), NOT NULL
+- unit_price                DECIMAL(10,2), NOT NULL
+- is_manual_priced          BOOLEAN, NOT NULL DEFAULT FALSE
+- manual_price_reason       VARCHAR(255), NULL
+- approved_by               FK → users.id, NULL
+- weight_per_piece_kg       DECIMAL(10,4), NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+
+sales_returns
+- id                        PK, AUTO INCREMENT
+- sale_id                   FK → sales.id, NOT NULL
+- sale_item_id              FK → sale_items.id, NULL
+- quantity_returned         DECIMAL(10,4), NOT NULL
+- reason                    VARCHAR(255), NOT NULL
+- refund_amount             DECIMAL(10,2), NOT NULL
+- processed_by              FK → users.id, NOT NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+
+credit
+- id                        PK, AUTO INCREMENT
+- sale_id                   FK → sales.id, NOT NULL UNIQUE
+- customer_id               FK → customers.id, NOT NULL
+- amount_owed               DECIMAL(10,2), NOT NULL
+- amount_paid               DECIMAL(10,2), NOT NULL DEFAULT 0.00
+- due_date                  DATE, NOT NULL
+- status                    ENUM('PENDING','PARTIALLY_PAID','PAID','OVERDUE'), NOT NULL DEFAULT 'PENDING'
+- notes                     TEXT, NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+credit_payments
+- id                        PK, AUTO INCREMENT
+- credit_id                 FK → credit.id, NOT NULL
+- amount_paid               DECIMAL(10,2), NOT NULL
+- payment_method            VARCHAR(50), NOT NULL
+- paid_at                   TIMESTAMP, NOT NULL DEFAULT CURRENT_TIMESTAMP
+- notes                     TEXT, NULL
+- received_by               FK → users.id, NOT NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+
+expense_categories
+- id                        PK, AUTO INCREMENT
+- name                      VARCHAR(100), NOT NULL UNIQUE
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+
+expenses
+- id                        PK, AUTO INCREMENT
+- expense_category_id       FK → expense_categories.id, NOT NULL
+- amount                    DECIMAL(10,2), NOT NULL
+- description               VARCHAR(255), NOT NULL
+- expense_date              DATE, NOT NULL DEFAULT (CURDATE())
+- image_url                 VARCHAR(500), NULL
+- created_by                FK → users.id, NOT NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+cash_fund
+- id                        PK, AUTO INCREMENT
+- user_id                   FK → users.id, NOT NULL
+- opening_balance           DECIMAL(10,2), NOT NULL DEFAULT 0.00
+- closed_at                 TIMESTAMP, NULL
+- closing_balance           DECIMAL(10,2), NULL
+- notes                     TEXT, NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+- updated_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+cash_fund_transactions
+- id                        PK, AUTO INCREMENT
+- cash_fund_id              FK → cash_fund.id, NOT NULL
+- transaction_type          ENUM('IN','OUT','ADJUSTMENT'), NOT NULL
+- amount                    DECIMAL(10,2), NOT NULL
+- reference_type            VARCHAR(50), NULL
+- reference_id              INT UNSIGNED, NULL
+- description               VARCHAR(255), NOT NULL
+- created_by                FK → users.id, NOT NULL
+- created_at                TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
