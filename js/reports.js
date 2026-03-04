@@ -219,31 +219,22 @@ function renderRecentSalesPage() {
 }
 
 // ─── Stock Logs page ──────────────────────────────────────────────────────────
-// Uses db.stock_movements (immutable audit log) instead of old db.stock_logs
 
 function renderStockLogsPage() {
   const searchQ = (document.getElementById("sl-search")?.value || "").toLowerCase();
-  const typeFilter = document.getElementById("sl-filter-type")?.value || "all";
+  const reasonFilter = document.getElementById("sl-filter-reason")?.value || "all";
   const dateFilter = document.getElementById("sl-filter-date")?.value || "all";
   const since = getDateRangeFilter(dateFilter);
 
-  // Map stock_log_reasons to a quick lookup
   const reasonMap = {};
   db.stock_log_reasons.forEach((r) => { reasonMap[r.id] = r.name; });
 
   let logs = [...db.stock_movements];
 
   if (since) logs = logs.filter((l) => new Date(l.created_at) >= since);
-
-  // type filter: "sale" maps to reason "Sale", "restock" maps to "Purchase"
-  if (typeFilter === "sale") {
-    const saleReasonId = db.stock_log_reasons.find((r) => r.name === "Sale")?.id;
-    logs = logs.filter((l) => l.stock_log_reason_id === saleReasonId);
-  } else if (typeFilter === "restock") {
-    const purchaseReasonId = db.stock_log_reasons.find((r) => r.name === "Purchase")?.id;
-    logs = logs.filter((l) => l.stock_log_reason_id === purchaseReasonId);
+  if (reasonFilter !== "all") {
+    logs = logs.filter((l) => l.stock_log_reason_id === parseInt(reasonFilter));
   }
-
   if (searchQ) {
     logs = logs.filter((l) => {
       const product = db.products.find((p) => p.id === l.product_id);
@@ -253,71 +244,221 @@ function renderStockLogsPage() {
 
   logs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-  const saleReasonId = db.stock_log_reasons.find((r) => r.name === "Sale")?.id;
   const purchaseReasonId = db.stock_log_reasons.find((r) => r.name === "Purchase")?.id;
+  const saleReasonId = db.stock_log_reasons.find((r) => r.name === "Sale")?.id;
 
-  const restockLogs = logs.filter((l) => l.stock_log_reason_id === purchaseReasonId);
-  const saleLogs = logs.filter((l) => l.stock_log_reason_id === saleReasonId);
-  const totalIn = restockLogs.reduce((s, l) => s + l.quantity_changed, 0);
-  const totalOut = saleLogs.reduce((s, l) => s + Math.abs(l.quantity_changed), 0);
+  const totalIn = logs.filter(l => l.quantity_changed > 0).reduce((s, l) => s + l.quantity_changed, 0);
+  const totalOut = logs.filter(l => l.quantity_changed < 0).reduce((s, l) => s + Math.abs(l.quantity_changed), 0);
   const netChange = totalIn - totalOut;
 
   document.getElementById("sl-stats").innerHTML = `
     <div class="stat-card blue">
-      <div class="stat-label">Total Log Entries</div>
+      <div class="stat-label">Total Entries</div>
       <div class="stat-value">${logs.length}</div>
     </div>
     <div class="stat-card green">
-      <div class="stat-label">Restock Events</div>
-      <div class="stat-value">${restockLogs.length}</div>
+      <div class="stat-label">Total In</div>
+      <div class="stat-value">+${parseFloat(totalIn.toFixed(2)).toLocaleString()}</div>
     </div>
     <div class="stat-card orange">
-      <div class="stat-label">Sale Events</div>
-      <div class="stat-value">${saleLogs.length}</div>
+      <div class="stat-label">Total Out</div>
+      <div class="stat-value">−${parseFloat(totalOut.toFixed(2)).toLocaleString()}</div>
     </div>
     <div class="stat-card ${netChange >= 0 ? "green" : "red"}">
-      <div class="stat-label">Net Units Change</div>
+      <div class="stat-label">Net Change</div>
       <div class="stat-value">${netChange >= 0 ? "+" : ""}${parseFloat(netChange.toFixed(2)).toLocaleString()}</div>
     </div>
   `;
 
   const tbody = document.getElementById("sl-tbody");
   if (!logs.length) {
-    tbody.innerHTML = `<tr><td colspan="5" class="page-empty">No stock logs found.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="page-empty">
+      <div style="padding:32px 0;">
+        <div style="font-size:36px;margin-bottom:10px;">📋</div>
+        <div style="font-weight:600;color:var(--text2);font-size:15px;">No stock logs found</div>
+        <div style="font-size:13px;color:var(--text3);margin-top:4px;">Try adjusting your filters or log a stock change</div>
+      </div>
+    </td></tr>`;
     return;
-  } 
+  }
+
+  // Badge colours per reason
+  const reasonBadge = {
+    "Purchase": "badge-green",
+    "Sale": "badge-orange",
+    "Return": "badge-blue",
+    "Damage": "badge-red",
+    "Recount": "badge-yellow",
+    "Sample": "badge-yellow",
+    "Adjustment": "badge-blue",
+  };
+  const reasonIcon = {
+    "Purchase": "📦", "Sale": "🛒", "Return": "↩️",
+    "Damage": "💥", "Recount": "🔢", "Sample": "🧪", "Adjustment": "⚙️",
+  };
 
   tbody.innerHTML = logs.map((l) => {
     const d = new Date(l.created_at);
     const product = db.products.find((p) => p.id === l.product_id);
-    const productName = product ? product.name : `Product #${l.product_id}`;
-    const productEmoji = product ? (product.emoji || "📦") : "📦";
+    const productName = product ? `${product.emoji || "📦"} ${product.name}` : `Product #${l.product_id}`;
+    const baseUnitName = product ? getProductBaseUnitName(product) : "";
     const reasonName = reasonMap[l.stock_log_reason_id] || "Unknown";
-    const isSale = l.stock_log_reason_id === saleReasonId;
-
-    const typeBadge = isSale
-      ? '<span class="badge badge-orange">📤 Sale</span>'
-      : reasonName === "Purchase"
-        ? '<span class="badge badge-green">📦 Restock</span>'
-        : `<span class="badge badge-blue">${reasonName}</span>`;
+    const badgeCls = reasonBadge[reasonName] || "badge-blue";
+    const icon = reasonIcon[reasonName] || "📋";
 
     const isPositive = l.quantity_changed >= 0;
     const qtyColor = isPositive ? "var(--green)" : "var(--red)";
     const qtySign = isPositive ? "+" : "−";
-    const baseUnitName = product ? getProductBaseUnitName(product) : "";
+
+    const expiryDisplay = l.expiry_date
+      ? (() => {
+        const exp = new Date(l.expiry_date + "T00:00:00");
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const daysLeft = Math.ceil((exp - today) / 86400000);
+        const expired = daysLeft < 0;
+        const soon = daysLeft >= 0 && daysLeft <= 30;
+        const color = expired ? "var(--red)" : soon ? "var(--orange)" : "var(--text2)";
+        const tag = expired ? " (Expired)" : soon ? ` (${daysLeft}d)` : "";
+        return `<span style="font-size:13px;font-weight:600;color:${color};">${l.expiry_date}${tag}</span>`;
+      })()
+      : `<span style="color:var(--text3);font-size:13px;">—</span>`;
 
     return `<tr>
-      <td><strong>${productEmoji} ${productName}</strong></td>
-      <td>${typeBadge}</td>
+      <td><strong>${productName}</strong></td>
       <td>
-        <span style="color:${qtyColor};font-weight:600;">${qtySign}${formatQty(Math.abs(l.quantity_changed))}</span>
-        <span style="font-size:12px;color:var(--text3);margin-left:4px;">${baseUnitName}</span>
+        <span style="color:${qtyColor};font-weight:700;font-size:15px;">${qtySign}${formatQty(Math.abs(l.quantity_changed))}</span>
+        <span style="font-size:12px;color:var(--text3);margin-left:3px;">${baseUnitName}</span>
       </td>
+      <td><span class="badge ${badgeCls}">${icon} ${reasonName}</span></td>
+      <td>${expiryDisplay}</td>
+      <td style="font-size:13px;color:var(--text2);max-width:200px;">${l.notes || "<span style='color:var(--text3)'>—</span>"}</td>
       <td>
-        <div>${formatDate(d)}</div>
+        <div style="font-size:13px;font-weight:600;">${formatDate(d)}</div>
         <div style="font-size:11px;color:var(--text3);">${formatTime(d)} · ${relativeTimeFrom(d)}</div>
       </td>
-      <td style="font-size:12px;color:var(--text2);">${l.notes || "—"}</td>
     </tr>`;
   }).join("");
+}
+
+// ─── Log Stock Change modal ───────────────────────────────────────────────────
+
+function openLogStockChangeModal() {
+  // Populate product dropdown
+  const sel = document.getElementById("sl-log-product");
+  sel.innerHTML =
+    '<option value="">— Select product —</option>' +
+    db.products
+      .filter((p) => !p.is_deleted)
+      .map((p) => `<option value="${p.id}">${p.emoji || "📦"} ${p.name}</option>`)
+      .join("");
+
+  // Reset fields
+  document.getElementById("sl-log-reason").value = "";
+  document.getElementById("sl-log-direction").value = "+";
+  document.getElementById("sl-log-qty").value = "";
+  document.getElementById("sl-log-expiry").value = "";
+  document.getElementById("sl-log-notes").value = "";
+  document.getElementById("sl-log-unit-suffix").textContent = "";
+  document.getElementById("sl-log-stock-preview").style.display = "none";
+
+  onLogStockReasonChange(); // set expiry label correctly
+  openModal("modal-log-stock");
+}
+
+function onLogStockProductChange() {
+  updateLogStockPreview();
+  const productId = parseInt(document.getElementById("sl-log-product").value);
+  const suffix = document.getElementById("sl-log-unit-suffix");
+  if (!productId) { suffix.textContent = ""; return; }
+  const product = db.products.find((p) => p.id === productId);
+  suffix.textContent = product ? getProductBaseUnitName(product) : "";
+}
+
+function onLogStockReasonChange() {
+  const reasonId = parseInt(document.getElementById("sl-log-reason").value);
+  const isPurchase = reasonId === 1;  // Purchase
+  const isSale = reasonId === 2;  // Sale
+
+  // Auto-set direction
+  const dirSel = document.getElementById("sl-log-direction");
+  if (isPurchase || reasonId === 3 /* Return */) dirSel.value = "+";
+  else if (isSale || reasonId === 4 /* Damage */ || reasonId === 6 /* Sample */) dirSel.value = "-";
+
+  // Expiry label
+  const requiredMark = document.getElementById("sl-log-expiry-required");
+  const hint = document.getElementById("sl-log-expiry-hint");
+  requiredMark.textContent = isPurchase ? " *" : "";
+  hint.textContent = isPurchase
+    ? "Required for Purchase restocks."
+    : "Leave blank if not applicable.";
+
+  updateLogStockPreview();
+}
+
+function updateLogStockPreview() {
+  const productId = parseInt(document.getElementById("sl-log-product").value);
+  const qty = parseFloat(document.getElementById("sl-log-qty").value) || 0;
+  const direction = document.getElementById("sl-log-direction").value;
+  const preview = document.getElementById("sl-log-stock-preview");
+
+  if (!productId || qty <= 0) { preview.style.display = "none"; return; }
+
+  const product = db.products.find((p) => p.id === productId);
+  if (!product) { preview.style.display = "none"; return; }
+
+  const stockRow = getProductStock(productId);
+  const currentQty = stockRow ? stockRow.quantity : 0;
+  const delta = direction === "+" ? qty : -qty;
+  const newQty = currentQty + delta;
+  const unitName = getProductBaseUnitName(product);
+
+  const isAdd = delta >= 0;
+  const bg = isAdd ? "var(--green-light)" : "var(--red-light)";
+  const color = isAdd ? "var(--green)" : "var(--red)";
+  const sign = isAdd ? "+" : "−";
+
+  preview.style.display = "block";
+  preview.style.background = bg;
+  preview.style.color = color;
+  preview.style.borderRadius = "var(--radius)";
+  preview.style.padding = "9px 12px";
+  preview.innerHTML = `${sign}${formatQty(qty)} ${unitName} &nbsp;→&nbsp; New stock: <strong>${formatQty(Math.max(0, newQty))} ${unitName}</strong>${newQty < 0 ? " ⚠️ Below zero" : ""}`;
+}
+
+function saveLogStockChange() {
+  const productId = parseInt(document.getElementById("sl-log-product").value);
+  const reasonId = parseInt(document.getElementById("sl-log-reason").value);
+  const qty = parseFloat(document.getElementById("sl-log-qty").value) || 0;
+  const direction = document.getElementById("sl-log-direction").value;
+  const expiry = document.getElementById("sl-log-expiry").value.trim() || null;
+  const notes = document.getElementById("sl-log-notes").value.trim() || null;
+
+  if (!productId) { toast("Select a product", "error"); return; }
+  if (!reasonId) { toast("Select a reason", "error"); return; }
+  if (qty <= 0) { toast("Enter a valid quantity", "error"); return; }
+  if (reasonId === 1 && !expiry) {
+    toast("Expiration date is required for Purchase restocks", "error"); return;
+  }
+
+  const quantityChanged = direction === "+" ? qty : -qty;
+
+  recordStockMovement({
+    product_id: productId,
+    stock_log_reason_id: reasonId,
+    quantity_changed: quantityChanged,
+    reference_type: null,
+    reference_id: null,
+    notes,
+    expiry_date: expiry,
+  });
+
+  persistDb();
+  closeModal("modal-log-stock");
+  renderStockLogsPage();
+  updateLowStockAlerts();
+
+  const product = db.products.find((p) => p.id === productId);
+  const sign = direction === "+" ? "+" : "−";
+  const unitName = product ? getProductBaseUnitName(product) : "";
+  toast(`${sign}${formatQty(qty)} ${unitName} logged for ${product?.name || "product"}`, "success");
 }

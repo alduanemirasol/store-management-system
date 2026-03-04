@@ -12,7 +12,7 @@ function showPage(page) {
 
   const pages = [
     "pos", "inventory", "restock", "pricing",
-    "categories", "transactions", "recentsales", "stocklogs", "saleshistory", "customers", "utang",
+    "categories", "stocklogs", "saleshistory", "customers", "utang",
   ];
   const idx = pages.indexOf(page);
   if (idx >= 0) {
@@ -25,8 +25,6 @@ function showPage(page) {
   if (page === "restock") initRestockPage();
   if (page === "pricing") renderPricingPage();
   if (page === "categories") renderCategoriesPage();
-  if (page === "transactions") renderTransactions();
-  if (page === "recentsales") renderRecentSalesPage();
   if (page === "stocklogs") renderStockLogsPage();
   if (page === "saleshistory") renderSalesHistoryPage();
   if (page === "customers") renderCustomersPage();
