@@ -795,12 +795,10 @@ function processCheckout(paymentTypeId, customerId) {
   updateLowStockAlerts();
   renderRecentSales();
 
-  if (document.getElementById("page-recentsales").classList.contains("active"))
-    renderRecentSalesPage();
+  if (document.getElementById("page-saleshistory").classList.contains("active"))
+    renderSalesHistoryPage();
   if (document.getElementById("page-stocklogs").classList.contains("active"))
     renderStockLogsPage();
-  if (document.getElementById("page-transactions").classList.contains("active"))
-    renderTransactions();
 }
 
 // ─── Recent sales panel (bottom of cart) ─────────────────────────────────────
