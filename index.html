@@ -156,6 +156,7 @@
                         <span class="low-stock-panel-title">⚠️ Items Needing Attention</span>
                         <button class="btn btn-warning btn-sm" onclick="showPage('restock')">Go to Restock →</button>
                     </div>
+
                     <div class="table-wrap">
                         <table class="low-stock-table">
                             <thead>
@@ -198,11 +199,17 @@
                 </div>
                 <div class="card">
                     <div class="inv-controls">
-                        <div class="search-box" style="flex:1;">
+                        <div class="search-box" style="flex:3;">
                             <span class="search-icon">🔍</span>
                             <input type="text" id="restock-search" placeholder="Search items..."
                                 oninput="filterRestockItems()">
                         </div>
+                        <select class="form-select" style="flex:0;white-space:nowrap;width:auto;"
+                            onchange="setRestockStatusFilter(this)">
+                            <option value="all">All Status</option>
+                            <option value="low">🔴 Low Stock</option>
+                            <option value="in">🟢 In Stock</option>
+                        </select>
                     </div>
                     <div class="table-wrap">
                         <table>

@@ -11,6 +11,7 @@
 
 let selectedRestockProductUnitId = null; // product_units.id selected in modal
 let selectedRestockProductId = null;
+let restockStatusFilter = "all"; // "all" | "low" | "in"
 
 function initRestockPage() {
   renderRestockItemsTable();
@@ -64,18 +65,39 @@ function filterRestockItems() {
   const searchTerm = document
     .getElementById("restock-search")
     .value.toLowerCase();
-  if (!searchTerm) {
-    renderRestockItemsTable();
-    return;
-  }
-  const filtered = db.products.filter(
-    (p) =>
-      !p.is_deleted &&
-      (p.name.toLowerCase().includes(searchTerm) ||
-        getProductCategoryName(p).toLowerCase().includes(searchTerm) ||
-        getProductBaseUnitName(p).toLowerCase().includes(searchTerm)),
-  );
+
+  const filtered = db.products.filter((p) => {
+    if (p.is_deleted) return false;
+
+    // Search filter
+    if (
+      searchTerm &&
+      !p.name.toLowerCase().includes(searchTerm) &&
+      !getProductCategoryName(p).toLowerCase().includes(searchTerm) &&
+      !getProductBaseUnitName(p).toLowerCase().includes(searchTerm)
+    ) {
+      return false;
+    }
+
+    // Status filter
+    if (restockStatusFilter !== "all") {
+      const stockRow = getProductStock(p.id);
+      const qty = stockRow ? stockRow.quantity : 0;
+      const threshold = getLowStockThreshold(p);
+      const isLow = threshold > 0 && qty <= threshold;
+      if (restockStatusFilter === "low" && !isLow) return false;
+      if (restockStatusFilter === "in" && isLow) return false;
+    }
+
+    return true;
+  });
+
   renderRestockItemsTable(filtered);
+}
+
+function setRestockStatusFilter(selectEl) {
+  restockStatusFilter = selectEl.value;
+  filterRestockItems();
 }
 
 // ─── Restock modal ────────────────────────────────────────────────────────────
@@ -185,7 +207,7 @@ function doRestockFromModal() {
   persistDb();
 
   closeModal("modal-restock");
-  renderRestockItemsTable();
+  filterRestockItems();
   renderPOSItems();
   renderInventory();
   // resetLowStockBanner: Allows banner to re-evaluate after new stock is added
