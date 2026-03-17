@@ -519,6 +519,18 @@
   margin-top: 3px;
 }
 
+/* Inline divider between standard unit chips and tier chips */
+.unit-option-divider {
+  display: inline-block;
+  width: 1px;
+  height: 28px;
+  background: var(--border2);
+  border-radius: 2px;
+  margin: 0 2px;
+  align-self: center;
+  flex-shrink: 0;
+}
+
 /* Cart modal stock display */
 .cart-stock-info {
   display: flex;

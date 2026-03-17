@@ -12,6 +12,7 @@
  */
 
 let cartModalProductUnitId = null; // product_units.id selected in the add-to-cart modal
+let cartModalTierId = null;        // pricing_tiers.id if a tier chip is active, else null
 let cart = [];
 let posFilterCatId = null; // categories.id or null for "All"
 
@@ -131,7 +132,7 @@ function openCartModal(productId) {
   else if (threshold > 0 && stockQty <= threshold)
     stockInfoEl.classList.add("low-stock");
 
-  // Build selling unit options
+  // Build selling unit options — unit chips first, then tier chips, with a divider if both exist
   const sellableUnits = getSellableUnits(productId);
   const defUnit = getDefaultSellingUnit(productId);
   cartModalProductUnitId = defUnit
@@ -139,19 +140,42 @@ function openCartModal(productId) {
     : sellableUnits[0]
       ? sellableUnits[0].id
       : null;
+  cartModalTierId = null;
 
-  const optEl = document.getElementById("cart-unit-options");
-  optEl.innerHTML = sellableUnits
+  // Collect all tier chips across all units
+  const allTierChips = [];
+  sellableUnits.forEach((pu) => {
+    getActiveTiersForUnit(pu.id).forEach((t) => {
+      allTierChips.push({ pu, tier: t });
+    });
+  });
+
+  const unitChips = sellableUnits
     .map((pu) => {
-      const tiers = getActiveTiersForUnit(pu.id);
-      const hasTier = tiers.length > 0;
       const isDefault = pu.id === cartModalProductUnitId;
-      return `<div class="unit-option ${hasTier ? "custom" : ""} ${isDefault ? "active" : ""}"
+      return `<div class="unit-option ${isDefault ? "active" : ""}"
         onclick="selectCartUnit(${pu.id}, this)">
-        ${pu.display_name}${hasTier ? " 🏷️" : ""}
+        ${pu.display_name}
       </div>`;
     })
     .join("");
+
+  const tierChips = allTierChips
+    .map(({ pu, tier }) => {
+      const label = tier.label || `${tier.quantity_min} for ₱${formatPeso(tier.total_price)}`;
+      return `<div class="unit-option custom"
+        onclick="selectCartTier(${pu.id}, ${tier.id}, this)">
+        ${label} 🏷️
+      </div>`;
+    })
+    .join("");
+
+  const divider = allTierChips.length > 0
+    ? `<span class="unit-option-divider"></span>`
+    : "";
+
+  const optEl = document.getElementById("cart-unit-options");
+  optEl.innerHTML = unitChips + divider + tierChips;
 
   document.getElementById("cart-qty").value = "1";
   document.getElementById("cart-manual-price").value = "";
@@ -167,6 +191,7 @@ function openCartModal(productId) {
 
 function selectCartUnit(productUnitId, el) {
   cartModalProductUnitId = productUnitId;
+  cartModalTierId = null;
   document
     .querySelectorAll("#cart-unit-options .unit-option")
     .forEach((o) => o.classList.remove("active"));
@@ -176,25 +201,48 @@ function selectCartUnit(productUnitId, el) {
   updateCartPreview();
 }
 
+function selectCartTier(productUnitId, tierId, el) {
+  cartModalProductUnitId = productUnitId;
+  cartModalTierId = tierId;
+  document
+    .querySelectorAll("#cart-unit-options .unit-option")
+    .forEach((o) => o.classList.remove("active"));
+  el.classList.add("active");
+  // Auto-set qty to the tier's bundle quantity
+  const tier = db.pricing_tiers.find((t) => t.id === tierId);
+  document.getElementById("cart-qty").value = tier ? tier.quantity_min : 1;
+  updateCartUnitUI();
+  updateCartPreview();
+}
+
 function updateCartUnitUI() {
   const pu = getProductUnit(cartModalProductUnitId);
   const label = pu ? pu.display_name : "unit";
   document.getElementById("manual-per-unit").textContent = label;
 
-  // Show tier info in quantity label if applicable
-  const tiers = cartModalProductUnitId
-    ? getActiveTiersForUnit(cartModalProductUnitId)
-    : [];
   const qtyLabel = document.getElementById("cart-qty-label");
-  if (tiers.length) {
-    const t = tiers[0];
-    if (t.tier_type === "BUNDLE_PRICE") {
+  if (cartModalTierId) {
+    const t = db.pricing_tiers.find((ti) => ti.id === cartModalTierId);
+    if (t && t.tier_type === "BUNDLE_PRICE") {
       qtyLabel.textContent = `Number of deals (${t.quantity_min} ${label} = ₱${formatPeso(t.total_price)})`;
-    } else {
+    } else if (t) {
       qtyLabel.textContent = `Quantity (${t.label || "promo active"})`;
     }
   } else {
-    qtyLabel.textContent = "Quantity";
+    // Show tier info in quantity label if the selected unit itself has tiers
+    const tiers = cartModalProductUnitId
+      ? getActiveTiersForUnit(cartModalProductUnitId)
+      : [];
+    if (tiers.length) {
+      const t = tiers[0];
+      if (t.tier_type === "BUNDLE_PRICE") {
+        qtyLabel.textContent = `Number of deals (${t.quantity_min} ${label} = ₱${formatPeso(t.total_price)})`;
+      } else {
+        qtyLabel.textContent = `Quantity (${t.label || "promo active"})`;
+      }
+    } else {
+      qtyLabel.textContent = "Quantity";
+    }
   }
 
   document.getElementById("cart-manual-check").checked = false;
