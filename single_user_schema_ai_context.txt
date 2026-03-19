@@ -1,0 +1,1668 @@
+################################################################################
+# SCHEMA REFERENCE — Retail POS & Inventory System
+# Mode    : Single-owner (no auth, no roles, full access assumed)
+# Database: MySQL 8.0+
+# Tables  : 24  |  Views: 1 (credit_balances)
+# Currency: PHP (Philippine Peso)
+################################################################################
+
+# HOW TO USE THIS FILE
+# ─────────────────────────────────────────────────────────────────────────────
+# Each table block contains:
+#   PURPOSE      — what the table represents
+#   COLUMNS      — field name | data type | constraints/notes
+#   FOREIGN KEYS — field → table.field
+#   RULES        — hard logic the application must always follow
+#
+# Cross-cutting rules that apply everywhere:
+#   [SOFT DELETE]  products, customers, suppliers: use is_deleted = TRUE, never DELETE.
+#                  Always add WHERE is_deleted = FALSE on active-record queries.
+#   [NO TOTALS]    No derived totals are stored. Always compute at query time.
+#   [BASE UNIT]    Stock is always stored in the product's base unit (kg, mL, piece).
+#                  Convert to display units using product_units.pack_quantity.
+#   [IMMUTABLE]    stock_movements and cash_fund_transactions rows are never
+#                  updated or deleted after insert.
+#   [CREDIT VIEW]  Always use the credit_balances VIEW for balances — never query
+#                  credit.amount_paid (that column does not exist).
+
+
+################################################################################
+# DOMAIN MAP — quick orientation
+################################################################################
+#
+#  CATALOG      → categories, units, products
+#  PRODUCT UNITS→ product_units
+#  PRICING      → product_unit_prices, pricing_tiers
+#  INVENTORY    → product_stock, stock_log_reasons, stock_movements
+#  SUPPLIERS    → suppliers
+#  PURCHASING   → stock_receipts, stock_receipt_items
+#  CUSTOMERS    → customers, customer_addresses
+#  SALES        → payment_types, sales, sale_items, sales_returns
+#  CREDIT       → credit, credit_payments  +  VIEW: credit_balances
+#  EXPENSES     → expense_categories, expenses
+#  CASH         → cash_fund, cash_fund_transactions
+
+
+################################################################################
+# SECTION 1 — CATALOG
+################################################################################
+
+## TABLE: categories
+## PURPOSE: Lookup list of product groupings.
+# ┌─────────────┬──────────────┬────────────────────────────┐
+# │ column      │ type         │ notes                      │
+# ├─────────────┼──────────────┼────────────────────────────┤
+# │ id          │ INT (PK)     │ auto-increment             │
+# │ name        │ VARCHAR      │ UNIQUE — e.g. "Grains"     │
+# │ description │ TEXT         │ nullable                   │
+# │ created_at  │ TIMESTAMP    │                            │
+# │ updated_at  │ TIMESTAMP    │                            │
+# └─────────────┴──────────────┴────────────────────────────┘
+# FOREIGN KEYS: none
+# REFERENCED BY: products.category_id
+
+---
+
+## TABLE: units
+## PURPOSE: Master list of measurement unit types (kg, mL, piece, etc.).
+##          These are unit types, NOT packaging labels.
+##          Packaging labels (e.g. "sack", "250mL bottle") live in product_units.display_name.
+# ┌────────────┬──────────────┬────────────────────────────────────────────────┐
+# │ column     │ type         │ notes                                          │
+# ├────────────┼──────────────┼────────────────────────────────────────────────┤
+# │ id         │ INT (PK)     │ auto-increment                                 │
+# │ name       │ VARCHAR      │ UNIQUE — e.g. "kg", "mL", "piece", "sack"      │
+# │ created_at │ TIMESTAMP    │                                                │
+# └────────────┴──────────────┴────────────────────────────────────────────────┘
+# FOREIGN KEYS: none
+# REFERENCED BY: products.base_unit_id, product_units.unit_id
+
+---
+
+## TABLE: products
+## PURPOSE: Master product catalog. Each product has exactly one base unit for
+##          all inventory tracking. Use is_deleted = TRUE to deactivate.
+# ┌──────────────┬──────────────┬────────────────────────────────────────────┐
+# │ column       │ type         │ notes                                      │
+# ├──────────────┼──────────────┼────────────────────────────────────────────┤
+# │ id           │ INT (PK)     │ auto-increment                             │
+# │ name         │ VARCHAR      │ product name                               │
+# │ category_id  │ INT (FK)     │ → categories.id                           │
+# │ base_unit_id │ INT (FK)     │ → units.id — canonical inventory unit      │
+# │ description  │ TEXT         │ nullable                                   │
+# │ is_deleted   │ BOOLEAN      │ soft delete — filter FALSE for active       │
+# │ created_at   │ TIMESTAMP    │                                            │
+# │ updated_at   │ TIMESTAMP    │                                            │
+# └──────────────┴──────────────┴────────────────────────────────────────────┘
+# FOREIGN KEYS: category_id → categories.id
+#               base_unit_id → units.id
+# REFERENCED BY: product_units.product_id, product_stock.product_id,
+#                stock_movements.product_id
+#
+# SAMPLE DATA:
+#   id=1  Rice         base_unit=kg
+#   id=2  Egg          base_unit=piece
+#   id=3  Cooking Oil  base_unit=mL
+#   id=4  Candy        base_unit=piece
+#   id=5  Cabbage      base_unit=kg
+
+
+################################################################################
+# SECTION 2 — PRODUCT UNITS
+################################################################################
+
+## TABLE: product_units
+## PURPOSE: Every packaging or selling format for a product.
+##          One row = one sellable or restockable unit option (e.g. "Rice by sack").
+##          pack_quantity is the key: it converts display units → base units.
+##          FORMULA: base_qty = quantity × pack_quantity
+##          EXAMPLE: 3 sacks of Rice → 3 × 50 = 150 kg deducted from stock.
+# ┌──────────────────────────┬──────────────┬───────────────────────────────────────────────┐
+# │ column                   │ type         │ notes                                         │
+# ├──────────────────────────┼──────────────┼───────────────────────────────────────────────┤
+# │ id                       │ INT (PK)     │ auto-increment                                │
+# │ product_id               │ INT (FK)     │ → products.id                                │
+# │ unit_id                  │ INT (FK)     │ → units.id — underlying unit type             │
+# │ display_name             │ VARCHAR      │ UI label — e.g. "sack", "250mL", "tray"       │
+# │ pack_quantity            │ DECIMAL 12,4 │ base units per 1 display unit                 │
+# │ is_default_selling       │ BOOLEAN      │ TRUE = pre-selected on POS (1 per product)    │
+# │ can_restock              │ BOOLEAN      │ TRUE = available on restock screen             │
+# │ can_sell                 │ BOOLEAN      │ TRUE = available on sales screen               │
+# │ approx_base_qty_per_piece│ DECIMAL 10,4 │ nullable — kg/piece for variable-weight items │
+# │ notes                    │ TEXT         │ nullable                                       │
+# │ created_at               │ TIMESTAMP    │                                               │
+# │ updated_at               │ TIMESTAMP    │                                               │
+# └──────────────────────────┴──────────────┴───────────────────────────────────────────────┘
+# FOREIGN KEYS: product_id → products.id
+#               unit_id → units.id
+# CONSTRAINT: Exactly ONE row per product may have is_default_selling = TRUE.
+# REFERENCED BY: product_unit_prices.product_unit_id, pricing_tiers.product_unit_id,
+#                sale_items.product_unit_id, stock_receipt_items.product_unit_id
+#
+# SAMPLE DATA:
+#   product   display_name  pack_qty  default  can_restock  can_sell
+#   Rice       kg            1        FALSE    TRUE         TRUE
+#   Rice       sack          50       TRUE     TRUE         TRUE      ← 1 sack = 50 kg
+#   Egg        piece         1        TRUE     TRUE         TRUE
+#   Egg        tray          30       FALSE    TRUE         TRUE      ← 1 tray = 30 pcs
+#   Oil        250mL         250      TRUE     FALSE        TRUE      ← sell only
+#   Oil        container     20000    FALSE    TRUE         TRUE      ← 1 container = 20 L
+#   Candy      piece         1        TRUE     TRUE         TRUE
+#   Candy      pack          100      FALSE    TRUE         TRUE      ← 1 pack = 100 pcs
+#   Cabbage    kg            1        FALSE    TRUE         TRUE
+#   Cabbage    sack          25       FALSE    TRUE         FALSE     ← restock only
+#   Cabbage    piece         ~0.5kg   TRUE     FALSE        TRUE      ← variable weight
+
+
+################################################################################
+# SECTION 3 — PRICING
+################################################################################
+
+## TABLE: product_unit_prices
+## PURPOSE: Standard cost and selling price for each product unit.
+##          Used as the fallback when no active pricing tier applies.
+##          Only ONE active row per product_unit_id at a time
+##          (active = expiry_date IS NULL or expiry_date >= today).
+# ┌────────────────┬──────────────┬──────────────────────────────────────────────┐
+# │ column         │ type         │ notes                                        │
+# ├────────────────┼──────────────┼──────────────────────────────────────────────┤
+# │ id             │ INT (PK)     │ auto-increment                               │
+# │ product_unit_id│ INT (FK)     │ → product_units.id                          │
+# │ purchase_price │ DECIMAL 10,2 │ cost paid to supplier                        │
+# │ selling_price  │ DECIMAL 10,2 │ default retail price                         │
+# │ effective_date │ DATE         │ when this price row becomes active           │
+# │ expiry_date    │ DATE         │ nullable — NULL = currently active            │
+# │ created_at     │ TIMESTAMP    │                                              │
+# │ updated_at     │ TIMESTAMP    │                                              │
+# └────────────────┴──────────────┴──────────────────────────────────────────────┘
+# FOREIGN KEYS: product_unit_id → product_units.id
+# CONSTRAINT: Partial unique index enforces one active row per product_unit_id:
+#   UNIQUE INDEX uq_active_price ON product_unit_prices
+#     (product_unit_id, (CASE WHEN expiry_date IS NULL THEN 1 END))
+# AI NOTE: When inserting a new price, first set expiry_date on the current
+#          active row, then insert the new row with expiry_date = NULL.
+#
+# SAMPLE DATA:
+#   product unit     purchase   selling
+#   Rice kg          55.00      57.00
+#   Rice sack        2750.00    2850.00
+#   Egg piece        9.00       9.00
+#   Oil 250mL        22.50      37.00
+#   Candy piece      1.50       2.00
+#   Cabbage kg       180.50     200.00
+#   Cabbage piece    0.00       25.00
+
+---
+
+## TABLE: pricing_tiers
+## PURPOSE: Price overrides for bulk quantities, bundles, or promotional periods.
+##          Takes priority over product_unit_prices when quantity and date match.
+# ┌────────────────┬──────────────┬──────────────────────────────────────────────────┐
+# │ column         │ type         │ notes                                            │
+# ├────────────────┼──────────────┼──────────────────────────────────────────────────┤
+# │ id             │ INT (PK)     │ auto-increment                                   │
+# │ product_unit_id│ INT (FK)     │ → product_units.id                              │
+# │ label          │ VARCHAR      │ nullable — promo name e.g. "January Sale"        │
+# │ tier_type      │ ENUM         │ BUNDLE_PRICE | VOLUME_DISCOUNT | FLAT_RATE       │
+# │ quantity_min   │ DECIMAL      │ minimum qty to qualify                           │
+# │ quantity_max   │ DECIMAL      │ maximum qty — use 999999 for open-ended          │
+# │ price_per_unit │ DECIMAL 10,2 │ unit price for VOLUME_DISCOUNT and FLAT_RATE     │
+# │ total_price    │ DECIMAL 10,2 │ fixed bundle total for BUNDLE_PRICE              │
+# │ effective_from │ DATE         │ promo start date                                 │
+# │ effective_to   │ DATE         │ nullable — NULL = currently active               │
+# │ created_at     │ TIMESTAMP    │                                                  │
+# │ updated_at     │ TIMESTAMP    │                                                  │
+# └────────────────┴──────────────┴──────────────────────────────────────────────────┘
+# FOREIGN KEYS: product_unit_id → product_units.id
+# CHECK CONSTRAINTS (DB-enforced):
+#   quantity_min <= quantity_max
+#   (VOLUME_DISCOUNT or FLAT_RATE) → price_per_unit must NOT be null
+#   BUNDLE_PRICE                   → total_price must NOT be null
+#
+# TIER TYPE GUIDE:
+#   BUNDLE_PRICE    → fixed total for an exact qty
+#                     effective unit_price = total_price / quantity
+#                     EXAMPLE: 3 Candy = 5 PHP total
+#   VOLUME_DISCOUNT → per-unit price for a qty range
+#                     effective unit_price = price_per_unit
+#                     EXAMPLE: 10+ Candy = 1.50 PHP each
+#   FLAT_RATE       → per-unit price regardless of standard price
+#                     effective unit_price = price_per_unit
+#                     EXAMPLE: Rice January sale = 54 PHP/kg
+#
+# PRICING RESOLUTION — always follow this order:
+#   Step 1: Check pricing_tiers for an active tier matching the product_unit and qty.
+#           WHERE product_unit_id = ?
+#             AND quantity_min <= :qty AND quantity_max >= :qty
+#             AND effective_from <= CURDATE()
+#             AND (effective_to IS NULL OR effective_to >= CURDATE())
+#   Step 2: If no tier found → use product_unit_prices.selling_price (active row).
+#   Step 3: If owner manually overrides at POS → use sale_items.unit_price
+#           and set is_manual_priced = TRUE + fill manual_price_reason.
+
+
+################################################################################
+# SECTION 4 — INVENTORY
+################################################################################
+
+## TABLE: product_stock
+## PURPOSE: Current on-hand quantity for each product. One row per product.
+##          Always stored in the product's base unit (kg, mL, piece — never sacks/trays).
+# ┌────────────┬──────────────┬────────────────────────────────────────────────┐
+# │ column     │ type         │ notes                                          │
+# ├────────────┼──────────────┼────────────────────────────────────────────────┤
+# │ product_id │ INT (PK, FK) │ → products.id — one row per product           │
+# │ quantity   │ DECIMAL 12,4 │ current stock in base unit                     │
+# │ updated_at │ TIMESTAMP    │                                                │
+# └────────────┴──────────────┴────────────────────────────────────────────────┘
+# FOREIGN KEYS: product_id → products.id
+# RULE: Never store a display-unit quantity here.
+#       Always convert: base_qty = display_qty × product_units.pack_quantity
+#       EXAMPLE: receiving 5 sacks of Rice → quantity += 5 × 50 = 250 (kg)
+
+---
+
+## TABLE: stock_log_reasons
+## PURPOSE: Lookup table of reasons a stock quantity changed.
+# ┌────────┬──────────┬────────────────────────────────────────────────────────┐
+# │ column │ type     │ notes                                                  │
+# ├────────┼──────────┼────────────────────────────────────────────────────────┤
+# │ id     │ INT (PK) │ auto-increment                                         │
+# │ name   │ VARCHAR  │ UNIQUE                                                 │
+# └────────┴──────────┴────────────────────────────────────────────────────────┘
+# STANDARD VALUES: Purchase | Sale | Return | Damage | Recount | Sample | Adjustment
+
+---
+
+## TABLE: stock_movements
+## PURPOSE: Immutable audit log. Every change to product_stock.quantity must have
+##          a corresponding row here — no exceptions.
+# ┌─────────────────────┬──────────────┬──────────────────────────────────────────────────┐
+# │ column              │ type         │ notes                                            │
+# ├─────────────────────┼──────────────┼──────────────────────────────────────────────────┤
+# │ id                  │ INT (PK)     │ auto-increment                                   │
+# │ product_id          │ INT (FK)     │ → products.id                                   │
+# │ stock_log_reason_id │ INT (FK)     │ → stock_log_reasons.id                          │
+# │ quantity_changed    │ DECIMAL 12,4 │ positive = added, negative = removed             │
+# │ reference_type      │ VARCHAR      │ nullable — 'SALE' | 'RETURN' | 'RECEIPT'         │
+# │ reference_id        │ INT          │ nullable — PK of the related sale/receipt/return  │
+# │ notes               │ TEXT         │ nullable                                          │
+# │ created_at          │ TIMESTAMP    │                                                  │
+# └─────────────────────┴──────────────┴──────────────────────────────────────────────────┘
+# FOREIGN KEYS: product_id → products.id
+#               stock_log_reason_id → stock_log_reasons.id
+# NOTE: reference_type + reference_id is a polymorphic link — no DB-level FK.
+#       App must verify reference_id exists in the correct table for the given reference_type.
+# RULE: NEVER update or delete rows. Insert-only.
+
+
+################################################################################
+# SECTION 5 — SUPPLIERS
+################################################################################
+
+## TABLE: suppliers
+## PURPOSE: Vendor/supplier contact list. Linked to stock receipts for
+##          purchase history and traceability. Soft-deleted when inactive.
+# ┌────────────────┬──────────────┬──────────────────────────────────────┐
+# │ column         │ type         │ notes                                │
+# ├────────────────┼──────────────┼──────────────────────────────────────┤
+# │ id             │ INT (PK)     │ auto-increment                       │
+# │ name           │ VARCHAR 255  │ NOT NULL                             │
+# │ contact_person │ VARCHAR 255  │ nullable                             │
+# │ contact_number │ VARCHAR 50   │ nullable                             │
+# │ address        │ TEXT         │ nullable                             │
+# │ notes          │ TEXT         │ nullable                             │
+# │ is_deleted     │ BOOLEAN      │ soft delete — filter FALSE for active │
+# │ created_at     │ TIMESTAMP    │                                      │
+# │ updated_at     │ TIMESTAMP    │                                      │
+# └────────────────┴──────────────┴──────────────────────────────────────┘
+# FOREIGN KEYS: none
+# REFERENCED BY: stock_receipts.supplier_id
+
+
+################################################################################
+# SECTION 6 — PURCHASING / RECEIVING
+################################################################################
+
+## TABLE: stock_receipts
+## PURPOSE: Header record for one supplier delivery event.
+##          One receipt covers multiple products via stock_receipt_items.
+# ┌──────────────────┬──────────────┬──────────────────────────────────────────────┐
+# │ column           │ type         │ notes                                        │
+# ├──────────────────┼──────────────┼──────────────────────────────────────────────┤
+# │ id               │ INT (PK)     │ auto-increment                               │
+# │ supplier_id      │ INT (FK)     │ → suppliers.id — nullable (ad-hoc receipt)  │
+# │ receipt_date     │ DATE         │ actual date goods were received               │
+# │ reference_number │ VARCHAR 100  │ nullable — supplier invoice or DR number      │
+# │ notes            │ TEXT         │ nullable                                      │
+# │ created_at       │ TIMESTAMP    │                                              │
+# │ updated_at       │ TIMESTAMP    │                                              │
+# └──────────────────┴──────────────┴──────────────────────────────────────────────┘
+# FOREIGN KEYS: supplier_id → suppliers.id (nullable)
+# REFERENCED BY: stock_receipt_items.stock_receipt_id
+
+---
+
+## TABLE: stock_receipt_items
+## PURPOSE: One row per product line within a stock receipt.
+##          Triggers stock additions to product_stock and stock_movements.
+# ┌──────────────────┬──────────────┬──────────────────────────────────────────────────┐
+# │ column           │ type         │ notes                                            │
+# ├──────────────────┼──────────────┼──────────────────────────────────────────────────┤
+# │ id               │ INT (PK)     │ auto-increment                                   │
+# │ stock_receipt_id │ INT (FK)     │ → stock_receipts.id                             │
+# │ product_unit_id  │ INT (FK)     │ → product_units.id — unit the supplier delivered │
+# │ quantity_received│ DECIMAL 12,4 │ in the display unit (e.g. sacks, trays)          │
+# │ cost_per_unit    │ DECIMAL 10,2 │ actual price paid per display unit                │
+# │ notes            │ VARCHAR 255  │ nullable                                          │
+# │ created_at       │ TIMESTAMP    │                                                  │
+# └──────────────────┴──────────────┴──────────────────────────────────────────────────┘
+# FOREIGN KEYS: stock_receipt_id → stock_receipts.id
+#               product_unit_id → product_units.id
+#
+# STOCK ADDITION LOGIC (run for every row inserted):
+#   base_qty_to_add = quantity_received × product_units.pack_quantity
+#   1. UPDATE product_stock SET quantity = quantity + base_qty_to_add
+#      WHERE product_id = (SELECT product_id FROM product_units WHERE id = product_unit_id)
+#   2. INSERT INTO stock_movements:
+#        product_id          = (derived from product_unit)
+#        stock_log_reason    = 'Purchase'
+#        quantity_changed    = +base_qty_to_add
+#        reference_type      = 'RECEIPT'
+#        reference_id        = stock_receipt_id
+#
+# NOTE: cost_per_unit is the actual transaction cost.
+#       product_unit_prices.purchase_price is the reference/standard cost — they may differ.
+
+
+################################################################################
+# SECTION 7 — CUSTOMERS
+################################################################################
+
+## TABLE: customers
+## PURPOSE: Registered buyer profiles with optional credit limits.
+##          Walk-in (anonymous) sales use sales.customer_id = NULL.
+# ┌────────────────┬──────────────┬──────────────────────────────────────────────┐
+# │ column         │ type         │ notes                                        │
+# ├────────────────┼──────────────┼──────────────────────────────────────────────┤
+# │ id             │ INT (PK)     │ auto-increment                               │
+# │ first_name     │ VARCHAR      │                                              │
+# │ middle_name    │ VARCHAR      │ nullable                                      │
+# │ last_name      │ VARCHAR      │                                              │
+# │ contact_number │ VARCHAR      │ nullable                                      │
+# │ credit_limit   │ DECIMAL 10,2 │ 0 = credit not allowed                       │
+# │ is_deleted     │ BOOLEAN      │ soft delete — always filter FALSE for active  │
+# │ created_at     │ TIMESTAMP    │                                              │
+# │ updated_at     │ TIMESTAMP    │                                              │
+# └────────────────┴──────────────┴──────────────────────────────────────────────┘
+# FOREIGN KEYS: none
+# REFERENCED BY: sales.customer_id, customer_addresses.customer_id
+# RULE: Never approve credit for a customer where is_deleted = TRUE.
+
+---
+
+## TABLE: customer_addresses
+## PURPOSE: One or more delivery addresses per customer. One must be primary.
+# ┌──────────────┬──────────────┬─────────────────────────────────────────────────┐
+# │ column       │ type         │ notes                                           │
+# ├──────────────┼──────────────┼─────────────────────────────────────────────────┤
+# │ id           │ INT (PK)     │ auto-increment                                  │
+# │ customer_id  │ INT (FK)     │ → customers.id                                 │
+# │ municipality │ VARCHAR      │                                                 │
+# │ barangay     │ VARCHAR      │                                                 │
+# │ street       │ VARCHAR      │                                                 │
+# │ is_primary   │ BOOLEAN      │ TRUE = default address — only 1 per customer    │
+# │ created_at   │ TIMESTAMP    │                                                 │
+# │ updated_at   │ TIMESTAMP    │                                                 │
+# └──────────────┴──────────────┴─────────────────────────────────────────────────┘
+# FOREIGN KEYS: customer_id → customers.id
+# CONSTRAINT: Exactly ONE row per customer may have is_primary = TRUE.
+
+
+################################################################################
+# SECTION 8 — SALES
+################################################################################
+
+## TABLE: payment_types
+## PURPOSE: Lookup list of accepted payment methods.
+# ┌────────┬──────────┬──────────────────────────────────────────────────────────┐
+# │ column │ type     │ notes                                                    │
+# ├────────┼──────────┼──────────────────────────────────────────────────────────┤
+# │ id     │ INT (PK) │ auto-increment                                           │
+# │ name   │ VARCHAR  │ UNIQUE                                                   │
+# └────────┴──────────┴──────────────────────────────────────────────────────────┘
+# STANDARD VALUES: Cash | Credit | GCash | PayMaya | Bank Transfer | Check
+
+---
+
+## TABLE: sales
+## PURPOSE: Header record for one sales transaction.
+##          No total stored — compute via SUM(sale_items.quantity × sale_items.unit_price).
+# ┌─────────────────┬──────────────┬───────────────────────────────────────────────┐
+# │ column          │ type         │ notes                                         │
+# ├─────────────────┼──────────────┼───────────────────────────────────────────────┤
+# │ id              │ INT (PK)     │ auto-increment                                │
+# │ customer_id     │ INT (FK)     │ → customers.id — nullable (NULL = walk-in)   │
+# │ payment_type_id │ INT (FK)     │ → payment_types.id                           │
+# │ sale_date       │ TIMESTAMP    │ when the sale was made                        │
+# │ notes           │ TEXT         │ nullable                                       │
+# │ created_at      │ TIMESTAMP    │                                               │
+# │ updated_at      │ TIMESTAMP    │                                               │
+# └─────────────────┴──────────────┴───────────────────────────────────────────────┘
+# FOREIGN KEYS: customer_id → customers.id (nullable)
+#               payment_type_id → payment_types.id
+# REFERENCED BY: sale_items.sale_id, sales_returns.sale_id, credit.sale_id
+
+---
+
+## TABLE: sale_items
+## PURPOSE: One row per product line within a sale.
+##          Holds the final charged price (post-tier and post-override).
+##          No line_total stored — compute as quantity × unit_price.
+# ┌─────────────────────┬──────────────┬─────────────────────────────────────────────────┐
+# │ column              │ type         │ notes                                           │
+# ├─────────────────────┼──────────────┼─────────────────────────────────────────────────┤
+# │ id                  │ INT (PK)     │ auto-increment                                  │
+# │ sale_id             │ INT (FK)     │ → sales.id                                     │
+# │ product_unit_id     │ INT (FK)     │ → product_units.id — the unit sold              │
+# │ quantity            │ DECIMAL 10,4 │ how many of the display unit were sold          │
+# │ unit_price          │ DECIMAL 10,2 │ final price charged per unit                    │
+# │ is_manual_priced    │ BOOLEAN      │ TRUE if owner overrode the system price         │
+# │ manual_price_reason │ VARCHAR 255  │ nullable — required when is_manual_priced = TRUE│
+# │ weight_per_piece_kg │ DECIMAL 10,4 │ nullable — actual weighed kg (variable items)   │
+# │ created_at          │ TIMESTAMP    │                                                 │
+# └─────────────────────┴──────────────┴─────────────────────────────────────────────────┘
+# FOREIGN KEYS: sale_id → sales.id
+#               product_unit_id → product_units.id
+# REFERENCED BY: sales_returns.sale_item_id
+#
+# STOCK DEDUCTION LOGIC (run for every row inserted):
+#   IF weight_per_piece_kg IS NOT NULL:
+#     base_qty_to_deduct = weight_per_piece_kg   ← actual weighed amount
+#   ELSE:
+#     base_qty_to_deduct = quantity × product_units.pack_quantity
+#   INSERT INTO stock_movements:
+#     quantity_changed = -base_qty_to_deduct
+#     reference_type   = 'SALE'
+#     reference_id     = sale_id
+
+---
+
+## TABLE: sales_returns
+## PURPOSE: Records a return (partial or full) against a previous sale.
+##          Always triggers stock restoration via stock_movements.
+# ┌───────────────────┬──────────────┬──────────────────────────────────────────────────┐
+# │ column            │ type         │ notes                                            │
+# ├───────────────────┼──────────────┼──────────────────────────────────────────────────┤
+# │ id                │ INT (PK)     │ auto-increment                                   │
+# │ sale_id           │ INT (FK)     │ → sales.id                                      │
+# │ sale_item_id      │ INT (FK)     │ → sale_items.id — nullable (NULL = whole sale)   │
+# │ quantity_returned │ DECIMAL 10,4 │ how many were returned                           │
+# │ reason            │ VARCHAR 255  │                                                  │
+# │ refund_amount     │ DECIMAL 10,2 │                                                  │
+# │ created_at        │ TIMESTAMP    │                                                  │
+# └───────────────────┴──────────────┴──────────────────────────────────────────────────┘
+# FOREIGN KEYS: sale_id → sales.id
+#               sale_item_id → sale_items.id (nullable)
+#
+# STOCK RESTORATION LOGIC:
+#   IF sale_item_id IS NOT NULL (partial return):
+#     Insert 1 stock_movements row: quantity_changed = +base_qty_returned, reference_type='RETURN'
+#   IF sale_item_id IS NULL (full-sale return):
+#     Iterate over ALL sale_items for sale_id.
+#     Insert ONE stock_movements row PER sale_item — never a single aggregate.
+
+
+################################################################################
+# SECTION 9 — CREDIT
+################################################################################
+
+## TABLE: credit
+## PURPOSE: Tracks that a sale was paid on credit. One row per credit sale.
+##          Customer is NOT stored here — always derive via JOIN to sales.
+##          Amount paid is NOT stored here — always compute via the credit_balances VIEW.
+# ┌────────────┬──────────────┬────────────────────────────────────────────────────┐
+# │ column     │ type         │ notes                                              │
+# ├────────────┼──────────────┼────────────────────────────────────────────────────┤
+# │ id         │ INT (PK)     │ auto-increment                                     │
+# │ sale_id    │ INT (FK)     │ → sales.id — UNIQUE (one credit per sale)         │
+# │ amount_owed│ DECIMAL 10,2 │ original credit amount                             │
+# │ due_date   │ DATE         │ repayment deadline                                 │
+# │ status     │ ENUM         │ PENDING | PARTIALLY_PAID | PAID | OVERDUE          │
+# │ notes      │ TEXT         │ nullable                                            │
+# │ created_at │ TIMESTAMP    │                                                    │
+# │ updated_at │ TIMESTAMP    │                                                    │
+# └────────────┴──────────────┴────────────────────────────────────────────────────┘
+# FOREIGN KEYS: sale_id → sales.id (UNIQUE)
+# REFERENCED BY: credit_payments.credit_id
+#
+# CREDIT LIMIT CHECK — run before approving any new credit sale:
+#   SELECT c.credit_limit, COALESCE(SUM(cb.balance), 0) AS outstanding
+#   FROM customers c
+#   LEFT JOIN credit cr ON cr.sale_id IN (SELECT id FROM sales WHERE customer_id = c.id)
+#   LEFT JOIN credit_balances cb ON cr.id = cb.credit_id AND cb.status != 'PAID'
+#   WHERE c.id = ? AND c.is_deleted = FALSE
+#   GROUP BY c.id;
+#   → Approve only if (outstanding + new_sale_amount) <= credit_limit
+
+---
+
+## TABLE: credit_payments
+## PURPOSE: Records one payment instalment against a credit record.
+##          After each insert, recalculate and update credit.status.
+# ┌────────────────┬──────────────┬──────────────────────────────────────────┐
+# │ column         │ type         │ notes                                    │
+# ├────────────────┼──────────────┼──────────────────────────────────────────┤
+# │ id             │ INT (PK)     │ auto-increment                           │
+# │ credit_id      │ INT (FK)     │ → credit.id                             │
+# │ amount_paid    │ DECIMAL 10,2 │ payment amount                           │
+# │ payment_method │ VARCHAR 50   │ e.g. Cash, GCash                         │
+# │ paid_at        │ TIMESTAMP    │ when payment was received                 │
+# │ notes          │ TEXT         │ nullable                                  │
+# │ created_at     │ TIMESTAMP    │                                          │
+# └────────────────┴──────────────┴──────────────────────────────────────────┘
+# FOREIGN KEYS: credit_id → credit.id
+#
+# STATUS UPDATE LOGIC (after every insert):
+#   balance = credit.amount_owed - SUM(credit_payments.amount_paid) for this credit_id
+#   IF balance = 0              → status = 'PAID'
+#   IF balance > 0 AND payments exist → status = 'PARTIALLY_PAID'
+#   IF balance > 0 AND due_date < today AND no payments → status = 'OVERDUE'
+#   ELSE                        → status = 'PENDING'
+
+---
+
+## VIEW: credit_balances
+## PURPOSE: Always-accurate computed credit balance. Use this for all credit queries.
+##          Never try to read credit.amount_paid — that column does not exist.
+# COLUMNS RETURNED:
+#   credit_id    — credit.id
+#   customer_id  — derived from sales.customer_id
+#   sale_id      — credit.sale_id
+#   amount_owed  — credit.amount_owed
+#   amount_paid  — SUM(credit_payments.amount_paid) — computed
+#   balance      — amount_owed - amount_paid — computed
+#   status       — credit.status (PENDING | PARTIALLY_PAID | PAID | OVERDUE)
+#   due_date     — credit.due_date
+#
+# VIEW DEFINITION:
+#   SELECT cr.id AS credit_id, s.customer_id, cr.sale_id, cr.amount_owed,
+#          COALESCE(SUM(cp.amount_paid), 0) AS amount_paid,
+#          cr.amount_owed - COALESCE(SUM(cp.amount_paid), 0) AS balance,
+#          cr.status, cr.due_date
+#   FROM credit cr
+#   JOIN sales s ON cr.sale_id = s.id
+#   LEFT JOIN credit_payments cp ON cr.id = cp.credit_id
+#   GROUP BY cr.id, s.customer_id, cr.sale_id, cr.amount_owed, cr.status, cr.due_date;
+#
+# USE FOR: customer outstanding summary | credit limit checks | overdue detection | reports
+
+
+################################################################################
+# SECTION 10 — EXPENSES
+################################################################################
+
+## TABLE: expense_categories
+## PURPOSE: Lookup list of expense classifications.
+# ┌────────────┬──────────┬───────────────────────────────────────────────────────┐
+# │ column     │ type     │ notes                                                 │
+# ├────────────┼──────────┼───────────────────────────────────────────────────────┤
+# │ id         │ INT (PK) │ auto-increment                                        │
+# │ name       │ VARCHAR  │ UNIQUE                                                │
+# │ created_at │ TIMESTAMP│                                                       │
+# └────────────┴──────────┴───────────────────────────────────────────────────────┘
+# STANDARD VALUES: Rent | Utilities | Salaries | Transportation | Marketing | Supplies
+
+---
+
+## TABLE: expenses
+## PURPOSE: Records one business expense with optional receipt image.
+# ┌─────────────────────┬──────────────┬──────────────────────────────────────────────┐
+# │ column              │ type         │ notes                                        │
+# ├─────────────────────┼──────────────┼──────────────────────────────────────────────┤
+# │ id                  │ INT (PK)     │ auto-increment                               │
+# │ expense_category_id │ INT (FK)     │ → expense_categories.id                     │
+# │ amount              │ DECIMAL 10,2 │                                              │
+# │ description         │ VARCHAR 255  │                                              │
+# │ expense_date        │ DATE         │ actual expense date (may differ from created)│
+# │ image_url           │ VARCHAR 500  │ nullable — receipt photo URL                 │
+# │ created_at          │ TIMESTAMP    │                                              │
+# │ updated_at          │ TIMESTAMP    │                                              │
+# └─────────────────────┴──────────────┴──────────────────────────────────────────────┘
+# FOREIGN KEYS: expense_category_id → expense_categories.id
+
+
+################################################################################
+# SECTION 11 — CASH MANAGEMENT
+################################################################################
+
+## TABLE: cash_fund
+## PURPOSE: Cash drawer for one business session.
+##          Owner opens it at session start and closes it at end.
+##          Current balance is always COMPUTED, never stored.
+# ┌─────────────────┬──────────────┬────────────────────────────────────────────────┐
+# │ column          │ type         │ notes                                          │
+# ├─────────────────┼──────────────┼────────────────────────────────────────────────┤
+# │ id              │ INT (PK)     │ auto-increment                                 │
+# │ opening_balance │ DECIMAL 10,2 │ cash counted at session start                  │
+# │ closed_at       │ TIMESTAMP    │ nullable — NULL means session is still open     │
+# │ closing_balance │ DECIMAL 10,2 │ nullable — physical cash count at session close │
+# │ notes           │ TEXT         │ nullable                                        │
+# │ created_at      │ TIMESTAMP    │                                                │
+# │ updated_at      │ TIMESTAMP    │                                                │
+# └─────────────────┴──────────────┴────────────────────────────────────────────────┘
+# FOREIGN KEYS: none
+# REFERENCED BY: cash_fund_transactions.cash_fund_id
+#
+# BALANCE FORMULA:
+#   current_balance = opening_balance + SUM(
+#     CASE WHEN transaction_type = 'IN'  THEN amount
+#          WHEN transaction_type = 'OUT' THEN -amount
+#          ELSE amount  -- ADJUSTMENT (can be positive or negative)
+#     END
+#   ) FROM cash_fund_transactions WHERE cash_fund_id = ?
+
+---
+
+## TABLE: cash_fund_transactions
+## PURPOSE: Immutable log of every cash movement within a session.
+##          Never updated or deleted. Use ADJUSTMENT to fix errors.
+# ┌──────────────────┬──────────────┬──────────────────────────────────────────────────┐
+# │ column           │ type         │ notes                                            │
+# ├──────────────────┼──────────────┼──────────────────────────────────────────────────┤
+# │ id               │ INT (PK)     │ auto-increment                                   │
+# │ cash_fund_id     │ INT (FK)     │ → cash_fund.id                                  │
+# │ transaction_type │ ENUM         │ IN | OUT | ADJUSTMENT                            │
+# │ amount           │ DECIMAL 10,2 │ always positive — direction set by type          │
+# │ reference_type   │ VARCHAR      │ nullable — 'SALE' | 'EXPENSE' | 'RETURN'         │
+# │ reference_id     │ INT          │ nullable — PK of the related record               │
+# │ description      │ VARCHAR 255  │                                                  │
+# │ created_at       │ TIMESTAMP    │                                                  │
+# └──────────────────┴──────────────┴──────────────────────────────────────────────────┘
+# FOREIGN KEYS: cash_fund_id → cash_fund.id
+# RULE: NEVER update or delete rows. Use ADJUSTMENT type to correct mistakes.
+# NOTE: reference_type + reference_id is polymorphic — no DB-level FK.
+#       App must validate reference_id for the given reference_type before inserting.
+#
+# TRANSACTION TYPE GUIDE:
+#   IN         → cash received (e.g. customer pays for a sale)
+#   OUT        → cash paid out (e.g. expense or supplier payment)
+#   ADJUSTMENT → manual correction after a physical cash count
+
+
+################################################################################
+# SECTION 12 — RELATIONSHIP MAP
+################################################################################
+#
+#  products
+#    ├── product_stock          (1:1 — one stock row per product)
+#    ├── stock_movements        (1:many — full history of all stock changes)
+#    └── product_units          (1:many — all packaging/selling formats)
+#          ├── product_unit_prices  (1:many — price history, one active at a time)
+#          ├── pricing_tiers        (1:many — bulk/promo price overrides)
+#          ├── sale_items           (1:many — sold in a sale)
+#          └── stock_receipt_items  (1:many — received from a supplier)
+#
+#  categories → products        (1:many)
+#  units      → products        (1:many via base_unit_id)
+#  units      → product_units   (1:many via unit_id)
+#
+#  suppliers  → stock_receipts  (1:many)
+#  stock_receipts → stock_receipt_items (1:many)
+#
+#  customers
+#    ├── customer_addresses     (1:many — one marked primary)
+#    └── sales                  (1:many — NULL customer_id = walk-in)
+#          ├── sale_items       (1:many)
+#          │     └── sales_returns (1:many — partial or full)
+#          └── credit           (1:1 — one credit record per credit sale)
+#                └── credit_payments (1:many — instalment payments)
+#
+#  payment_types → sales        (1:many)
+#
+#  cash_fund → cash_fund_transactions (1:many)
+#
+#  expense_categories → expenses (1:many)
+#
+#  VIEW credit_balances
+#    aggregates: credit + credit_payments + sales → returns computed balance per credit
+
+
+################################################################################
+# SECTION 13 — INDEXES
+################################################################################
+#
+#  uq_active_price         UNIQUE  product_unit_prices (product_unit_id, (expiry_date IS NULL))
+#  idx_pricing_tiers_lookup        pricing_tiers       (product_unit_id, effective_from, effective_to)
+#  idx_sale_items_sale_id          sale_items          (sale_id)
+#  idx_stock_movements_product_time stock_movements    (product_id, created_at)
+#  idx_credit_status               credit              (status)
+#  idx_cft_fund_time               cash_fund_transactions (cash_fund_id, created_at)
+#  idx_sri_receipt                 stock_receipt_items (stock_receipt_id)
+#  idx_sr_supplier_date            stock_receipts      (supplier_id, receipt_date)
+
+
+################################################################################
+# SECTION 14 — BUSINESS RULES QUICK REFERENCE
+################################################################################
+#
+#  R1  STOCK IN BASE UNIT
+#      product_stock always stores kg/mL/piece. Convert using pack_quantity.
+#
+#  R2  EVERY STOCK CHANGE = 1 stock_movements ROW
+#      Covers: sales, returns, receipt items, damage, recount, adjustment.
+#
+#  R3  PRICING ORDER
+#      pricing_tiers (if active + qty match) → product_unit_prices → manual override
+#
+#  R4  MANUAL PRICE OVERRIDE
+#      Set is_manual_priced = TRUE and fill manual_price_reason.
+#      No approval needed (single-owner system).
+#
+#  R5  CREDIT APPROVAL CHECKLIST
+#      a. customer.is_deleted = FALSE
+#      b. outstanding (from credit_balances VIEW) + new amount <= credit_limit
+#      c. Insert credit row with sale_id only — customer derived via JOIN.
+#
+#  R6  FULL-SALE RETURN STOCK RESTORATION
+#      Insert one stock_movements row per sale_item — never one aggregate row.
+#
+#  R7  VARIABLE-WEIGHT ITEMS
+#      Use weight_per_piece_kg if weighed at POS.
+#      Fall back to product_units.approx_base_qty_per_piece if not weighed.
+#
+#  R8  CASH TRANSACTIONS IMMUTABLE
+#      Never UPDATE or DELETE cash_fund_transactions. Use ADJUSTMENT type to fix errors.
+#
+#  R9  SOFT DELETES
+#      products, customers, suppliers: set is_deleted = TRUE, never DELETE.
+#      All historical records (sales, movements, receipts) remain queryable.
+#
+#  R10 CREDIT BALANCE ALWAYS COMPUTED
+#      Always use credit_balances VIEW. credit.amount_paid does not exist.
+#
+#  R11 PLANNED PURCHASES VIA stock_receipts
+#      Use stock_receipts + stock_receipt_items for supplier deliveries.
+#      Direct stock_movements with reason='Purchase' reserved for corrections only.
+#
+#  R12 POLYMORPHIC LINKS NEED APP VALIDATION
+#      stock_movements.reference_id and cash_fund_transactions.reference_id
+#      have no DB-level FK. App must validate before every insert.
+
+
+################################################################################
+# SECTION 15 — COMMON QUERIES
+# Grouped by domain. Use :param notation for runtime values.
+# All queries assume is_deleted = FALSE on soft-deletable tables unless noted.
+################################################################################
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 15-A  PRODUCTS & CATALOG
+# ══════════════════════════════════════════════════════════════════════════════
+
+# LIST ALL ACTIVE PRODUCTS WITH CATEGORY AND BASE UNIT
+  SELECT p.id, p.name, c.name AS category, u.name AS base_unit, p.description
+  FROM products p
+  JOIN categories c ON p.category_id = c.id
+  JOIN units u ON p.base_unit_id = u.id
+  WHERE p.is_deleted = FALSE
+  ORDER BY c.name, p.name;
+
+---
+
+# GET ALL SELLING UNITS FOR A PRODUCT (shown on POS screen)
+  SELECT pu.id, pu.display_name, pu.pack_quantity,
+         pu.is_default_selling, pu.approx_base_qty_per_piece
+  FROM product_units pu
+  WHERE pu.product_id = :product_id
+    AND pu.can_sell = TRUE
+  ORDER BY pu.is_default_selling DESC, pu.display_name;
+
+---
+
+# GET ALL RESTOCKABLE UNITS FOR A PRODUCT (shown on receiving screen)
+  SELECT pu.id, pu.display_name, pu.pack_quantity
+  FROM product_units pu
+  WHERE pu.product_id = :product_id
+    AND pu.can_restock = TRUE
+  ORDER BY pu.display_name;
+
+---
+
+# SEARCH PRODUCTS BY NAME (partial match)
+  SELECT p.id, p.name, c.name AS category, u.name AS base_unit
+  FROM products p
+  JOIN categories c ON p.category_id = c.id
+  JOIN units u ON p.base_unit_id = u.id
+  WHERE p.name LIKE CONCAT('%', :search, '%')
+    AND p.is_deleted = FALSE
+  ORDER BY p.name;
+
+---
+
+# LIST ALL PRODUCTS IN A CATEGORY
+  SELECT p.id, p.name, u.name AS base_unit
+  FROM products p
+  JOIN units u ON p.base_unit_id = u.id
+  WHERE p.category_id = :category_id
+    AND p.is_deleted = FALSE
+  ORDER BY p.name;
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 15-B  PRICING
+# ══════════════════════════════════════════════════════════════════════════════
+
+# GET CURRENT PRICE FOR A PRODUCT UNIT
+# Step 1 — check for an active tier matching the quantity
+  SELECT tier_type, price_per_unit, total_price, label
+  FROM pricing_tiers
+  WHERE product_unit_id = :unit_id
+    AND quantity_min <= :qty AND quantity_max >= :qty
+    AND effective_from <= CURDATE()
+    AND (effective_to IS NULL OR effective_to >= CURDATE())
+  ORDER BY quantity_min DESC LIMIT 1;
+# Step 2 — fallback to standard price if no tier found
+  SELECT selling_price, purchase_price
+  FROM product_unit_prices
+  WHERE product_unit_id = :unit_id
+    AND effective_date <= CURDATE()
+    AND (expiry_date IS NULL OR expiry_date >= CURDATE())
+  ORDER BY effective_date DESC LIMIT 1;
+
+---
+
+# GET ALL ACTIVE PRICES FOR EVERY UNIT OF A PRODUCT
+  SELECT pu.display_name, pup.selling_price, pup.purchase_price, pup.effective_date
+  FROM product_units pu
+  JOIN product_unit_prices pup ON pu.id = pup.product_unit_id
+  WHERE pu.product_id = :product_id
+    AND pup.expiry_date IS NULL
+  ORDER BY pu.display_name;
+
+---
+
+# GET ALL ACTIVE PRICING TIERS FOR A PRODUCT UNIT
+  SELECT tier_type, label, quantity_min, quantity_max,
+         price_per_unit, total_price, effective_from, effective_to
+  FROM pricing_tiers
+  WHERE product_unit_id = :unit_id
+    AND effective_from <= CURDATE()
+    AND (effective_to IS NULL OR effective_to >= CURDATE())
+  ORDER BY quantity_min;
+
+---
+
+# GET PRICE HISTORY FOR A PRODUCT UNIT (all rows, newest first)
+  SELECT selling_price, purchase_price, effective_date, expiry_date
+  FROM product_unit_prices
+  WHERE product_unit_id = :unit_id
+  ORDER BY effective_date DESC;
+
+---
+
+# GET ALL CURRENTLY ACTIVE PROMOTIONS (any product)
+  SELECT pt.label, pt.tier_type,
+         p.name AS product, pu.display_name AS unit,
+         pt.quantity_min, pt.quantity_max,
+         pt.price_per_unit, pt.total_price,
+         pt.effective_from, pt.effective_to
+  FROM pricing_tiers pt
+  JOIN product_units pu ON pt.product_unit_id = pu.id
+  JOIN products p ON pu.product_id = p.id
+  WHERE pt.effective_from <= CURDATE()
+    AND (pt.effective_to IS NULL OR pt.effective_to >= CURDATE())
+    AND p.is_deleted = FALSE
+  ORDER BY p.name, pu.display_name;
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 15-C  INVENTORY & STOCK
+# ══════════════════════════════════════════════════════════════════════════════
+
+# GET CURRENT STOCK LEVEL FOR ONE PRODUCT
+  SELECT p.name, ps.quantity, u.name AS base_unit, ps.updated_at
+  FROM product_stock ps
+  JOIN products p ON ps.product_id = p.id
+  JOIN units u ON p.base_unit_id = u.id
+  WHERE ps.product_id = :product_id;
+
+---
+
+# GET FULL STOCK SNAPSHOT — ALL ACTIVE PRODUCTS
+  SELECT p.id, p.name, c.name AS category,
+         ps.quantity, u.name AS base_unit, ps.updated_at
+  FROM product_stock ps
+  JOIN products p ON ps.product_id = p.id
+  JOIN categories c ON p.category_id = c.id
+  JOIN units u ON p.base_unit_id = u.id
+  WHERE p.is_deleted = FALSE
+  ORDER BY c.name, p.name;
+
+---
+
+# GET LOW-STOCK PRODUCTS (below a given threshold)
+# Replace :threshold with the desired minimum quantity.
+  SELECT p.name, c.name AS category, ps.quantity, u.name AS base_unit
+  FROM product_stock ps
+  JOIN products p ON ps.product_id = p.id
+  JOIN categories c ON p.category_id = c.id
+  JOIN units u ON p.base_unit_id = u.id
+  WHERE ps.quantity < :threshold
+    AND p.is_deleted = FALSE
+  ORDER BY ps.quantity ASC;
+
+---
+
+# GET OUT-OF-STOCK PRODUCTS (quantity = 0)
+  SELECT p.id, p.name, c.name AS category, u.name AS base_unit
+  FROM product_stock ps
+  JOIN products p ON ps.product_id = p.id
+  JOIN categories c ON p.category_id = c.id
+  JOIN units u ON p.base_unit_id = u.id
+  WHERE ps.quantity <= 0
+    AND p.is_deleted = FALSE
+  ORDER BY c.name, p.name;
+
+---
+
+# GET STOCK MOVEMENT HISTORY FOR A PRODUCT (newest first)
+  SELECT sm.created_at, slr.name AS reason, sm.quantity_changed,
+         sm.reference_type, sm.reference_id, sm.notes
+  FROM stock_movements sm
+  JOIN stock_log_reasons slr ON sm.stock_log_reason_id = slr.id
+  WHERE sm.product_id = :product_id
+  ORDER BY sm.created_at DESC;
+
+---
+
+# GET ALL STOCK MOVEMENTS FOR A DATE RANGE
+  SELECT p.name AS product, slr.name AS reason,
+         sm.quantity_changed, sm.reference_type, sm.reference_id,
+         sm.created_at
+  FROM stock_movements sm
+  JOIN products p ON sm.product_id = p.id
+  JOIN stock_log_reasons slr ON sm.stock_log_reason_id = slr.id
+  WHERE sm.created_at >= :date_from
+    AND sm.created_at <  :date_to + INTERVAL 1 DAY
+  ORDER BY sm.created_at DESC;
+
+---
+
+# GET NET STOCK CHANGE PER PRODUCT FOR A DATE RANGE (positive = net gain)
+  SELECT p.name AS product, u.name AS base_unit,
+         SUM(sm.quantity_changed) AS net_change
+  FROM stock_movements sm
+  JOIN products p ON sm.product_id = p.id
+  JOIN units u ON p.base_unit_id = u.id
+  WHERE sm.created_at >= :date_from
+    AND sm.created_at <  :date_to + INTERVAL 1 DAY
+  GROUP BY p.id, p.name, u.name
+  ORDER BY net_change ASC;
+
+---
+
+# GET STOCK MOVEMENTS LINKED TO A SPECIFIC SALE
+  SELECT p.name AS product, sm.quantity_changed, sm.created_at
+  FROM stock_movements sm
+  JOIN products p ON sm.product_id = p.id
+  WHERE sm.reference_type = 'SALE'
+    AND sm.reference_id = :sale_id;
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 15-D  SALES
+# ══════════════════════════════════════════════════════════════════════════════
+
+# GET SALE HEADER + LINE ITEMS FOR ONE SALE
+  SELECT s.id, s.sale_date, s.notes,
+         COALESCE(CONCAT(c.first_name, ' ', c.last_name), 'Walk-in') AS customer,
+         pt.name AS payment_method,
+         p.name AS product, pu.display_name AS unit,
+         si.quantity, si.unit_price,
+         (si.quantity * si.unit_price) AS line_total,
+         si.is_manual_priced, si.manual_price_reason,
+         SUM(si.quantity * si.unit_price) OVER (PARTITION BY s.id) AS sale_total
+  FROM sales s
+  LEFT JOIN customers c ON s.customer_id = c.id
+  JOIN payment_types pt ON s.payment_type_id = pt.id
+  JOIN sale_items si ON s.id = si.sale_id
+  JOIN product_units pu ON si.product_unit_id = pu.id
+  JOIN products p ON pu.product_id = p.id
+  WHERE s.id = :sale_id;
+
+---
+
+# GET DAILY SALES SUMMARY (today)
+  SELECT COUNT(DISTINCT s.id)            AS total_transactions,
+         SUM(si.quantity * si.unit_price) AS total_revenue
+  FROM sales s
+  JOIN sale_items si ON s.id = si.sale_id
+  WHERE DATE(s.sale_date) = CURDATE();
+
+---
+
+# GET SALES SUMMARY FOR A DATE RANGE
+  SELECT DATE(s.sale_date)               AS sale_date,
+         COUNT(DISTINCT s.id)            AS total_transactions,
+         SUM(si.quantity * si.unit_price) AS total_revenue
+  FROM sales s
+  JOIN sale_items si ON s.id = si.sale_id
+  WHERE s.sale_date >= :date_from
+    AND s.sale_date <  :date_to + INTERVAL 1 DAY
+  GROUP BY DATE(s.sale_date)
+  ORDER BY sale_date DESC;
+
+---
+
+# GET MONTHLY SALES SUMMARY (current year)
+  SELECT MONTH(s.sale_date)              AS month,
+         COUNT(DISTINCT s.id)            AS total_transactions,
+         SUM(si.quantity * si.unit_price) AS total_revenue
+  FROM sales s
+  JOIN sale_items si ON s.id = si.sale_id
+  WHERE YEAR(s.sale_date) = YEAR(CURDATE())
+  GROUP BY MONTH(s.sale_date)
+  ORDER BY month;
+
+---
+
+# GET ALL SALES FOR A CUSTOMER (newest first)
+  SELECT s.id, s.sale_date, pt.name AS payment_method,
+         SUM(si.quantity * si.unit_price) AS total
+  FROM sales s
+  JOIN payment_types pt ON s.payment_type_id = pt.id
+  JOIN sale_items si ON s.id = si.sale_id
+  WHERE s.customer_id = :customer_id
+  GROUP BY s.id, s.sale_date, pt.name
+  ORDER BY s.sale_date DESC;
+
+---
+
+# GET TOP-SELLING PRODUCTS BY REVENUE (date range)
+  SELECT p.name AS product, pu.display_name AS unit,
+         SUM(si.quantity)                   AS total_qty_sold,
+         SUM(si.quantity * si.unit_price)   AS total_revenue
+  FROM sale_items si
+  JOIN product_units pu ON si.product_unit_id = pu.id
+  JOIN products p ON pu.product_id = p.id
+  JOIN sales s ON si.sale_id = s.id
+  WHERE s.sale_date >= :date_from
+    AND s.sale_date <  :date_to + INTERVAL 1 DAY
+  GROUP BY p.id, p.name, pu.id, pu.display_name
+  ORDER BY total_revenue DESC
+  LIMIT 10;
+
+---
+
+# GET TOP-SELLING PRODUCTS BY QUANTITY SOLD (date range)
+  SELECT p.name AS product, u.name AS base_unit,
+         SUM(si.quantity * pu.pack_quantity) AS total_base_qty_sold
+  FROM sale_items si
+  JOIN product_units pu ON si.product_unit_id = pu.id
+  JOIN products p ON pu.product_id = p.id
+  JOIN units u ON p.base_unit_id = u.id
+  JOIN sales s ON si.sale_id = s.id
+  WHERE s.sale_date >= :date_from
+    AND s.sale_date <  :date_to + INTERVAL 1 DAY
+  GROUP BY p.id, p.name, u.name
+  ORDER BY total_base_qty_sold DESC
+  LIMIT 10;
+
+---
+
+# GET SALES BREAKDOWN BY PAYMENT METHOD (date range)
+  SELECT pt.name AS payment_method,
+         COUNT(DISTINCT s.id)            AS transaction_count,
+         SUM(si.quantity * si.unit_price) AS total_revenue
+  FROM sales s
+  JOIN payment_types pt ON s.payment_type_id = pt.id
+  JOIN sale_items si ON s.id = si.sale_id
+  WHERE s.sale_date >= :date_from
+    AND s.sale_date <  :date_to + INTERVAL 1 DAY
+  GROUP BY pt.id, pt.name
+  ORDER BY total_revenue DESC;
+
+---
+
+# GET SALES BREAKDOWN BY CATEGORY (date range)
+  SELECT c.name AS category,
+         SUM(si.quantity * si.unit_price) AS total_revenue
+  FROM sale_items si
+  JOIN product_units pu ON si.product_unit_id = pu.id
+  JOIN products p ON pu.product_id = p.id
+  JOIN categories c ON p.category_id = c.id
+  JOIN sales s ON si.sale_id = s.id
+  WHERE s.sale_date >= :date_from
+    AND s.sale_date <  :date_to + INTERVAL 1 DAY
+  GROUP BY c.id, c.name
+  ORDER BY total_revenue DESC;
+
+---
+
+# GET ALL MANUALLY OVERRIDDEN PRICES IN A DATE RANGE
+  SELECT s.sale_date, s.id AS sale_id,
+         p.name AS product, pu.display_name AS unit,
+         si.quantity, si.unit_price, si.manual_price_reason
+  FROM sale_items si
+  JOIN sales s ON si.sale_id = s.id
+  JOIN product_units pu ON si.product_unit_id = pu.id
+  JOIN products p ON pu.product_id = p.id
+  WHERE si.is_manual_priced = TRUE
+    AND s.sale_date >= :date_from
+    AND s.sale_date <  :date_to + INTERVAL 1 DAY
+  ORDER BY s.sale_date DESC;
+
+---
+
+# GET ALL RETURNS FOR A DATE RANGE
+  SELECT s.sale_date, sr.created_at AS returned_at,
+         p.name AS product, pu.display_name AS unit,
+         sr.quantity_returned, sr.refund_amount, sr.reason
+  FROM sales_returns sr
+  JOIN sales s ON sr.sale_id = s.id
+  LEFT JOIN sale_items si ON sr.sale_item_id = si.id
+  LEFT JOIN product_units pu ON si.product_unit_id = pu.id
+  LEFT JOIN products p ON pu.product_id = p.id
+  WHERE sr.created_at >= :date_from
+    AND sr.created_at <  :date_to + INTERVAL 1 DAY
+  ORDER BY sr.created_at DESC;
+
+---
+
+# GET TOTAL REFUNDS ISSUED IN A DATE RANGE
+  SELECT COUNT(*) AS total_returns,
+         SUM(sr.refund_amount) AS total_refunded
+  FROM sales_returns sr
+  WHERE sr.created_at >= :date_from
+    AND sr.created_at <  :date_to + INTERVAL 1 DAY;
+
+---
+
+# GET GROSS PROFIT ESTIMATE FOR A DATE RANGE
+# Uses product_unit_prices.purchase_price as cost reference.
+# NOTE: actual cost may differ from receipt cost_per_unit.
+  SELECT p.name AS product,
+         SUM(si.quantity * si.unit_price)                            AS revenue,
+         SUM(si.quantity * pu.pack_quantity * pup.purchase_price)    AS estimated_cost,
+         SUM(si.quantity * si.unit_price)
+           - SUM(si.quantity * pu.pack_quantity * pup.purchase_price) AS gross_profit
+  FROM sale_items si
+  JOIN sales s ON si.sale_id = s.id
+  JOIN product_units pu ON si.product_unit_id = pu.id
+  JOIN products p ON pu.product_id = p.id
+  JOIN product_unit_prices pup
+    ON pup.product_unit_id = pu.id
+   AND pup.expiry_date IS NULL
+  WHERE s.sale_date >= :date_from
+    AND s.sale_date <  :date_to + INTERVAL 1 DAY
+  GROUP BY p.id, p.name
+  ORDER BY gross_profit DESC;
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 15-E  CUSTOMERS
+# ══════════════════════════════════════════════════════════════════════════════
+
+# GET ALL ACTIVE CUSTOMERS
+  SELECT id, first_name, middle_name, last_name, contact_number, credit_limit
+  FROM customers
+  WHERE is_deleted = FALSE
+  ORDER BY last_name, first_name;
+
+---
+
+# SEARCH CUSTOMER BY NAME
+  SELECT id, first_name, last_name, contact_number, credit_limit
+  FROM customers
+  WHERE (first_name LIKE CONCAT('%', :search, '%')
+      OR last_name  LIKE CONCAT('%', :search, '%'))
+    AND is_deleted = FALSE
+  ORDER BY last_name, first_name;
+
+---
+
+# GET CUSTOMER PROFILE WITH PRIMARY ADDRESS
+  SELECT c.id, c.first_name, c.last_name, c.contact_number, c.credit_limit,
+         ca.municipality, ca.barangay, ca.street
+  FROM customers c
+  LEFT JOIN customer_addresses ca
+    ON ca.customer_id = c.id AND ca.is_primary = TRUE
+  WHERE c.id = :customer_id
+    AND c.is_deleted = FALSE;
+
+---
+
+# GET ALL ADDRESSES FOR A CUSTOMER
+  SELECT id, municipality, barangay, street, is_primary
+  FROM customer_addresses
+  WHERE customer_id = :customer_id
+  ORDER BY is_primary DESC, id;
+
+---
+
+# GET CUSTOMER LIFETIME SPEND
+  SELECT CONCAT(c.first_name, ' ', c.last_name) AS customer,
+         COUNT(DISTINCT s.id)            AS total_transactions,
+         SUM(si.quantity * si.unit_price) AS lifetime_spend
+  FROM customers c
+  JOIN sales s ON s.customer_id = c.id
+  JOIN sale_items si ON s.id = si.sale_id
+  WHERE c.id = :customer_id;
+
+---
+
+# GET TOP CUSTOMERS BY REVENUE (date range)
+  SELECT CONCAT(c.first_name, ' ', c.last_name) AS customer,
+         COUNT(DISTINCT s.id)            AS transactions,
+         SUM(si.quantity * si.unit_price) AS total_spend
+  FROM customers c
+  JOIN sales s ON s.customer_id = c.id
+  JOIN sale_items si ON s.id = si.sale_id
+  WHERE s.sale_date >= :date_from
+    AND s.sale_date <  :date_to + INTERVAL 1 DAY
+    AND c.is_deleted = FALSE
+  GROUP BY c.id, c.first_name, c.last_name
+  ORDER BY total_spend DESC
+  LIMIT 10;
+
+---
+
+# CHECK CUSTOMER CREDIT LIMIT AVAILABILITY
+# Returns current outstanding and how much headroom remains.
+  SELECT c.credit_limit,
+         COALESCE(SUM(cb.balance), 0)                   AS outstanding,
+         c.credit_limit - COALESCE(SUM(cb.balance), 0)  AS available
+  FROM customers c
+  LEFT JOIN credit cr ON cr.sale_id IN (
+    SELECT id FROM sales WHERE customer_id = c.id
+  )
+  LEFT JOIN credit_balances cb
+    ON cr.id = cb.credit_id AND cb.status != 'PAID'
+  WHERE c.id = :customer_id
+    AND c.is_deleted = FALSE
+  GROUP BY c.id, c.credit_limit;
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 15-F  CREDIT
+# ══════════════════════════════════════════════════════════════════════════════
+
+# GET ALL OUTSTANDING CREDIT FOR A CUSTOMER (unpaid only)
+  SELECT cb.credit_id, cb.amount_owed, cb.amount_paid,
+         cb.balance, cb.due_date, cb.status
+  FROM credit_balances cb
+  WHERE cb.customer_id = :customer_id
+    AND cb.status != 'PAID'
+  ORDER BY cb.due_date ASC;
+
+---
+
+# GET FULL CREDIT HISTORY FOR A CUSTOMER (all statuses)
+  SELECT cb.credit_id, cb.sale_id, cb.amount_owed,
+         cb.amount_paid, cb.balance, cb.status, cb.due_date
+  FROM credit_balances cb
+  WHERE cb.customer_id = :customer_id
+  ORDER BY cb.due_date DESC;
+
+---
+
+# GET ALL OVERDUE CREDIT BALANCES (all customers)
+  SELECT CONCAT(c.first_name, ' ', c.last_name) AS customer,
+         c.contact_number,
+         cb.credit_id, cb.amount_owed, cb.balance,
+         cb.due_date,
+         DATEDIFF(CURDATE(), cb.due_date) AS days_overdue
+  FROM credit_balances cb
+  JOIN sales s ON cb.sale_id = s.id
+  JOIN customers c ON s.customer_id = c.id
+  WHERE cb.status IN ('PENDING', 'PARTIALLY_PAID', 'OVERDUE')
+    AND cb.due_date < CURDATE()
+    AND c.is_deleted = FALSE
+  ORDER BY days_overdue DESC;
+
+---
+
+# GET PAYMENT HISTORY FOR ONE CREDIT RECORD
+  SELECT cp.paid_at, cp.amount_paid, cp.payment_method, cp.notes
+  FROM credit_payments cp
+  WHERE cp.credit_id = :credit_id
+  ORDER BY cp.paid_at ASC;
+
+---
+
+# GET TOTAL CREDIT OUTSTANDING ACROSS ALL CUSTOMERS
+  SELECT COUNT(DISTINCT cb.customer_id) AS customers_with_credit,
+         COUNT(cb.credit_id)            AS open_credit_records,
+         SUM(cb.balance)                AS total_outstanding
+  FROM credit_balances cb
+  WHERE cb.status != 'PAID';
+
+---
+
+# GET CREDIT COLLECTIONS RECEIVED IN A DATE RANGE
+  SELECT CONCAT(c.first_name, ' ', c.last_name) AS customer,
+         cp.paid_at, cp.amount_paid, cp.payment_method
+  FROM credit_payments cp
+  JOIN credit cr ON cp.credit_id = cr.id
+  JOIN sales s ON cr.sale_id = s.id
+  JOIN customers c ON s.customer_id = c.id
+  WHERE cp.paid_at >= :date_from
+    AND cp.paid_at <  :date_to + INTERVAL 1 DAY
+  ORDER BY cp.paid_at DESC;
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 15-G  PURCHASING & SUPPLIERS
+# ══════════════════════════════════════════════════════════════════════════════
+
+# GET ALL ACTIVE SUPPLIERS
+  SELECT id, name, contact_person, contact_number, address
+  FROM suppliers
+  WHERE is_deleted = FALSE
+  ORDER BY name;
+
+---
+
+# GET ALL RECEIPTS FROM A SUPPLIER (newest first)
+  SELECT sr.id, sr.receipt_date, sr.reference_number,
+         COUNT(sri.id) AS line_items,
+         SUM(sri.quantity_received * sri.cost_per_unit) AS total_cost
+  FROM stock_receipts sr
+  JOIN stock_receipt_items sri ON sr.id = sri.stock_receipt_id
+  WHERE sr.supplier_id = :supplier_id
+  GROUP BY sr.id, sr.receipt_date, sr.reference_number
+  ORDER BY sr.receipt_date DESC;
+
+---
+
+# GET LINE ITEMS FOR A SPECIFIC RECEIPT
+  SELECT p.name AS product, pu.display_name AS unit,
+         sri.quantity_received, sri.cost_per_unit,
+         (sri.quantity_received * sri.cost_per_unit) AS line_total,
+         (sri.quantity_received * pu.pack_quantity)  AS base_qty_added,
+         u.name AS base_unit
+  FROM stock_receipt_items sri
+  JOIN product_units pu ON sri.product_unit_id = pu.id
+  JOIN products p ON pu.product_id = p.id
+  JOIN units u ON p.base_unit_id = u.id
+  WHERE sri.stock_receipt_id = :receipt_id;
+
+---
+
+# GET PURCHASE HISTORY FOR A PRODUCT (all receipts, newest first)
+  SELECT sr.receipt_date, sup.name AS supplier, sr.reference_number,
+         pu.display_name AS unit, sri.quantity_received, sri.cost_per_unit,
+         (sri.quantity_received * sri.cost_per_unit) AS line_total
+  FROM stock_receipt_items sri
+  JOIN stock_receipts sr ON sri.stock_receipt_id = sr.id
+  LEFT JOIN suppliers sup ON sr.supplier_id = sup.id
+  JOIN product_units pu ON sri.product_unit_id = pu.id
+  WHERE pu.product_id = :product_id
+  ORDER BY sr.receipt_date DESC;
+
+---
+
+# GET TOTAL PURCHASING SPEND PER SUPPLIER (date range)
+  SELECT sup.name AS supplier,
+         COUNT(DISTINCT sr.id)                           AS receipt_count,
+         SUM(sri.quantity_received * sri.cost_per_unit)  AS total_spend
+  FROM stock_receipts sr
+  JOIN suppliers sup ON sr.supplier_id = sup.id
+  JOIN stock_receipt_items sri ON sr.id = sri.stock_receipt_id
+  WHERE sr.receipt_date >= :date_from
+    AND sr.receipt_date <= :date_to
+  GROUP BY sup.id, sup.name
+  ORDER BY total_spend DESC;
+
+---
+
+# GET TOTAL STOCK RECEIVED IN A DATE RANGE (in base units per product)
+  SELECT p.name AS product, u.name AS base_unit,
+         SUM(sri.quantity_received * pu.pack_quantity) AS total_base_qty_received
+  FROM stock_receipt_items sri
+  JOIN stock_receipts sr ON sri.stock_receipt_id = sr.id
+  JOIN product_units pu ON sri.product_unit_id = pu.id
+  JOIN products p ON pu.product_id = p.id
+  JOIN units u ON p.base_unit_id = u.id
+  WHERE sr.receipt_date >= :date_from
+    AND sr.receipt_date <= :date_to
+  GROUP BY p.id, p.name, u.name
+  ORDER BY p.name;
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 15-H  EXPENSES
+# ══════════════════════════════════════════════════════════════════════════════
+
+# GET ALL EXPENSES FOR A DATE RANGE (newest first)
+  SELECT e.expense_date, ec.name AS category,
+         e.amount, e.description, e.image_url
+  FROM expenses e
+  JOIN expense_categories ec ON e.expense_category_id = ec.id
+  WHERE e.expense_date >= :date_from
+    AND e.expense_date <= :date_to
+  ORDER BY e.expense_date DESC;
+
+---
+
+# GET EXPENSE TOTALS BY CATEGORY (date range)
+  SELECT ec.name AS category,
+         COUNT(*)    AS entry_count,
+         SUM(e.amount) AS total_amount
+  FROM expenses e
+  JOIN expense_categories ec ON e.expense_category_id = ec.id
+  WHERE e.expense_date >= :date_from
+    AND e.expense_date <= :date_to
+  GROUP BY ec.id, ec.name
+  ORDER BY total_amount DESC;
+
+---
+
+# GET MONTHLY EXPENSE SUMMARY (current year)
+  SELECT MONTH(e.expense_date) AS month,
+         SUM(e.amount)          AS total_expenses
+  FROM expenses e
+  WHERE YEAR(e.expense_date) = YEAR(CURDATE())
+  GROUP BY MONTH(e.expense_date)
+  ORDER BY month;
+
+---
+
+# GET TOTAL EXPENSES FOR A DATE RANGE
+  SELECT SUM(e.amount) AS total_expenses
+  FROM expenses e
+  WHERE e.expense_date >= :date_from
+    AND e.expense_date <= :date_to;
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 15-I  CASH MANAGEMENT
+# ══════════════════════════════════════════════════════════════════════════════
+
+# GET THE CURRENTLY OPEN CASH SESSION (NULL if none open)
+  SELECT id, opening_balance, created_at
+  FROM cash_fund
+  WHERE closed_at IS NULL
+  ORDER BY created_at DESC
+  LIMIT 1;
+
+---
+
+# GET CURRENT CASH BALANCE FOR AN OPEN SESSION
+  SELECT cf.opening_balance,
+         cf.opening_balance + COALESCE(SUM(
+           CASE WHEN cft.transaction_type = 'IN'  THEN  cft.amount
+                WHEN cft.transaction_type = 'OUT' THEN -cft.amount
+                ELSE cft.amount END), 0) AS current_balance
+  FROM cash_fund cf
+  LEFT JOIN cash_fund_transactions cft ON cf.id = cft.cash_fund_id
+  WHERE cf.id = :cash_fund_id
+  GROUP BY cf.id, cf.opening_balance;
+
+---
+
+# GET TRANSACTION LOG FOR A SESSION (newest first)
+  SELECT cft.created_at, cft.transaction_type, cft.amount,
+         cft.reference_type, cft.reference_id, cft.description
+  FROM cash_fund_transactions cft
+  WHERE cft.cash_fund_id = :cash_fund_id
+  ORDER BY cft.created_at DESC;
+
+---
+
+# GET RUNNING BALANCE THROUGH A SESSION (chronological)
+  SELECT cft.created_at, cft.transaction_type, cft.amount, cft.description,
+         cf.opening_balance + SUM(
+           CASE WHEN cft.transaction_type = 'IN'  THEN  cft.amount
+                WHEN cft.transaction_type = 'OUT' THEN -cft.amount
+                ELSE cft.amount END
+         ) OVER (ORDER BY cft.created_at ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+           AS running_balance
+  FROM cash_fund_transactions cft
+  JOIN cash_fund cf ON cft.cash_fund_id = cf.id
+  WHERE cft.cash_fund_id = :cash_fund_id
+  ORDER BY cft.created_at;
+
+---
+
+# GET SESSION CASH RECONCILIATION (closing summary)
+  SELECT cf.opening_balance,
+         cf.opening_balance + COALESCE(SUM(
+           CASE WHEN cft.transaction_type = 'IN'  THEN  cft.amount
+                WHEN cft.transaction_type = 'OUT' THEN -cft.amount
+                ELSE cft.amount END), 0) AS computed_balance,
+         cf.closing_balance,
+         cf.closing_balance - (
+           cf.opening_balance + COALESCE(SUM(
+             CASE WHEN cft.transaction_type = 'IN'  THEN  cft.amount
+                  WHEN cft.transaction_type = 'OUT' THEN -cft.amount
+                  ELSE cft.amount END), 0)
+         ) AS discrepancy
+  FROM cash_fund cf
+  LEFT JOIN cash_fund_transactions cft ON cf.id = cft.cash_fund_id
+  WHERE cf.id = :cash_fund_id
+  GROUP BY cf.id, cf.opening_balance, cf.closing_balance;
+
+---
+
+# GET CASH-IN TOTAL VS CASH-OUT TOTAL FOR A SESSION
+  SELECT
+    SUM(CASE WHEN transaction_type = 'IN'  THEN amount ELSE 0 END) AS total_in,
+    SUM(CASE WHEN transaction_type = 'OUT' THEN amount ELSE 0 END) AS total_out,
+    SUM(CASE WHEN transaction_type = 'IN'  THEN  amount
+             WHEN transaction_type = 'OUT' THEN -amount
+             ELSE amount END)                                        AS net_movement
+  FROM cash_fund_transactions
+  WHERE cash_fund_id = :cash_fund_id;
+
+---
+
+# GET SESSION HISTORY (all past closed sessions, newest first)
+  SELECT cf.id, cf.created_at AS opened_at, cf.closed_at,
+         cf.opening_balance, cf.closing_balance,
+         cf.closing_balance - cf.opening_balance AS declared_movement
+  FROM cash_fund cf
+  WHERE cf.closed_at IS NOT NULL
+  ORDER BY cf.closed_at DESC;
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 15-J  REPORTING & DASHBOARD
+# ══════════════════════════════════════════════════════════════════════════════
+
+# DAILY P&L SNAPSHOT (today)
+# Revenue - expenses - refunds = net
+  SELECT
+    (SELECT COALESCE(SUM(si.quantity * si.unit_price), 0)
+       FROM sale_items si
+       JOIN sales s ON si.sale_id = s.id
+      WHERE DATE(s.sale_date) = CURDATE())           AS gross_revenue,
+    (SELECT COALESCE(SUM(amount), 0)
+       FROM expenses
+      WHERE expense_date = CURDATE())                AS total_expenses,
+    (SELECT COALESCE(SUM(refund_amount), 0)
+       FROM sales_returns sr
+       JOIN sales s ON sr.sale_id = s.id
+      WHERE DATE(s.sale_date) = CURDATE())           AS total_refunds;
+
+---
+
+# WEEKLY REVENUE TREND (last 7 days including today)
+  SELECT DATE(s.sale_date)               AS day,
+         COUNT(DISTINCT s.id)            AS transactions,
+         SUM(si.quantity * si.unit_price) AS revenue
+  FROM sales s
+  JOIN sale_items si ON s.id = si.sale_id
+  WHERE s.sale_date >= CURDATE() - INTERVAL 6 DAY
+  GROUP BY DATE(s.sale_date)
+  ORDER BY day;
+
+---
+
+# INVENTORY VALUE SNAPSHOT (cost × current stock)
+  SELECT p.name AS product, u.name AS base_unit,
+         ps.quantity AS stock_qty,
+         pup.purchase_price AS unit_cost,
+         (ps.quantity * pup.purchase_price) AS stock_value
+  FROM product_stock ps
+  JOIN products p ON ps.product_id = p.id
+  JOIN units u ON p.base_unit_id = u.id
+  JOIN product_units pu
+    ON pu.product_id = p.id AND pu.pack_quantity = 1
+  JOIN product_unit_prices pup
+    ON pup.product_unit_id = pu.id AND pup.expiry_date IS NULL
+  WHERE p.is_deleted = FALSE
+  ORDER BY stock_value DESC;
+
+---
+
+# NET PROFIT ESTIMATE FOR A DATE RANGE
+# Revenue minus purchasing cost of goods sold (based on receipt cost_per_unit)
+  SELECT
+    SUM(si.quantity * si.unit_price)                              AS total_revenue,
+    (SELECT COALESCE(SUM(sri.quantity_received * sri.cost_per_unit), 0)
+       FROM stock_receipt_items sri
+       JOIN stock_receipts sr ON sri.stock_receipt_id = sr.id
+      WHERE sr.receipt_date >= :date_from
+        AND sr.receipt_date <= :date_to)                          AS total_cogs,
+    (SELECT COALESCE(SUM(amount), 0)
+       FROM expenses
+      WHERE expense_date >= :date_from
+        AND expense_date <= :date_to)                             AS total_expenses
+  FROM sale_items si
+  JOIN sales s ON si.sale_id = s.id
+  WHERE s.sale_date >= :date_from
+    AND s.sale_date <  :date_to + INTERVAL 1 DAY;
+
+---
+
+# PRODUCTS NOT SOLD IN THE LAST N DAYS (slow movers)
+  SELECT p.id, p.name, c.name AS category,
+         MAX(s.sale_date) AS last_sold_at,
+         DATEDIFF(CURDATE(), MAX(s.sale_date)) AS days_since_last_sale
+  FROM products p
+  JOIN categories c ON p.category_id = c.id
+  LEFT JOIN product_units pu ON pu.product_id = p.id
+  LEFT JOIN sale_items si ON si.product_unit_id = pu.id
+  LEFT JOIN sales s ON si.sale_id = s.id
+  WHERE p.is_deleted = FALSE
+  GROUP BY p.id, p.name, c.name
+  HAVING days_since_last_sale > :days OR MAX(s.sale_date) IS NULL
+  ORDER BY days_since_last_sale DESC;
+
+---
+
+# TOTAL OUTSTANDING CREDIT SUMMARY BY STATUS
+  SELECT cb.status,
+         COUNT(*)          AS record_count,
+         SUM(cb.balance)   AS total_balance
+  FROM credit_balances cb
+  WHERE cb.status != 'PAID'
+  GROUP BY cb.status
+  ORDER BY total_balance DESC;
+
+################################################################################
+# END OF SCHEMA REFERENCE
+################################################################################
